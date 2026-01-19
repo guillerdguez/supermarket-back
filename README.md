@@ -16,7 +16,7 @@ El sistema se basa en una arquitectura de **N-Capas**, asegurando un bajo acopla
 * **Capa de Presentación (REST Controllers):** Gestión de contratos de entrada/salida y códigos de estado HTTP.
 * **Capa de Servicio (Business Logic):** Implementación de reglas de negocio complejas (Validación de stock, cálculos de totales, estados de venta).
 * **Capa de Persistencia (Repositories):** Abstracción de datos mediante Spring Data JPA.
-* **Domain Model:** Entidades ricas y manejo de estados mediante Enums (`REGISTRADA`, `ANULADA`).
+* **Domain Model:** Entidades ricas y manejo de estados mediante Enums (`REGISTERED`, `CANCELLED`).
 * **Data Transfer Objects (DTO):** Desacoplamiento total entre la base de datos y la respuesta JSON enviada al cliente.
 
 ---
@@ -34,7 +34,7 @@ El sistema se basa en una arquitectura de **N-Capas**, asegurando un bajo acopla
 ## 📂 Estructura del Proyecto
 
 ```plaintext
-src/main/java/com/supermercado/supermercado/
+src/main/java/com/supermarket/supermarket/
 ├── controller/    # Endpoints REST (API Gateways)
 ├── service/       # Interfaces y lógica de negocio (S.O.L.I.D.)
 │   └── impl/      # Implementaciones concretas
@@ -70,10 +70,10 @@ src/main/java/com/supermercado/supermercado/
 
 ```json
 {
-  "idSucursal": 1,
-  "fecha": "2026-01-19",
-  "detalles": [
-    { "productoId": 1, "cantidad": 10 }
+  "branchId": 1,
+  "date": "2026-01-19",
+  "details": [
+    { "productId": 1, "quantity": 10 }
   ]
 }
 
