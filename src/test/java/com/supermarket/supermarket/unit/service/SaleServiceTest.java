@@ -61,11 +61,15 @@ class SaleServiceTest {
         given(saleRepository.save(any(Sale.class))).willReturn(sale);
         given(saleMapper.toResponse(any(Sale.class))).willReturn(response);
 
+        // ★★★ MOCK DEL NUEVO MÉTODO
+        given(productRepository.decrementStock(1L, 5)).willReturn(1);
+
         SaleResponse result = saleService.create(request);
 
         assertThat(result).isNotNull();
-        assertThat(product.getQuantity()).isEqualTo(95);
+        // Ya no verificamos product.getQuantity() porque se hace en la BD
         then(saleRepository).should().save(any(Sale.class));
+        then(productRepository).should().decrementStock(1L, 5);
     }
 
     @Test
@@ -80,10 +84,14 @@ class SaleServiceTest {
         given(productRepository.findById(1L)).willReturn(Optional.of(lowStockProduct));
         given(saleMapper.toEntity(request)).willReturn(sale);
 
+        // ★★★ MOCK: decrementStock devuelve 0 (no hay stock suficiente)
+        given(productRepository.decrementStock(1L, 5)).willReturn(0);
+
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(InsufficientStockException.class);
 
         then(saleRepository).should(never()).save(any());
+        then(productRepository).should().decrementStock(1L, 5);
     }
 
     @Test
@@ -95,41 +103,41 @@ class SaleServiceTest {
         Sale sale = TestFixtures.saleWithDetails();
 
         given(branchRepository.findById(999L)).willReturn(Optional.empty());
-
         given(saleMapper.toEntity(request)).willReturn(sale);
 
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(ResourceNotFoundException.class);
 
         then(saleRepository).should(never()).save(any());
+        then(productRepository).should(never()).decrementStock(any(), any());
     }
 
     @Test
     @DisplayName("CREATE - should throw exception when product not found")
     void create_WhenProductNotFound_ShouldThrowException() {
         SaleRequest request = TestFixtures.validSaleRequest();
-
         request.getDetails().get(0).setProductId(999L);
 
         Branch branch = TestFixtures.defaultBranch();
         Sale sale = TestFixtures.saleWithDetails();
 
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
-
         given(productRepository.findById(999L)).willReturn(Optional.empty());
-
         given(saleMapper.toEntity(request)).willReturn(sale);
+
+        given(productRepository.decrementStock(999L, 5)).willReturn(0);
 
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(ResourceNotFoundException.class);
 
         then(saleRepository).should(never()).save(any());
+
+        then(productRepository).should().decrementStock(999L, 5);
     }
 
     @Test
     @DisplayName("UPDATE - should update sale")
     void update_ShouldUpdateSale() {
-
         Long id = 100L;
         SaleRequest request = TestFixtures.validSaleRequest();
         Sale existingSale = TestFixtures.saleWithDetails();
@@ -138,9 +146,12 @@ class SaleServiceTest {
 
         given(saleRepository.findById(id)).willReturn(Optional.of(existingSale));
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
-
         given(saleRepository.save(existingSale)).willReturn(existingSale);
         given(saleMapper.toResponse(existingSale)).willReturn(response);
+
+        // ★★★ MOCKS: incrementStock y decrementStock
+        given(productRepository.incrementStock(1L, 5)).willReturn(1);
+        given(productRepository.decrementStock(1L, 5)).willReturn(1);
 
         SaleResponse result = saleService.update(id, request);
 
@@ -148,7 +159,8 @@ class SaleServiceTest {
         assertThat(result.getId()).isEqualTo(100L);
 
         then(saleRepository).should().findById(id);
-        then(productRepository).should().findById(1L);
+        then(productRepository).should().incrementStock(1L, 5);
+        then(productRepository).should().decrementStock(1L, 5);
         then(saleRepository).should().save(existingSale);
     }
 
@@ -166,6 +178,8 @@ class SaleServiceTest {
                 .isInstanceOf(InvalidSaleStateException.class);
 
         then(saleRepository).should(never()).save(any());
+        then(productRepository).should(never()).incrementStock(any(), any());
+        then(productRepository).should(never()).decrementStock(any(), any());
     }
 
     @Test
@@ -205,6 +219,8 @@ class SaleServiceTest {
         saleService.delete(id);
 
         then(saleRepository).should().delete(sale);
+        // No debe llamar a incrementStock porque no hay devolución de stock al eliminar
+        then(productRepository).should(never()).incrementStock(any(), any());
     }
 
     @Test
