@@ -9,11 +9,11 @@
 		<version>3.4.1</version>
 		<relativePath />
 	</parent>
-	<groupId>com.supermercado</groupId>
-	<artifactId>supermercado</artifactId>
+	<groupId>com.supermarket</groupId>
+	<artifactId>supermarket</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>supermercado</name>
-	<description>Demo supermercado</description>
+	<name>supermarket</name>
+	<description>Demo supermarket</description>
 
 	<properties>
 		<java.version>17</java.version>
