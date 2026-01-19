@@ -98,16 +98,22 @@ public class SaleServiceImpl implements SaleService {
         double saleTotal = 0.0;
 
         for (SaleDetailRequest item : detailsRequest) {
-            Product product = productRepo.findById(item.getProductId())
-                    .orElseThrow(
-                            () -> new ResourceNotFoundException("Product not found ID: " + item.getProductId()));
+            int rowsAffected = productRepo.decrementStock(
+                    item.getProductId(),
+                    item.getQuantity());
 
-            if (product.getQuantity() < item.getQuantity()) {
+            if (rowsAffected == 0) {
+                Product product = productRepo.findById(item.getProductId())
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Product not found ID: " + item.getProductId()));
+
                 throw new InsufficientStockException(
                         "Insufficient stock for " + product.getName() + ". Available: " + product.getQuantity());
             }
 
-            product.setQuantity(product.getQuantity() - item.getQuantity());
+            Product product = productRepo.findById(item.getProductId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Product not found ID: " + item.getProductId()));
 
             SaleDetail detail = SaleDetail.builder()
                     .quantity(item.getQuantity())
@@ -124,8 +130,9 @@ public class SaleServiceImpl implements SaleService {
 
     private void updateDetailsAndStock(Sale sale, List<SaleDetailRequest> newDetails) {
         for (SaleDetail oldDetail : sale.getDetails()) {
-            Product product = oldDetail.getProduct();
-            product.setQuantity(product.getQuantity() + oldDetail.getQuantity());
+            productRepo.incrementStock(
+                    oldDetail.getProduct().getId(),
+                    oldDetail.getQuantity());
         }
         sale.getDetails().clear();
         processDetailsAndStock(sale, newDetails);
