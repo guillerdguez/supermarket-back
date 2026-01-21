@@ -28,7 +28,4 @@ public class Product {
     private Double price;
     private Integer quantity;
 
-   /* @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<SaleDetail> sales = new ArrayList<>();*/
-
 }

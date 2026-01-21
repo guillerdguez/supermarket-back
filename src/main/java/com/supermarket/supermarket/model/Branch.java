@@ -25,6 +25,4 @@ public class Branch {
     private String name;
     @Column(unique = true, nullable = false)
     private String address;
-   /* @OneToMany(mappedBy = "branch",cascade = CascadeType.ALL)
-    private List<Sale> sales;*/
 }

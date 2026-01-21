@@ -3,13 +3,14 @@ package com.supermarket.supermarket.unit.service;
 import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
 import com.supermarket.supermarket.exception.DuplicateResourceException;
+import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.fixtures.TestFixtures;
 import com.supermarket.supermarket.mapper.ProductMapper;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.repository.ProductRepository;
+import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.impl.ProductServiceImpl;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -32,8 +34,13 @@ class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
+
     @Mock
     private ProductMapper productMapper;
+
+    @Mock
+    private SaleRepository saleRepository;
+
     @InjectMocks
     private ProductServiceImpl productService;
 
@@ -99,6 +106,7 @@ class ProductServiceTest {
     @DisplayName("CREATE - should throw exception when name exists")
     void create_WhenNameExists_ShouldThrowException() {
         ProductRequest request = TestFixtures.validProductRequest();
+
         given(productRepository.existsByName(request.getName())).willReturn(true);
 
         assertThatThrownBy(() -> productService.create(request))
@@ -173,16 +181,33 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("DELETE - should delete product")
+    @DisplayName("DELETE - should delete product when no sales associated")
     void delete_ShouldDeleteProduct() {
         Long id = 1L;
         Product product = TestFixtures.defaultProduct();
 
         given(productRepository.findById(id)).willReturn(Optional.of(product));
+        given(saleRepository.existsByDetailsProductId(id)).willReturn(false);
 
         productService.delete(id);
 
         then(productRepository).should().delete(product);
+    }
+
+    @Test
+    @DisplayName("DELETE - should throw exception when product has associated sales")
+    void delete_WhenProductHasSales_ShouldThrowException() {
+        Long id = 1L;
+        Product product = TestFixtures.defaultProduct();
+
+        given(productRepository.findById(id)).willReturn(Optional.of(product));
+
+        given(saleRepository.existsByDetailsProductId(id)).willReturn(true);
+
+        assertThatThrownBy(() -> productService.delete(id))
+                .isInstanceOf(InvalidOperationException.class);
+
+        then(productRepository).should(never()).delete(any());
     }
 
     @Test
