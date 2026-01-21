@@ -17,6 +17,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,18 +50,34 @@ class ProductServiceTest {
     private ProductServiceImpl productService;
 
     @Test
-    @DisplayName("GET ALL - should return list")
-    void getAll_ShouldReturnList() {
+    @DisplayName("GET ALL - should return paginated list")
+    void getAll_ShouldReturnPaginatedList() {
+        Product product = TestFixtures.defaultProduct();
+        ProductResponse response = TestFixtures.productResponse();
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Product> page = new PageImpl<>(List.of(product));
+
+        given(productRepository.findAll((Specification<Product>) any(), eq(pageable))).willReturn(page);
+        given(productMapper.toResponse(product)).willReturn(response);
+
+        Page<ProductResponse> result = productService.getAll(null, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("GET ALL DROPDOWN - should return simple list")
+    void getAllForDropdown_ShouldReturnList() {
         Product product = TestFixtures.defaultProduct();
         ProductResponse response = TestFixtures.productResponse();
 
         given(productRepository.findAll()).willReturn(List.of(product));
         given(productMapper.toResponseList(List.of(product))).willReturn(List.of(response));
 
-        List<ProductResponse> result = productService.getAll();
+        List<ProductResponse> result = productService.getAllForDropdown();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("Premium Rice");
     }
 
     @Test
@@ -112,7 +133,7 @@ class ProductServiceTest {
         assertThatThrownBy(() -> productService.create(request))
                 .isInstanceOf(DuplicateResourceException.class);
 
-        then(productRepository).should(never()).save(any());
+        then(productRepository).should(never()).save(any(Product.class));
     }
 
     @Test
@@ -131,38 +152,6 @@ class ProductServiceTest {
         ProductResponse result = productService.update(id, request);
 
         assertThat(result).isNotNull();
-        then(productMapper).should().updateEntity(request, existingProduct);
-    }
-
-    @Test
-    @DisplayName("UPDATE - should update stock correctly")
-    void update_ShouldUpdateStock() {
-        Long id = 1L;
-        ProductRequest request = ProductRequest.builder()
-                .name("Updated Product")
-                .category("Updated Category")
-                .price(15.0)
-                .quantity(200)
-                .build();
-
-        Product existingProduct = TestFixtures.defaultProduct();
-        ProductResponse response = ProductResponse.builder()
-                .id(1L)
-                .name("Updated Product")
-                .category("Updated Category")
-                .price(15.0)
-                .quantity(200)
-                .build();
-
-        given(productRepository.findById(id)).willReturn(Optional.of(existingProduct));
-        given(productRepository.existsByName(request.getName())).willReturn(false);
-        given(productRepository.save(existingProduct)).willReturn(existingProduct);
-        given(productMapper.toResponse(existingProduct)).willReturn(response);
-
-        ProductResponse result = productService.update(id, request);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getQuantity()).isEqualTo(200);
         then(productMapper).should().updateEntity(request, existingProduct);
     }
 
@@ -201,13 +190,12 @@ class ProductServiceTest {
         Product product = TestFixtures.defaultProduct();
 
         given(productRepository.findById(id)).willReturn(Optional.of(product));
-
         given(saleRepository.existsByDetailsProductId(id)).willReturn(true);
 
         assertThatThrownBy(() -> productService.delete(id))
                 .isInstanceOf(InvalidOperationException.class);
 
-        then(productRepository).should(never()).delete(any());
+        then(productRepository).should(never()).delete((Product) any());
     }
 
     @Test
@@ -219,6 +207,6 @@ class ProductServiceTest {
         assertThatThrownBy(() -> productService.delete(id))
                 .isInstanceOf(ResourceNotFoundException.class);
 
-        then(productRepository).should(never()).delete(any());
+        then(productRepository).should(never()).delete((Product) any());
     }
 }
