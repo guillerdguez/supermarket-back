@@ -85,8 +85,6 @@ public class BranchServiceImpl implements BranchService {
         log.info("Branch deleted successfully - ID: {}", id);
     }
 
-    // Auxiliary Methods
-
     private Branch findBranch(Long id) {
         return branchRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with ID: " + id));

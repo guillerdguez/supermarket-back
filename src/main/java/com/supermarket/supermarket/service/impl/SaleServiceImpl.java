@@ -1,22 +1,20 @@
 package com.supermarket.supermarket.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
-import com.supermarket.supermarket.exception.InsufficientStockException;
 import com.supermarket.supermarket.exception.InvalidSaleStateException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.SaleMapper;
 import com.supermarket.supermarket.model.*;
-import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.service.ProductService;
 import com.supermarket.supermarket.service.SaleService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,25 +24,30 @@ import java.util.List;
 @Slf4j
 @Service
 public class SaleServiceImpl implements SaleService {
+
     private final SaleRepository saleRepo;
     private final BranchRepository branchRepo;
     private final SaleMapper saleMapper;
-    private final ProductRepository productRepo;
+    private final ProductService productService;
 
     @Transactional(readOnly = true)
     @Override
     public List<SaleResponse> getAll() {
+        log.info("Fetching all sales");
         return saleMapper.toResponseList(saleRepo.findAll());
     }
 
     @Transactional(readOnly = true)
     @Override
     public SaleResponse getById(Long id) {
+        log.info("Fetching sale with ID: {}", id);
         return mapToDto(findSale(id));
     }
 
     @Override
     public SaleResponse create(SaleRequest request) {
+        log.info("Creating new sale for branch ID: {}", request.getBranchId());
+
         Sale sale = saleMapper.toEntity(request);
         sale.setStatus(SaleStatus.REGISTERED);
         sale.setDetails(new ArrayList<>());
@@ -57,6 +60,7 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     public SaleResponse update(Long id, SaleRequest request) {
+        log.info("Updating sale with ID: {}", id);
         Sale sale = findSale(id);
 
         if (sale.getStatus() == SaleStatus.CANCELLED) {
@@ -79,8 +83,44 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     public void delete(Long id) {
+        log.info("Attempting to delete sale with ID: {}", id);
         Sale sale = findSale(id);
+
+        if (sale.getStatus() == SaleStatus.REGISTERED) {
+            restoreStock(sale);
+        }
+
         saleRepo.delete(sale);
+        log.info("Sale deleted successfully - ID: {}", id);
+    }
+
+    private void restoreStock(Sale sale) {
+        for (SaleDetail detail : sale.getDetails()) {
+            productService.increaseStock(
+                    detail.getProduct().getId(),
+                    detail.getQuantity());
+        }
+    }
+
+    private void processDetailsAndStock(Sale sale, List<SaleDetailRequest> detailsRequest) {
+        double saleTotal = 0.0;
+
+        for (SaleDetailRequest item : detailsRequest) {
+            Product product = productService.reduceStock(item.getProductId(), item.getQuantity());
+
+            SaleDetail detail = buildSaleDetail(sale, item, product);
+            sale.getDetails().add(detail);
+            saleTotal += (detail.getQuantity() * detail.getPrice());
+        }
+        sale.setTotal(saleTotal);
+    }
+
+    private void updateDetailsAndStock(Sale sale, List<SaleDetailRequest> newDetails) {
+        restoreStock(sale);
+
+        sale.getDetails().clear();
+
+        processDetailsAndStock(sale, newDetails);
     }
 
     private Sale findSale(Long id) {
@@ -94,48 +134,13 @@ public class SaleServiceImpl implements SaleService {
         sale.setBranch(branch);
     }
 
-    private void processDetailsAndStock(Sale sale, List<SaleDetailRequest> detailsRequest) {
-        double saleTotal = 0.0;
-
-        for (SaleDetailRequest item : detailsRequest) {
-            int rowsAffected = productRepo.decrementStock(
-                    item.getProductId(),
-                    item.getQuantity());
-
-            if (rowsAffected == 0) {
-                Product product = productRepo.findById(item.getProductId())
-                        .orElseThrow(
-                                () -> new ResourceNotFoundException("Product not found ID: " + item.getProductId()));
-
-                throw new InsufficientStockException(
-                        "Insufficient stock for " + product.getName() + ". Available: " + product.getQuantity());
-            }
-
-            Product product = productRepo.findById(item.getProductId())
-                    .orElseThrow(
-                            () -> new ResourceNotFoundException("Product not found ID: " + item.getProductId()));
-
-            SaleDetail detail = SaleDetail.builder()
-                    .quantity(item.getQuantity())
-                    .price(product.getPrice())
-                    .product(product)
-                    .sale(sale)
-                    .build();
-
-            sale.getDetails().add(detail);
-            saleTotal += (detail.getQuantity() * detail.getPrice());
-        }
-        sale.setTotal(saleTotal);
-    }
-
-    private void updateDetailsAndStock(Sale sale, List<SaleDetailRequest> newDetails) {
-        for (SaleDetail oldDetail : sale.getDetails()) {
-            productRepo.incrementStock(
-                    oldDetail.getProduct().getId(),
-                    oldDetail.getQuantity());
-        }
-        sale.getDetails().clear();
-        processDetailsAndStock(sale, newDetails);
+    private SaleDetail buildSaleDetail(Sale sale, SaleDetailRequest item, Product product) {
+        return SaleDetail.builder()
+                .quantity(item.getQuantity())
+                .price(product.getPrice())
+                .product(product)
+                .sale(sale)
+                .build();
     }
 
     private SaleResponse mapToDto(Sale sale) {
