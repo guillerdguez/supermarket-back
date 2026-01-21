@@ -13,6 +13,9 @@ import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +33,17 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<ProductResponse> getAll() {
-        log.info("Fetching all products");
+    public Page<ProductResponse> getAll(Specification<Product> spec, Pageable pageable) {
+        log.info("Fetching products page: {} with filters", pageable.getPageNumber());
+
+        Page<Product> productsPage = productRepo.findAll(spec, pageable);
+
+        return productsPage.map(productMapper::toResponse);
+    }
+
+    @Override
+    public List<ProductResponse> getAllForDropdown() {
+        log.info("Fetching simple list of products");
         return productMapper.toResponseList(productRepo.findAll());
     }
 
