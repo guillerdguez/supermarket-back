@@ -6,6 +6,7 @@ import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailResponse;
 import com.supermarket.supermarket.model.SaleDetail;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,9 +17,9 @@ public class SaleDetailMapper {
         if (entity == null)
             return null;
 
-        double subtotal = 0.0;
+        BigDecimal subtotal = BigDecimal.ZERO;
         if (entity.getPrice() != null && entity.getQuantity() != null) {
-            subtotal = entity.getPrice() * entity.getQuantity();
+            subtotal = entity.getPrice().multiply(BigDecimal.valueOf(entity.getQuantity()));
         }
 
         return SaleDetailResponse.builder()

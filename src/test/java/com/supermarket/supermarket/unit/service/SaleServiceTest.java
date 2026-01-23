@@ -1,6 +1,5 @@
 package com.supermarket.supermarket.unit.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.exception.InsufficientStockException;
@@ -23,13 +22,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doThrow;
@@ -149,6 +146,7 @@ class SaleServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(100L);
+
         then(saleRepository).should().findById(id);
         then(productService).should().increaseStock(1L, 5);
         then(productService).should().reduceStock(1L, 5);
@@ -180,7 +178,7 @@ class SaleServiceTest {
         Sale sale = TestFixtures.saleWithDetails();
         SaleResponse response = TestFixtures.saleResponse();
 
-        given(saleRepository.findById(id)).willReturn(Optional.of(sale));
+        given(saleRepository.findWithDetailsById(id)).willReturn(Optional.of(sale));
         given(saleMapper.toResponse(sale)).willReturn(response);
 
         SaleResponse result = saleService.getById(id);
@@ -194,7 +192,7 @@ class SaleServiceTest {
     void getById_WhenNotFound_ShouldThrowException() {
         Long id = 999L;
 
-        given(saleRepository.findById(id)).willReturn(Optional.empty());
+        given(saleRepository.findWithDetailsById(id)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> saleService.getById(id))
                 .isInstanceOf(ResourceNotFoundException.class);

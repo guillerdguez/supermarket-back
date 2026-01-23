@@ -1,5 +1,6 @@
 package com.supermarket.supermarket.fixtures;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ public class TestFixtures {
                                 .id(id)
                                 .name("Premium Rice")
                                 .category("Food")
-                                .price(2.50)
+                                .price(new BigDecimal("2.50"))
                                 .quantity(stock)
                                 .build();
         }
@@ -38,7 +39,7 @@ public class TestFixtures {
                 return ProductRequest.builder()
                                 .name("New Product")
                                 .category("Cleaning")
-                                .price(10.0)
+                                .price(new BigDecimal("10.00"))
                                 .quantity(50)
                                 .build();
         }
@@ -47,7 +48,7 @@ public class TestFixtures {
                 return ProductRequest.builder()
                                 .name("")
                                 .category("")
-                                .price(-10.0)
+                                .price(new BigDecimal("-10.00"))
                                 .quantity(-5)
                                 .build();
         }
@@ -57,7 +58,7 @@ public class TestFixtures {
                                 .id(1L)
                                 .name("Premium Rice")
                                 .category("Food")
-                                .price(2.50)
+                                .price(new BigDecimal("2.50"))
                                 .quantity(100)
                                 .build();
         }
@@ -125,14 +126,15 @@ public class TestFixtures {
                 Sale sale = Sale.builder()
                                 .id(100L)
                                 .date(LocalDate.now())
-                                .total(12.50)
+                                .total(new BigDecimal("12.50"))
                                 .status(SaleStatus.REGISTERED)
                                 .branch(defaultBranch())
                                 .details(new ArrayList<>())
                                 .build();
+
                 SaleDetail detail = SaleDetail.builder()
                                 .quantity(5)
-                                .price(2.50)
+                                .price(new BigDecimal("2.50"))
                                 .product(defaultProduct())
                                 .sale(sale)
                                 .build();
@@ -144,7 +146,7 @@ public class TestFixtures {
         public static SaleResponse saleResponse() {
                 return SaleResponse.builder()
                                 .id(100L)
-                                .total(12.50)
+                                .total(new BigDecimal("12.50"))
                                 .date(LocalDate.now())
                                 .status(SaleStatus.REGISTERED)
                                 .branchId(1L)
@@ -153,8 +155,8 @@ public class TestFixtures {
                                                 SaleDetailResponse.builder()
                                                                 .productName("Premium Rice")
                                                                 .quantity(5)
-                                                                .unitPrice(2.50)
-                                                                .subtotal(12.50)
+                                                                .unitPrice(new BigDecimal("2.50"))
+                                                                .subtotal(new BigDecimal("12.50"))
                                                                 .build()))
                                 .build();
         }

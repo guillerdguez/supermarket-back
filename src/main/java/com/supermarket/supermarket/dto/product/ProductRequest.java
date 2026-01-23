@@ -1,6 +1,8 @@
 
 package com.supermarket.supermarket.dto.product;
 
+import java.math.BigDecimal;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -31,7 +33,7 @@ public class ProductRequest {
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be greater than zero")
     @DecimalMin(value = "0.01", message = "Minimum price is  0.01 ")
-    private Double price;
+    private BigDecimal price;
 
     @NotNull(message = "Quantity is required")
     @Min(value = 0, message = "Quantity cannot be negative")

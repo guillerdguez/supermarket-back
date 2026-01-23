@@ -17,9 +17,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hibernate.annotations.BatchSize;
 
 @Getter
 @Setter
@@ -34,12 +37,13 @@ public class Sale {
     private LocalDate date;
     @Enumerated(EnumType.STRING)
     private SaleStatus status;
-    private Double total;
+    private BigDecimal total;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id", nullable = false)
     private Branch branch;
+
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    
+    @BatchSize(size = 20)
     private List<SaleDetail> details = new ArrayList<>();
 }
