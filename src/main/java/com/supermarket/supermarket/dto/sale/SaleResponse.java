@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class SaleResponse {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
     private SaleStatus status;
-    private Double total;
+    private BigDecimal total;
     private Long branchId;
     private String branchName;
     private List<SaleDetailResponse> details;

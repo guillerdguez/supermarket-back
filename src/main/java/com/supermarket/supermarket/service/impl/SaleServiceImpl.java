@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +41,10 @@ public class SaleServiceImpl implements SaleService {
     @Transactional(readOnly = true)
     @Override
     public SaleResponse getById(Long id) {
-        log.info("Fetching sale with ID: {}", id);
-        return mapToDto(findSale(id));
+        log.info("Fetching sale with ID: {} with fully optimized query", id);
+        Sale sale = saleRepo.findWithDetailsById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sale not found with ID: " + id));
+        return saleMapper.toResponse(sale);
     }
 
     @Override
@@ -103,14 +106,16 @@ public class SaleServiceImpl implements SaleService {
     }
 
     private void processDetailsAndStock(Sale sale, List<SaleDetailRequest> detailsRequest) {
-        double saleTotal = 0.0;
+        BigDecimal saleTotal = BigDecimal.ZERO;
 
         for (SaleDetailRequest item : detailsRequest) {
             Product product = productService.reduceStock(item.getProductId(), item.getQuantity());
 
             SaleDetail detail = buildSaleDetail(sale, item, product);
             sale.getDetails().add(detail);
-            saleTotal += (detail.getQuantity() * detail.getPrice());
+
+            BigDecimal lineSubtotal = detail.getPrice().multiply(BigDecimal.valueOf(detail.getQuantity()));
+            saleTotal = saleTotal.add(lineSubtotal);
         }
         sale.setTotal(saleTotal);
     }

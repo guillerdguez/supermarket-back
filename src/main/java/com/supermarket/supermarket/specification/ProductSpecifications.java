@@ -5,12 +5,13 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProductSpecifications {
 
-    public static Specification<Product> withFilters(String name, String category, Double minPrice, Double maxPrice) {
+    public static Specification<Product> withFilters(String name, String category, BigDecimal minPrice, BigDecimal maxPrice) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 

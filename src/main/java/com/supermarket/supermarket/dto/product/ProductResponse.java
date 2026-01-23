@@ -1,6 +1,8 @@
 
 package com.supermarket.supermarket.dto.product;
 
+import java.math.BigDecimal;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +21,6 @@ public class ProductResponse {
     private Long id;
     private String name;
     private String category;
-    private Double price;
+    private BigDecimal price;
     private Integer quantity;
 }
