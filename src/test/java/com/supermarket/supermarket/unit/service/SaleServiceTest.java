@@ -22,14 +22,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,13 +67,13 @@ class SaleServiceTest {
         given(saleMapper.toEntity(request)).willReturn(sale);
         given(saleRepository.save(any(Sale.class))).willReturn(sale);
         given(saleMapper.toResponse(any(Sale.class))).willReturn(response);
-        given(productService.reduceStock(1L, 5)).willReturn(product);
+        given(productService.validateAndReduceStockBatch(anyList())).willReturn(List.of(product));
 
         SaleResponse result = saleService.create(request);
 
         assertThat(result).isNotNull();
         then(saleRepository).should().save(any(Sale.class));
-        then(productService).should().reduceStock(1L, 5);
+        then(productService).should().validateAndReduceStockBatch(anyList());
     }
 
     @Test
@@ -81,14 +85,14 @@ class SaleServiceTest {
 
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(saleMapper.toEntity(request)).willReturn(sale);
-        doThrow(new InsufficientStockException("Insufficient stock"))
-                .when(productService).reduceStock(1L, 5);
+        willThrow(new InsufficientStockException("Insufficient stock"))
+                .given(productService).validateAndReduceStockBatch(anyList());
 
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(InsufficientStockException.class);
 
         then(saleRepository).should(never()).save(any());
-        then(productService).should().reduceStock(1L, 5);
+        then(productService).should().validateAndReduceStockBatch(anyList());
     }
 
     @Test
@@ -105,7 +109,7 @@ class SaleServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
 
         then(saleRepository).should(never()).save(any());
-        then(productService).should(never()).reduceStock(any(), any());
+        then(productService).should(never()).validateAndReduceStockBatch(anyList());
     }
 
     @Test
@@ -118,14 +122,14 @@ class SaleServiceTest {
 
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(saleMapper.toEntity(request)).willReturn(sale);
-        doThrow(new ResourceNotFoundException("Product not found"))
-                .when(productService).reduceStock(999L, 5);
+        willThrow(new ResourceNotFoundException("Product not found"))
+                .given(productService).validateAndReduceStockBatch(anyList());
 
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(ResourceNotFoundException.class);
 
         then(saleRepository).should(never()).save(any());
-        then(productService).should().reduceStock(999L, 5);
+        then(productService).should().validateAndReduceStockBatch(anyList());
     }
 
     @Test
@@ -140,7 +144,7 @@ class SaleServiceTest {
         given(saleRepository.findById(id)).willReturn(Optional.of(existingSale));
         given(saleRepository.save(existingSale)).willReturn(existingSale);
         given(saleMapper.toResponse(existingSale)).willReturn(response);
-        given(productService.reduceStock(1L, 5)).willReturn(product);
+        given(productService.validateAndReduceStockBatch(anyList())).willReturn(List.of(product));
 
         SaleResponse result = saleService.update(id, request);
 
@@ -148,8 +152,8 @@ class SaleServiceTest {
         assertThat(result.getId()).isEqualTo(100L);
 
         then(saleRepository).should().findById(id);
-        then(productService).should().increaseStock(1L, 5);
-        then(productService).should().reduceStock(1L, 5);
+        then(productService).should().increaseStock(anyLong(), anyInt());
+        then(productService).should().validateAndReduceStockBatch(anyList());
         then(saleRepository).should().save(existingSale);
     }
 
@@ -167,8 +171,8 @@ class SaleServiceTest {
                 .isInstanceOf(InvalidSaleStateException.class);
 
         then(saleRepository).should(never()).save(any());
-        then(productService).should(never()).increaseStock(any(), any());
-        then(productService).should(never()).reduceStock(any(), any());
+        then(productService).should(never()).increaseStock(anyLong(), anyInt());
+        then(productService).should(never()).validateAndReduceStockBatch(anyList());
     }
 
     @Test
@@ -184,7 +188,7 @@ class SaleServiceTest {
         SaleResponse result = saleService.getById(id);
 
         assertThat(result).isNotNull();
-        assertThat(result.getTotal()).isEqualTo(12.50);
+        assertThat(result.getTotal()).isEqualTo(TestFixtures.saleResponse().getTotal());
     }
 
     @Test

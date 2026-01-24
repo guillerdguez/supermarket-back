@@ -73,8 +73,9 @@ public class GlobalExceptionHandler {
     // 6. Concurrency Control (409) - Critical for Supermarkets
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<Map<String, Object>> handleConcurrencyError(ObjectOptimisticLockingFailureException ex) {
-        log.error("Concurrency conflict: Product stock was updated by another process.");
-        return buildResponse("Conflict", "The record was updated by another user. Please refresh and try again.",
+        log.warn("Concurrency conflict: {}", ex.getMessage());
+        return buildResponse("Concurrency Conflict",
+                "The product stock was modified by another process. Please refresh and try again.",
                 HttpStatus.CONFLICT);
     }
 

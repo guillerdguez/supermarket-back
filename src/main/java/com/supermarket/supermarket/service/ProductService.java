@@ -4,6 +4,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
+import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.model.Product;
 
 import java.util.List;
@@ -24,7 +25,9 @@ public interface ProductService {
 
     void delete(Long id);
 
-    Product reduceStock(Long id, Integer quantity);
-
+     Product reduceStock(Long id, Integer quantity);
     void increaseStock(Long id, Integer quantity);
+ 
+    List<Product> validateAndReduceStockBatch(List<SaleDetailRequest> details);
+
 }
