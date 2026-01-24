@@ -19,6 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Transactional
@@ -56,9 +59,43 @@ public class SaleServiceImpl implements SaleService {
         sale.setDetails(new ArrayList<>());
 
         assignBranch(sale, request.getBranchId());
+
         processDetailsAndStock(sale, request.getDetails());
 
         return mapToDto(saleRepo.save(sale));
+    }
+
+    private void processDetailsAndStock(Sale sale, List<SaleDetailRequest> detailsRequest) {
+        if (detailsRequest == null || detailsRequest.isEmpty()) {
+            throw new IllegalArgumentException("La venta debe contener al menos un producto");
+        }
+
+        List<Product> updatedProducts = productService.validateAndReduceStockBatch(detailsRequest);
+
+        Map<Long, Product> productMap = updatedProducts.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        BigDecimal saleTotal = BigDecimal.ZERO;
+        List<SaleDetail> saleDetails = new ArrayList<>();
+
+        for (SaleDetailRequest item : detailsRequest) {
+            Product product = productMap.get(item.getProductId());
+
+            SaleDetail detail = SaleDetail.builder()
+                    .sale(sale)
+                    .product(product)
+                    .quantity(item.getQuantity())
+                    .price(product.getPrice())
+                    .build();
+
+            saleDetails.add(detail);
+
+            BigDecimal lineSubtotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            saleTotal = saleTotal.add(lineSubtotal);
+        }
+
+        sale.getDetails().addAll(saleDetails);
+        sale.setTotal(saleTotal);
     }
 
     @Override
@@ -105,21 +142,6 @@ public class SaleServiceImpl implements SaleService {
         }
     }
 
-    private void processDetailsAndStock(Sale sale, List<SaleDetailRequest> detailsRequest) {
-        BigDecimal saleTotal = BigDecimal.ZERO;
-
-        for (SaleDetailRequest item : detailsRequest) {
-            Product product = productService.reduceStock(item.getProductId(), item.getQuantity());
-
-            SaleDetail detail = buildSaleDetail(sale, item, product);
-            sale.getDetails().add(detail);
-
-            BigDecimal lineSubtotal = detail.getPrice().multiply(BigDecimal.valueOf(detail.getQuantity()));
-            saleTotal = saleTotal.add(lineSubtotal);
-        }
-        sale.setTotal(saleTotal);
-    }
-
     private void updateDetailsAndStock(Sale sale, List<SaleDetailRequest> newDetails) {
         restoreStock(sale);
 
@@ -137,15 +159,6 @@ public class SaleServiceImpl implements SaleService {
         Branch branch = branchRepo.findById(branchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with ID: " + branchId));
         sale.setBranch(branch);
-    }
-
-    private SaleDetail buildSaleDetail(Sale sale, SaleDetailRequest item, Product product) {
-        return SaleDetail.builder()
-                .quantity(item.getQuantity())
-                .price(product.getPrice())
-                .product(product)
-                .sale(sale)
-                .build();
     }
 
     private SaleResponse mapToDto(Sale sale) {

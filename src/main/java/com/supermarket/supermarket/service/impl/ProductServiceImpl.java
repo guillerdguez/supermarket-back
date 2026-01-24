@@ -2,6 +2,7 @@ package com.supermarket.supermarket.service.impl;
 
 import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
+import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.DuplicateResourceException;
 import com.supermarket.supermarket.exception.InsufficientStockException;
 import com.supermarket.supermarket.exception.InvalidOperationException;
@@ -19,7 +20,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Transactional
@@ -121,6 +126,52 @@ public class ProductServiceImpl implements ProductService {
         }
 
         productRepo.incrementStock(id, quantity);
+    }
+
+    @Override
+    @Transactional
+    public List<Product> validateAndReduceStockBatch(List<SaleDetailRequest> details) {
+        log.info("Procesando reducción de stock por lotes para {} items", details.size());
+
+        if (details == null || details.isEmpty()) {
+            throw new IllegalArgumentException("La lista de detalles no puede estar vacía");
+        }
+
+        Map<Long, Integer> totalQuantities = new HashMap<>();
+        for (SaleDetailRequest item : details) {
+            if (item.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Cantidad inválida para producto ID: " + item.getProductId());
+            }
+            totalQuantities.merge(item.getProductId(), item.getQuantity(), Integer::sum);
+        }
+
+        List<Product> products = productRepo.findAllById(totalQuantities.keySet());
+
+        if (products.size() != totalQuantities.size()) {
+            Set<Long> foundIds = products.stream()
+                    .map(Product::getId)
+                    .collect(Collectors.toSet());
+
+            List<Long> missingIds = totalQuantities.keySet().stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .collect(Collectors.toList());
+
+            throw new ResourceNotFoundException("Productos no encontrados con IDs: " + missingIds);
+        }
+
+        for (Product product : products) {
+            Integer quantityNeeded = totalQuantities.get(product.getId());
+
+            if (product.getQuantity() < quantityNeeded) {
+                throw new InsufficientStockException(
+                        String.format("Stock insuficiente para %s. Solicitado: %d, Disponible: %d",
+                                product.getName(), quantityNeeded, product.getQuantity()));
+            }
+
+            product.setQuantity(product.getQuantity() - quantityNeeded);
+        }
+
+        return productRepo.saveAll(products);
     }
 
     private Product findProduct(Long id) {
