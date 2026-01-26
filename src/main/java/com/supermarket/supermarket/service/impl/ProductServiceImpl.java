@@ -9,6 +9,7 @@ import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.ProductMapper;
 import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.model.SaleDetail;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.ProductService;
@@ -98,49 +99,18 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product reduceStock(Long id, Integer quantity) {
-        log.info("Reducing stock for Product ID: {} by {} units", id, quantity);
-
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than zero");
-        }
-
-        int rowsAffected = productRepo.decrementStock(id, quantity);
-
-        if (rowsAffected == 0) {
-            Product product = findProduct(id);
-            log.error("Insufficient stock for Product ID: {}. Available: {}", id, product.getQuantity());
-            throw new InsufficientStockException(
-                    "Insufficient stock for " + product.getName() + ". Available: " + product.getQuantity());
-        }
-
-        return findProduct(id);
-    }
-
-    @Override
-    public void increaseStock(Long id, Integer quantity) {
-        log.info("Restoring stock for Product ID: {} by {} units", id, quantity);
-
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than zero");
-        }
-
-        productRepo.incrementStock(id, quantity);
-    }
-
-    @Override
     @Transactional
     public List<Product> validateAndReduceStockBatch(List<SaleDetailRequest> details) {
-        log.info("Procesando reducción de stock por lotes para {} items", details.size());
+        log.info("Processing batch stock reduction for {} items", details.size());
 
         if (details == null || details.isEmpty()) {
-            throw new IllegalArgumentException("La lista de detalles no puede estar vacía");
+            throw new IllegalArgumentException("Details list cannot be empty");
         }
 
         Map<Long, Integer> totalQuantities = new HashMap<>();
         for (SaleDetailRequest item : details) {
             if (item.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Cantidad inválida para producto ID: " + item.getProductId());
+                throw new IllegalArgumentException("Invalid quantity for product ID: " + item.getProductId());
             }
             totalQuantities.merge(item.getProductId(), item.getQuantity(), Integer::sum);
         }
@@ -156,7 +126,7 @@ public class ProductServiceImpl implements ProductService {
                     .filter(id -> !foundIds.contains(id))
                     .collect(Collectors.toList());
 
-            throw new ResourceNotFoundException("Productos no encontrados con IDs: " + missingIds);
+            throw new ResourceNotFoundException("Products not found with IDs: " + missingIds);
         }
 
         for (Product product : products) {
@@ -164,7 +134,7 @@ public class ProductServiceImpl implements ProductService {
 
             if (product.getQuantity() < quantityNeeded) {
                 throw new InsufficientStockException(
-                        String.format("Stock insuficiente para %s. Solicitado: %d, Disponible: %d",
+                        String.format("Insufficient stock for %s. Requested: %d, Available: %d",
                                 product.getName(), quantityNeeded, product.getQuantity()));
             }
 
@@ -172,6 +142,45 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return productRepo.saveAll(products);
+    }
+
+    @Override
+    @Transactional
+    public void restoreStockBatch(List<SaleDetail> existingDetails) {
+        if (existingDetails == null || existingDetails.isEmpty()) {
+            log.warn("Attempting to restore stock with empty list");
+            return;
+        }
+
+        log.info("Restoring stock for {} sale items", existingDetails.size());
+
+        Map<Long, Integer> quantitiesByProduct = existingDetails.stream()
+                .collect(Collectors.groupingBy(
+                        detail -> detail.getProduct().getId(),
+                        Collectors.summingInt(SaleDetail::getQuantity)));
+
+        List<Product> products = productRepo.findAllById(quantitiesByProduct.keySet());
+
+        if (products.size() != quantitiesByProduct.size()) {
+            Set<Long> foundIds = products.stream()
+                    .map(Product::getId)
+                    .collect(Collectors.toSet());
+            List<Long> missingIds = quantitiesByProduct.keySet().stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .collect(Collectors.toList());
+            throw new ResourceNotFoundException("Products not found: " + missingIds);
+        }
+
+        products.forEach(product -> {
+            Integer quantityToRestore = quantitiesByProduct.get(product.getId());
+            product.setQuantity(product.getQuantity() + quantityToRestore);
+            log.debug("Restored {} units of product {}",
+                    quantityToRestore, product.getName());
+        });
+
+        productRepo.saveAll(products);
+
+        log.info("Stock successfully restored for {} products", products.size());
     }
 
     private Product findProduct(Long id) {

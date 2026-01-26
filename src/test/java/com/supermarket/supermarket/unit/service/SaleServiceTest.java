@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
@@ -152,7 +152,7 @@ class SaleServiceTest {
         assertThat(result.getId()).isEqualTo(100L);
 
         then(saleRepository).should().findById(id);
-        then(productService).should().increaseStock(anyLong(), anyInt());
+        then(productService).should().restoreStockBatch(anyList());
         then(productService).should().validateAndReduceStockBatch(anyList());
         then(saleRepository).should().save(existingSale);
     }
@@ -171,7 +171,7 @@ class SaleServiceTest {
                 .isInstanceOf(InvalidSaleStateException.class);
 
         then(saleRepository).should(never()).save(any());
-        then(productService).should(never()).increaseStock(anyLong(), anyInt());
+        then(productService).should(never()).restoreStockBatch(anyList());
         then(productService).should(never()).validateAndReduceStockBatch(anyList());
     }
 
@@ -213,7 +213,7 @@ class SaleServiceTest {
         saleService.delete(id);
 
         then(saleRepository).should().delete(sale);
-        then(productService).should().increaseStock(1L, 5);
+        then(productService).should().restoreStockBatch(anyList());
     }
 
     @Test

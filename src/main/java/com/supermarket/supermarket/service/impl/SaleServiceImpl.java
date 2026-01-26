@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     private void processDetailsAndStock(Sale sale, List<SaleDetailRequest> detailsRequest) {
-        if (detailsRequest == null || detailsRequest.isEmpty()) {
+        if (CollectionUtils.isEmpty(detailsRequest)) {
             throw new IllegalArgumentException("La venta debe contener al menos un producto");
         }
 
@@ -126,24 +127,18 @@ public class SaleServiceImpl implements SaleService {
         log.info("Attempting to delete sale with ID: {}", id);
         Sale sale = findSale(id);
 
-        if (sale.getStatus() == SaleStatus.REGISTERED) {
-            restoreStock(sale);
+        if (sale.getStatus() == SaleStatus.REGISTERED && !CollectionUtils.isEmpty(sale.getDetails())) {
+            productService.restoreStockBatch(sale.getDetails());
         }
 
         saleRepo.delete(sale);
         log.info("Sale deleted successfully - ID: {}", id);
     }
 
-    private void restoreStock(Sale sale) {
-        for (SaleDetail detail : sale.getDetails()) {
-            productService.increaseStock(
-                    detail.getProduct().getId(),
-                    detail.getQuantity());
-        }
-    }
-
     private void updateDetailsAndStock(Sale sale, List<SaleDetailRequest> newDetails) {
-        restoreStock(sale);
+        if (!CollectionUtils.isEmpty(sale.getDetails())) {
+            productService.restoreStockBatch(sale.getDetails());
+        }
 
         sale.getDetails().clear();
 
