@@ -24,7 +24,7 @@ import java.util.List;
 @Service
 public class BranchServiceImpl implements BranchService {
 
-    private final BranchRepository branchRepo;
+    private final BranchRepository branchRepository;
     private final BranchMapper branchMapper;
     private final SaleRepository saleRepo;
 
@@ -32,7 +32,7 @@ public class BranchServiceImpl implements BranchService {
     @Override
     public List<BranchResponse> getAll() {
         log.info("Fetching all branches");
-        return branchMapper.toResponseList(branchRepo.findAll());
+        return branchMapper.toResponseList(branchRepository.findAll());
     }
 
     @Transactional(readOnly = true)
@@ -46,12 +46,12 @@ public class BranchServiceImpl implements BranchService {
     public BranchResponse create(BranchRequest request) {
         log.info("Creating new branch: {}", request.getName());
 
-        if (branchRepo.existsByName(request.getName())) {
+        if (branchRepository.existsByName(request.getName())) {
             throw new DuplicateResourceException("Branch already exists with name: " + request.getName());
         }
 
         Branch branch = branchMapper.toEntity(request);
-        return mapToDto(branchRepo.save(branch));
+        return mapToDto(branchRepository.save(branch));
     }
 
     @Override
@@ -60,33 +60,33 @@ public class BranchServiceImpl implements BranchService {
         Branch branch = findBranch(id);
 
         if (request.getName() != null && !request.getName().equals(branch.getName())) {
-            if (branchRepo.existsByName(request.getName())) {
+            if (branchRepository.existsByName(request.getName())) {
                 throw new DuplicateResourceException(
                         "Cannot update: Branch name '" + request.getName() + "' is already in use");
             }
         }
 
         branchMapper.updateEntity(request, branch);
-        return mapToDto(branchRepo.save(branch));
+        return mapToDto(branchRepository.save(branch));
     }
 
     @Override
     public void delete(Long id) {
         log.info("Attempting to delete branch with ID: {}", id);
 
-        Branch branch = branchRepo.findById(id)
+        Branch branch = branchRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with ID: " + id));
 
         if (saleRepo.existsByBranchId(id)) {
             throw new InvalidOperationException("Cannot delete branch: It has associated sales records");
         }
 
-        branchRepo.delete(branch);
+        branchRepository.delete(branch);
         log.info("Branch deleted successfully - ID: {}", id);
     }
 
     private Branch findBranch(Long id) {
-        return branchRepo.findById(id)
+        return branchRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with ID: " + id));
     }
 

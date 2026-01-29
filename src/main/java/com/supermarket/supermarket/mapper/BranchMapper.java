@@ -53,6 +53,6 @@ public class BranchMapper {
 
         return branches.stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

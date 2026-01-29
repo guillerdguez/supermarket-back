@@ -64,6 +64,6 @@ public class ProductMapper {
 
         return entities.stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

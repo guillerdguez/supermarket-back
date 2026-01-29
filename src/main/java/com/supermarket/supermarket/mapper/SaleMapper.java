@@ -50,6 +50,6 @@ public class SaleMapper {
 
                 return sales.stream()
                                 .map(this::toResponse)
-                                .collect(Collectors.toList());
+                                .toList();
         }
 }
