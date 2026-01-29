@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal; 
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 @Builder
 @Entity
 public class SaleDetail {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

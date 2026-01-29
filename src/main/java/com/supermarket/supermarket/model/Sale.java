@@ -31,6 +31,7 @@ import org.hibernate.annotations.BatchSize;
 @Builder
 @Entity
 public class Sale {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

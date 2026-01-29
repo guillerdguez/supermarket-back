@@ -30,7 +30,7 @@ public class Product {
     private String category;
     private BigDecimal price;
     private Integer quantity;
-    
+
     @Version
     private Integer version;
 }

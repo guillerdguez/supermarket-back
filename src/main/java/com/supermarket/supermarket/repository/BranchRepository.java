@@ -7,5 +7,6 @@ import com.supermarket.supermarket.model.Branch;
 
 @Repository
 public interface BranchRepository extends JpaRepository<Branch, Long> {
+
     Boolean existsByName(String name);
 }

@@ -46,6 +46,6 @@ public class SaleDetailMapper {
 
         return entities.stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
