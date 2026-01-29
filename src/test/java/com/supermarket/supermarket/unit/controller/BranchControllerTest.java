@@ -1,20 +1,24 @@
 package com.supermarket.supermarket.unit.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.supermarket.supermarket.controller.BranchController;
 import com.supermarket.supermarket.dto.branch.BranchRequest;
 import com.supermarket.supermarket.dto.branch.BranchResponse;
+import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.fixtures.TestFixtures;
 import com.supermarket.supermarket.service.BranchService;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
@@ -25,22 +29,30 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-@WebMvcTest(BranchController.class)
+@ExtendWith(MockitoExtension.class)
 class BranchControllerTest {
-
-    @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @MockBean
+
+    @Mock
     private BranchService branchService;
+
+    private ObjectMapper objectMapper;
+    private BranchController branchController;
+
+    @BeforeEach
+    void setUp() {
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        branchController = new BranchController(branchService);
+        mockMvc = MockMvcBuilders.standaloneSetup(branchController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     @Test
     @DisplayName("GET /branches - should return list")
     void getAll_ShouldReturnList() throws Exception {
         given(branchService.getAll()).willReturn(List.of(TestFixtures.branchResponse()));
-
         mockMvc.perform(get("/branches"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
@@ -50,7 +62,6 @@ class BranchControllerTest {
     @DisplayName("GET /branches/{id} - should return branch")
     void getById_ShouldReturnBranch() throws Exception {
         given(branchService.getById(1L)).willReturn(TestFixtures.branchResponse());
-
         mockMvc.perform(get("/branches/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Central Branch"));
@@ -61,7 +72,6 @@ class BranchControllerTest {
     void getById_WhenNotFound_ShouldReturn404() throws Exception {
         given(branchService.getById(999L))
                 .willThrow(new ResourceNotFoundException("Branch not found"));
-
         mockMvc.perform(get("/branches/999"))
                 .andExpect(status().isNotFound());
     }
@@ -71,10 +81,9 @@ class BranchControllerTest {
     void create_ShouldReturn201() throws Exception {
         BranchResponse response = TestFixtures.branchResponse();
         given(branchService.create(any(BranchRequest.class))).willReturn(response);
-
         mockMvc.perform(post("/branches")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TestFixtures.validBranchRequest())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TestFixtures.validBranchRequest())))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"))
                 .andExpect(jsonPath("$.name").value("Central Branch"));
@@ -84,8 +93,8 @@ class BranchControllerTest {
     @DisplayName("POST /branches - should return 400 when invalid request")
     void create_WithInvalidRequest_ShouldReturn400() throws Exception {
         mockMvc.perform(post("/branches")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TestFixtures.invalidBranchRequest())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TestFixtures.invalidBranchRequest())))
                 .andExpect(status().isBadRequest());
     }
 
@@ -94,10 +103,9 @@ class BranchControllerTest {
     void update_ShouldReturnUpdatedBranch() throws Exception {
         BranchResponse response = TestFixtures.branchResponse();
         given(branchService.update(eq(1L), any(BranchRequest.class))).willReturn(response);
-
         mockMvc.perform(put("/branches/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TestFixtures.validBranchRequest())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TestFixtures.validBranchRequest())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Central Branch"));
     }
@@ -114,7 +122,6 @@ class BranchControllerTest {
     void delete_WhenNotFound_ShouldReturn404() throws Exception {
         doThrow(new ResourceNotFoundException("Branch not found"))
                 .when(branchService).delete(999L);
-
         mockMvc.perform(delete("/branches/999"))
                 .andExpect(status().isNotFound());
     }
