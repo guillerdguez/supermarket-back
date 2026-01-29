@@ -1,20 +1,24 @@
 package com.supermarket.supermarket.unit.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.supermarket.supermarket.controller.SaleController;
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
+import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.fixtures.TestFixtures;
 import com.supermarket.supermarket.service.SaleService;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
@@ -25,22 +29,30 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-@WebMvcTest(SaleController.class)
+@ExtendWith(MockitoExtension.class)
 class SaleControllerTest {
-
-    @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @MockBean
+
+    @Mock
     private SaleService saleService;
+
+    private ObjectMapper objectMapper;
+    private SaleController saleController;
+
+    @BeforeEach
+    void setUp() {
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        saleController = new SaleController(saleService);
+        mockMvc = MockMvcBuilders.standaloneSetup(saleController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     @Test
     @DisplayName("GET /sales - should return list")
     void getAll_ShouldReturnList() throws Exception {
         given(saleService.getAll()).willReturn(List.of(TestFixtures.saleResponse()));
-
         mockMvc.perform(get("/sales"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
@@ -50,7 +62,6 @@ class SaleControllerTest {
     @DisplayName("GET /sales/{id} - should return sale")
     void getById_ShouldReturnSale() throws Exception {
         given(saleService.getById(100L)).willReturn(TestFixtures.saleResponse());
-
         mockMvc.perform(get("/sales/100"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(12.50));
@@ -61,7 +72,6 @@ class SaleControllerTest {
     void getById_WhenNotFound_ShouldReturn404() throws Exception {
         given(saleService.getById(999L))
                 .willThrow(new ResourceNotFoundException("Sale not found"));
-
         mockMvc.perform(get("/sales/999"))
                 .andExpect(status().isNotFound());
     }
@@ -71,10 +81,9 @@ class SaleControllerTest {
     void create_ShouldReturn201() throws Exception {
         SaleResponse response = TestFixtures.saleResponse();
         given(saleService.create(any(SaleRequest.class))).willReturn(response);
-
         mockMvc.perform(post("/sales")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TestFixtures.validSaleRequest())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TestFixtures.validSaleRequest())))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"))
                 .andExpect(jsonPath("$.total").value(12.50));
@@ -84,8 +93,8 @@ class SaleControllerTest {
     @DisplayName("POST /sales - should return 400 when invalid request")
     void create_WithInvalidRequest_ShouldReturn400() throws Exception {
         mockMvc.perform(post("/sales")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TestFixtures.invalidSaleRequest())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TestFixtures.invalidSaleRequest())))
                 .andExpect(status().isBadRequest());
     }
 
@@ -94,10 +103,9 @@ class SaleControllerTest {
     void update_ShouldReturnUpdatedSale() throws Exception {
         SaleResponse response = TestFixtures.saleResponse();
         given(saleService.update(eq(100L), any(SaleRequest.class))).willReturn(response);
-
         mockMvc.perform(put("/sales/100")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(TestFixtures.validSaleRequest())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(TestFixtures.validSaleRequest())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(12.50));
     }
@@ -114,7 +122,6 @@ class SaleControllerTest {
     void delete_WhenNotFound_ShouldReturn404() throws Exception {
         doThrow(new ResourceNotFoundException("Sale not found"))
                 .when(saleService).delete(999L);
-
         mockMvc.perform(delete("/sales/999"))
                 .andExpect(status().isNotFound());
     }
