@@ -1,13 +1,11 @@
 package com.supermarket.supermarket.service;
 
-
 import java.util.List;
 
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
 
-public interface SaleService
- {
+public interface SaleService {
     List<SaleResponse> getAll();
 
     SaleResponse getById(Long id);
