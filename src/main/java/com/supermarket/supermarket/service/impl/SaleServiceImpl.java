@@ -62,7 +62,7 @@ public class SaleServiceImpl implements SaleService {
         assignBranch(sale, request.getBranchId());
         processDetailsAndStock(sale, request.getDetails());
 
-        return mapToDto(saleRepo.save(sale));
+        return saleMapper.toResponse(saleRepo.save(sale));
     }
 
     private void processDetailsAndStock(Sale sale, List<SaleDetailRequest> detailsRequest) {
@@ -116,7 +116,7 @@ public class SaleServiceImpl implements SaleService {
             updateDetailsAndStock(sale, request.getDetails());
         }
 
-        return mapToDto(saleRepo.save(sale));
+        return saleMapper.toResponse(saleRepo.save(sale));
     }
 
     @Override
@@ -145,9 +145,5 @@ public class SaleServiceImpl implements SaleService {
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with ID: " + branchId));
         sale.setBranch(branch);
-    }
-
-    private SaleResponse mapToDto(Sale sale) {
-        return saleMapper.toResponse(sale);
     }
 }

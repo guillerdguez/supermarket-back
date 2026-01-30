@@ -1,10 +1,5 @@
 package com.supermarket.supermarket.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.supermarket.supermarket.dto.branch.BranchRequest;
 import com.supermarket.supermarket.dto.branch.BranchResponse;
 import com.supermarket.supermarket.exception.DuplicateResourceException;
@@ -15,6 +10,10 @@ import com.supermarket.supermarket.model.Branch;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.BranchService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class BranchServiceImpl implements BranchService {
     @Override
     public BranchResponse getById(Long id) {
         log.info("Fetching branch with ID: {}", id);
-        return mapToDto(findBranch(id));
+        return branchMapper.toResponse(findBranch(id));
     }
 
     @Override
@@ -51,7 +50,7 @@ public class BranchServiceImpl implements BranchService {
         }
 
         Branch branch = branchMapper.toEntity(request);
-        return mapToDto(branchRepository.save(branch));
+        return branchMapper.toResponse(branchRepository.save(branch));
     }
 
     @Override
@@ -67,7 +66,7 @@ public class BranchServiceImpl implements BranchService {
         }
 
         branchMapper.updateEntity(request, branch);
-        return mapToDto(branchRepository.save(branch));
+        return branchMapper.toResponse(branchRepository.save(branch));
     }
 
     @Override
@@ -90,7 +89,4 @@ public class BranchServiceImpl implements BranchService {
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with ID: " + id));
     }
 
-    private BranchResponse mapToDto(Branch branch) {
-        return branchMapper.toResponse(branch);
-    }
 }
