@@ -48,7 +48,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse getById(Long id) {
         log.info("Fetching product with ID: {}", id);
-        return mapToDto(findProduct(id));
+        return productMapper.toResponse(findProduct(id));
     }
 
     @Override
@@ -58,7 +58,7 @@ public class ProductServiceImpl implements ProductService {
             throw new DuplicateResourceException("Product already exists with name: " + request.getName());
         }
         Product product = productMapper.toEntity(request);
-        return mapToDto(productRepo.save(product));
+        return productMapper.toResponse(productRepo.save(product));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         productMapper.updateEntity(request, product);
-        return mapToDto(productRepo.save(product));
+        return productMapper.toResponse(productRepo.save(product));
     }
 
     @Override
@@ -84,13 +84,18 @@ public class ProductServiceImpl implements ProductService {
         productRepo.delete(product);
         log.info("Product deleted successfully - ID: {}", id);
     }
+    @Transactional(readOnly = true)
+    @Override
+    public List<ProductResponse> getLowStockProducts(Integer threshold) {
+        log.info("Fetching products with stock less than: {}", threshold);
 
+         List<Product> products = productRepo.findByQuantityLessThan(threshold);
+
+         return productMapper.toResponseList(products);
+    }
     private Product findProduct(Long id) {
         return productRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + id));
     }
 
-    private ProductResponse mapToDto(Product product) {
-        return productMapper.toResponse(product);
-    }
 }
