@@ -1,141 +1,121 @@
+ 
+---
+
+## 🛒 Supermarket Management System — Portfolio Junior
+
+### ¿Qué es este proyecto?
+
+API REST completa que simula la gestión de un supermercado real, desarrollada con **Spring Boot 3.4.1**.
+El sistema maneja sucursales, productos y ventas, aplicando principios de **Clean Architecture** y **SOLID** para asegurar un código ordenado y escalable.
+
+El objetivo es **demostrar buenas prácticas de desarrollo backend**: uso de DTOs, validaciones, manejo de excepciones, control de transacciones y testing.
 
 ---
 
-# 🛒 Supermarket Management System API
+## ✨ Características principales
 
-> API REST empresarial para la gestión integral de inventarios, sucursales y procesos de venta automatizados.
-
-Este proyecto implementa una solución de backend robusta utilizando **Spring Boot 3.4.1**, diseñada bajo los principios de **Clean Architecture** y **SOLID**. El sistema no solo gestiona datos, sino que garantiza la integridad del negocio mediante un motor de ventas con control de stock transaccional.
-
----
-
-## 🏗️ Arquitectura y Diseño de Software
-
-El sistema se basa en una arquitectura de **N-Capas**, asegurando un bajo acoplamiento y una alta cohesión:
-
-* **Capa de Presentación (REST Controllers):** Gestión de contratos de entrada/salida y códigos de estado HTTP.
-* **Capa de Servicio (Business Logic):** Implementación de reglas de negocio complejas (Validación de stock, cálculos de totales, estados de venta).
-* **Capa de Persistencia (Repositories):** Abstracción de datos mediante Spring Data JPA.
-* **Domain Model:** Entidades ricas y manejo de estados mediante Enums (`REGISTERED`, `CANCELLED`).
-* **Data Transfer Objects (DTO):** Desacoplamiento total entre la base de datos y la respuesta JSON enviada al cliente.
+✅ **CRUD completo** para sucursales, productos y ventas.
+✅ **Control transaccional de stock** (no permite ventas si falta inventario).
+✅ **Paginación y filtros** avanzados para el catálogo de productos.
+✅ **Manejo global de errores** (respuestas JSON estandarizadas).
+✅ **Validaciones automáticas** (Jakarta Validation) para datos seguros.
+✅ **Documentación interactiva** con Swagger UI.
+✅ **Base de datos H2** (memoria) para desarrollo rápido y **MySQL** para producción.
 
 ---
 
-## 🌟 Características Técnicas
+## 🔄 Flujo de una venta (explicado fácil)
 
-* ✅ **Transaccionalidad ACID:** Las ventas garantizan que el stock se reduzca solo si toda la operación es exitosa.
-* ✅ **Manejo de Errores Global:** Implementación de `@RestControllerAdvice` para respuestas estandarizadas.
-* ✅ **Validación Declarativa:** Uso de `Jakarta Validation` para asegurar la integridad de los datos.
-* ✅ **Documentación Viva:** Swagger UI integrado para pruebas automáticas.
-* ✅ **Detección de Conflictos:** Gestión de duplicados y recursos no encontrados con excepciones personalizadas.
+Cuando se registra una venta, la API sigue estos pasos estrictos para evitar errores:
 
----
-
-## 📂 Estructura del Proyecto
-
-```plaintext
-src/main/java/com/supermarket/supermarket/
-├── controller/    # Endpoints REST (API Gateways)
-├── service/       # Interfaces y lógica de negocio (S.O.L.I.D.)
-│   └── impl/      # Implementaciones concretas
-├── repository/    # Abstracción de base de datos (JPA)
-├── model/         # Entidades de dominio y Enums
-├── dto/           # Data Transfer Objects (Request/Response)
-├── mapper/        # Transformadores de datos (manual mapping)
-└── exception/     # Handler global y errores personalizados
-
-```
+1. **Validación Inicial**
+Verifica que la sucursal y los productos existan en la base de datos.
+2. **Verificación de Stock**
+Comprueba si hay suficiente cantidad de cada producto antes de procesar nada.
+3. **Cálculo Automático**
+El servidor calcula los subtotales y el total final (no confía en los datos del cliente).
+4. **Transacción Segura**
+Descuenta el stock y guarda la venta. Si algo falla aquí, **se revierte todo** para no dejar datos corruptos.
+5. **Respuesta**
+Devuelve la venta con estado `REGISTERED` y el total confirmado.
 
 ---
 
-## 📑 Documentación de la API
+## 📌 Endpoints principales
 
-### 🔹 Sucursales (`/branches`)
+### 📍 Sucursales (`/branches`)
 
-* `GET /branches` - Listado completo de sucursales.
-* `POST /branches` - Registro de nueva sucursal.
-* `DELETE /branches/{id}` - Baja de sucursal (Protegida contra integridad referencial).
+* `GET /branches` — Listar todas las sucursales.
+* `POST /branches` — Crear nueva sucursal.
+* `DELETE /branches/{id}` — Eliminar sucursal (protegido si tiene datos asociados).
 
-### 🔹 Productos (`/products`)
+---
 
-* `GET /products` - Consulta de catálogo y stock disponible.
-* `PUT /products/{id}` - Actualización de precio, stock o categoría.
+### 🛍️ Productos (`/products`)
 
-### 🔹 Ventas (`/sales`) - Operación Crítica
+* `GET /products` — Catálogo con **paginación y filtros** (nombre, precio, categoría).
+* `GET /products/all` — Lista simple sin paginar (ideal para selectores/combos).
+* `GET /products/{id}` — Ver detalle de un producto.
+* `POST /products` — Crear producto (valida nombre único).
+* `PUT /products/{id}` — Actualizar precio o stock.
+* `DELETE /products/{id}` — Eliminar producto.
 
-* `POST /sales` - Registro de transacción comercial.
-* **Lógica Interna:** Busca producto ➔ Valida stock ➔ Calcula Subtotales ➔ Descuenta Stock ➔ Genera Venta.
+---
 
-**Cuerpo de petición (POST):**
+### 💰 Ventas (`/sales`) — **Funcionalidad Core**
+
+* `POST /sales` — Registrar nueva venta (descuenta stock).
+* `PUT /sales/{id}` — Modificar venta (recalcula y ajusta el stock automáticamente).
+* `DELETE /sales/{id}` — Cancelar venta (**devuelve el stock** a los productos).
+
+---
+
+## 🧾 Ejemplo de venta (JSON)
 
 ```json
 {
   "branchId": 1,
   "date": "2026-01-19",
   "details": [
-    { "productId": 1, "quantity": 10 }
+    { "productId": 1, "quantity": 5 },
+    { "productId": 3, "quantity": 2 }
   ]
 }
 
 ```
 
----
+La API responde con:
 
-## 🚀 Instalación y Despliegue
-
-1. **Clonación:**
-```bash
-git clone [https://github.com/guillerdguez/Supermarket.git](https://github.com/guillerdguez/Supermarket.git)
-
-```
-
-
-2. **Compilación y Tests:**
-```bash
-./mvnw clean install
-
-```
-
-
-3. **Ejecución:**
-```bash
-./mvnw spring-boot:run
-
-```
-
-
-4. **Swagger UI:**
-Accede a: [http://localhost:8080/swagger-ui/index.html](https://www.google.com/search?q=http://localhost:8080/swagger-ui/index.html)
+* Estado de la venta (`REGISTERED`)
+* Total calculado automáticamente
+* Stock actualizado en base de datos
 
 ---
 
-## 🧪 Calidad de Código (Testing)
+## 🔎 Herramientas disponibles
 
-Se ha implementado una suite de pruebas para asegurar la estabilidad del sistema:
+### Swagger UI
 
-* **Unit Tests:** Pruebas aisladas de lógica en servicios y mappers.
-* **WebMvc Tests:** Validación de controladores y contratos JSON.
-* **Mocking:** Uso exhaustivo de Mockito para simular la persistencia.
+Interfaz visual para probar la API sin escribir código.
+`http://localhost:8080/swagger-ui/index.html`
 
-Para ejecutar el reporte de pruebas:
+### Consola H2
 
-```bash
-./mvnw test
+Acceso directo a la base de datos en memoria.
+`http://localhost:8080/h2-console`
 
-```
+* **JDBC URL:** `jdbc:h2:mem:supermarketdb`
 
 ---
 
 ## 🛠️ Tecnologías
 
-* **Framework:** Spring Boot 3.4.1
-* **Database:** H2 (Dev) / MySQL (Prod)
-* **Documentation:** SpringDoc OpenAPI 2.7.0
-* **Lombok:** Productividad y reducción de boilerplate.
-* **Maven Wrapper:** Consistencia de entorno.
-
----
-
-Desarrollado por **[Guillermo]** - 2026
-
----
+| Capa | Tecnologías |
+| --- | --- |
+| **Backend** | Spring Boot 3.4.1, Spring Data JPA |
+| **Arquitectura** | Layered Architecture, DTOs, SOLID |
+| **Validación** | Jakarta Bean Validation |
+| **Base de datos** | H2 (Dev), MySQL (Prod) |
+| **Documentación** | SpringDoc OpenAPI, Swagger UI |
+| **Productividad** | Lombok, Maven Wrapper |
+| **Testing** | JUnit 5, Mockito, MockMvc |
