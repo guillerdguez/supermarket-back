@@ -37,10 +37,10 @@ public class StockServiceImpl implements StockService {
             if (item == null || item.getProductId() == null) {
                 throw new IllegalArgumentException("Invalid detail: productId is required");
             }
-            if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Invalid quantity for productId: " + item.getProductId());
+            if (item.getStock() == null || item.getStock() <= 0) {
+                throw new IllegalArgumentException("Invalid stock for productId: " + item.getProductId());
             }
-            totalQuantities.merge(item.getProductId(), item.getQuantity(), Integer::sum);
+            totalQuantities.merge(item.getProductId(), item.getStock(), Integer::sum);
         }
 
         List<Product> products = productRepository.findAllById(totalQuantities.keySet());
@@ -55,25 +55,24 @@ public class StockServiceImpl implements StockService {
 
         for (Product product : products) {
             Integer needed = totalQuantities.get(product.getId());
-            if (product.getQuantity() == null || product.getQuantity() < needed) {
+            if (product.getStock() == null || product.getStock() < needed) {
                 throw new InsufficientStockException(
                         String.format("Insufficient stock for %s (id=%d). Requested: %d, Available: %d",
                                 product.getName(), product.getId(), needed,
-                                product.getQuantity() == null ? 0 : product.getQuantity()));
+                                product.getStock() == null ? 0 : product.getStock()));
             }
-            product.setQuantity(product.getQuantity() - needed);
+            product.setStock(product.getStock() - needed);
         }
-
         return productRepository.saveAll(products);
     }
 
     @Override
     @Transactional
     public void restoreStockBatch(List<SaleDetail> existingDetails) {
+    //revisar
         if (existingDetails == null || existingDetails.isEmpty()) {
             return;
         }
-
         Map<Long, Integer> quantitiesByProduct = existingDetails.stream()
                 .map(saleDetail -> {
                     if (saleDetail.getProduct() == null || saleDetail.getProduct().getId() == null) {
@@ -82,7 +81,7 @@ public class StockServiceImpl implements StockService {
                     return saleDetail;
                 })
                 .collect(Collectors.groupingBy(saleDetail -> saleDetail.getProduct().getId(),
-                        Collectors.summingInt(SaleDetail::getQuantity)));
+                        Collectors.summingInt(SaleDetail::getStock)));
 
         List<Product> products = productRepository.findAllById(quantitiesByProduct.keySet());
 
@@ -96,7 +95,7 @@ public class StockServiceImpl implements StockService {
 
         for (Product product : products) {
             Integer toRestore = quantitiesByProduct.get(product.getId());
-            product.setQuantity((product.getQuantity() == null ? 0 : product.getQuantity()) + toRestore);
+            product.setStock((product.getStock() == null ? 0 : product.getStock()) + toRestore);
         }
 
         productRepository.saveAll(products);

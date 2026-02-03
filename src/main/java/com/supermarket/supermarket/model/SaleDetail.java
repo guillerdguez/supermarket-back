@@ -26,7 +26,7 @@ public class SaleDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Integer quantity;
+    private Integer stock;
     private BigDecimal price;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -83,12 +83,12 @@ public class SaleServiceImpl implements SaleService {
             SaleDetail saleDetail = SaleDetail.builder()
                     .sale(sale)
                     .product(product)
-                    .quantity(saleDetailRequest.getQuantity())
+                    .stock(saleDetailRequest.getStock())
                     .price(product.getPrice())
                     .build();
             saleDetails.add(saleDetail);
 
-            BigDecimal lineSubtotal = product.getPrice().multiply(BigDecimal.valueOf(saleDetailRequest.getQuantity()));
+            BigDecimal lineSubtotal = product.getPrice().multiply(BigDecimal.valueOf(saleDetailRequest.getStock()));
             saleTotal = saleTotal.add(lineSubtotal);
         }
 

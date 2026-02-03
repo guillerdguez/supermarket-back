@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponse> getLowStockProducts(Integer threshold) {
         log.info("Fetching products with stock less than: {}", threshold);
 
-         List<Product> products = productRepo.findByQuantityLessThan(threshold);
+         List<Product> products = productRepo.findBystockLessThan(threshold);
 
          return productMapper.toResponseList(products);
     }

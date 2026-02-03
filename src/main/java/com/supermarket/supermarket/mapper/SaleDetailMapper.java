@@ -18,13 +18,13 @@ public class SaleDetailMapper {
             return null;
 
         BigDecimal subtotal = BigDecimal.ZERO;
-        if (entity.getPrice() != null && entity.getQuantity() != null) {
-            subtotal = entity.getPrice().multiply(BigDecimal.valueOf(entity.getQuantity()));
+        if (entity.getPrice() != null && entity.getStock() != null) {
+            subtotal = entity.getPrice().multiply(BigDecimal.valueOf(entity.getStock()));
         }
 
         return SaleDetailResponse.builder()
                 .id(entity.getId())
-                .quantity(entity.getQuantity())
+                .stock(entity.getStock())
                 .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
                 .unitPrice(entity.getPrice())
                 .subtotal(subtotal)
@@ -36,7 +36,7 @@ public class SaleDetailMapper {
             return null;
 
         return SaleDetail.builder()
-                .quantity(request.getQuantity())
+                .stock(request.getStock())
                 .build();
     }
 

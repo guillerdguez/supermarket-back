@@ -29,8 +29,11 @@ public class Product {
     private String name;
     private String category;
     private BigDecimal price;
-    private Integer quantity;
+    private Integer stock;
 
     @Version
     private Integer version;
+
+
+    
 }

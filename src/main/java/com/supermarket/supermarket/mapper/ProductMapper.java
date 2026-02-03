@@ -21,7 +21,7 @@ public class ProductMapper {
                 .name(product.getName())
                 .category(product.getCategory())
                 .price(product.getPrice())
-                .quantity(product.getQuantity())
+                .stock(product.getStock())
                 .build();
     }
 
@@ -33,7 +33,7 @@ public class ProductMapper {
                 .name(request.getName())
                 .category(request.getCategory())
                 .price(request.getPrice())
-                .quantity(request.getQuantity())
+                .stock(request.getStock())
                 .build();
     }
 
@@ -53,8 +53,8 @@ public class ProductMapper {
             target.setPrice(request.getPrice());
         }
 
-        if (request.getQuantity() != null) {
-            target.setQuantity(request.getQuantity());
+        if (request.getStock() != null) {
+            target.setStock(request.getStock());
         }
     }
 
