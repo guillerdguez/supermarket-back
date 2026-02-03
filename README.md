@@ -77,8 +77,8 @@ Devuelve la venta con estado `REGISTERED` y el total confirmado.
   "branchId": 1,
   "date": "2026-01-19",
   "details": [
-    { "productId": 1, "quantity": 5 },
-    { "productId": 3, "quantity": 2 }
+    { "productId": 1, "stock": 5 },
+    { "productId": 3, "stock": 2 }
   ]
 }
 

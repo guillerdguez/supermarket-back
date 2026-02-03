@@ -39,15 +39,15 @@ class StockServiceImplTest {
     void validateAndReduceStockBatch_ShouldReduceStock() {
         Long productId = 1L;
         int initialStock = 100;
-        int quantity = 5;
+        int stock = 5;
         Product product = TestFixtures.productWithIdAndStock(productId, initialStock);
-        SaleDetailRequest detail = TestFixtures.saleDetailRequest(productId, quantity);
+        SaleDetailRequest detail = TestFixtures.saleDetailRequest(productId, stock);
         List<SaleDetailRequest> details = List.of(detail);
         given(productRepository.findAllById(anySet())).willReturn(List.of(product));
         given(productRepository.saveAll(anyList())).willReturn(List.of(product));
         List<Product> result = stockService.validateAndReduceStockBatch(details);
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getQuantity()).isEqualTo(initialStock - quantity);
+        assertThat(result.get(0).getStock()).isEqualTo(initialStock - stock);
         then(productRepository).should().findAllById(Set.of(productId));
         then(productRepository).should().saveAll(anyList());
     }
@@ -57,9 +57,9 @@ class StockServiceImplTest {
     void validateAndReduceStockBatch_WhenInsufficientStock_ShouldThrowException() {
         Long productId = 1L;
         int initialStock = 10;
-        int quantity = 20;
+        int stock = 20;
         Product product = TestFixtures.productWithIdAndStock(productId, initialStock);
-        SaleDetailRequest detail = TestFixtures.saleDetailRequest(productId, quantity);
+        SaleDetailRequest detail = TestFixtures.saleDetailRequest(productId, stock);
         List<SaleDetailRequest> details = List.of(detail);
 
         given(productRepository.findAllById(anySet())).willReturn(List.of(product));
@@ -82,7 +82,7 @@ class StockServiceImplTest {
         given(productRepository.findAllById(anySet())).willReturn(List.of(product));
         given(productRepository.saveAll(anyList())).willReturn(List.of(product));
         List<Product> result = stockService.validateAndReduceStockBatch(details);
-        assertThat(result.get(0).getQuantity()).isEqualTo(initialStock - 15);
+        assertThat(result.get(0).getStock()).isEqualTo(initialStock - 15);
     }
 
     @Test
@@ -101,14 +101,14 @@ class StockServiceImplTest {
     void restoreStockBatch_ShouldRestoreStock() {
         Long productId = 1L;
         int initialStock = 100;
-        int quantity = 5;
+        int stock = 5;
         Product product = TestFixtures.productWithIdAndStock(productId, initialStock);
-        SaleDetail detail = TestFixtures.saleDetailWithProductAndQuantity(product, quantity);
+        SaleDetail detail = TestFixtures.saleDetailWithProductAndstock(product, stock);
         List<SaleDetail> details = List.of(detail);
         given(productRepository.findAllById(anySet())).willReturn(List.of(product));
         given(productRepository.saveAll(anyList())).willReturn(List.of(product));
         stockService.restoreStockBatch(details);
-        assertThat(product.getQuantity()).isEqualTo(initialStock + quantity);
+        assertThat(product.getStock()).isEqualTo(initialStock + stock);
         then(productRepository).should().findAllById(Set.of(productId));
         then(productRepository).should().saveAll(anyList());
     }
@@ -127,12 +127,12 @@ class StockServiceImplTest {
         Long productId = 1L;
         int initialStock = 100;
         Product product = TestFixtures.productWithIdAndStock(productId, initialStock);
-        SaleDetail detail1 = TestFixtures.saleDetailWithProductAndQuantity(product, 5);
-        SaleDetail detail2 = TestFixtures.saleDetailWithProductAndQuantity(product, 10);
+        SaleDetail detail1 = TestFixtures.saleDetailWithProductAndstock(product, 5);
+        SaleDetail detail2 = TestFixtures.saleDetailWithProductAndstock(product, 10);
         List<SaleDetail> details = List.of(detail1, detail2);
         given(productRepository.findAllById(anySet())).willReturn(List.of(product));
         given(productRepository.saveAll(anyList())).willReturn(List.of(product));
         stockService.restoreStockBatch(details);
-        assertThat(product.getQuantity()).isEqualTo(initialStock + 15);
+        assertThat(product.getStock()).isEqualTo(initialStock + 15);
     }
 }

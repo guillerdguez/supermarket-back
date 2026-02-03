@@ -16,9 +16,9 @@ import lombok.Setter;
 @AllArgsConstructor
 public class SaleDetailRequest {
 
-    @NotNull(message = "Quantity is required")
-    @Min(value = 1, message = "Minimum quantity allowed is 1")
-    private Integer quantity;
+    @NotNull(message = "stock is required")
+    @Min(value = 1, message = "Minimum stock allowed is 1")
+    private Integer stock;
 
     @NotNull(message = "Product ID is required")
     private Long productId;

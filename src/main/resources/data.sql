@@ -12,7 +12,7 @@ VALUES
     (5, 'West Branch', '202 West Avenue, West Zone');
 
 INSERT INTO
-    product (id, name, category, price, quantity)
+    product (id, name, category, price, stock)
 VALUES
     (1, 'Whole Milk 1L', 'Dairy', 1200.50, 150),
     (2, 'Natural Yogurt', 'Dairy', 800.75, 200),
@@ -21,7 +21,7 @@ VALUES
     (5, 'Heavy Cream 200ml', 'Dairy', 950.00, 100);
 
 INSERT INTO
-    product (id, name, category, price, quantity)
+    product (id, name, category, price, stock)
 VALUES
     (
         6,
@@ -60,7 +60,7 @@ VALUES
     );
 
 INSERT INTO
-    product (id, name, category, price, quantity)
+    product (id, name, category, price, stock)
 VALUES
     (11, 'Chicken Breast 1kg', 'Meats', 8500.00, 75),
     (12, 'Ground Beef 500g', 'Meats', 4500.50, 60),
@@ -69,7 +69,7 @@ VALUES
     (15, 'Beef Steak 500g', 'Meats', 12000.00, 40);
 
 INSERT INTO
-    product (id, name, category, price, quantity)
+    product (id, name, category, price, stock)
 VALUES
     (
         16,
@@ -90,7 +90,7 @@ VALUES
     (20, 'Red Wine 750ml', 'Beverages', 8500.00, 50);
 
 INSERT INTO
-    product (id, name, category, price, quantity)
+    product (id, name, category, price, stock)
 VALUES
     (21, 'White Bread 500g', 'Bakery', 1200.00, 220),
     (
@@ -105,7 +105,7 @@ VALUES
     (25, 'Chocolate Cake', 'Bakery', 12000.00, 20);
 
 INSERT INTO
-    product (id, name, category, price, quantity)
+    product (id, name, category, price, stock)
 VALUES
     (
         26,
@@ -183,7 +183,7 @@ VALUES
     (25, '2024-12-04', 'REGISTERED', 29600.00, 5);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (1, 2, 1200.50, 1, 1),
     (2, 1, 3500.00, 1, 3),
@@ -192,57 +192,57 @@ VALUES
     (5, 2, 2500.00, 1, 17);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (6, 1, 12000.00, 2, 25);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (7, 4, 800.75, 3, 2),
     (8, 2, 1800.50, 3, 8),
     (9, 1, 4500.50, 3, 12);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (10, 1, 8500.00, 4, 11);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (11, 5, 1200.50, 5, 1),
     (12, 2, 3500.00, 5, 3),
     (13, 1, 12000.00, 5, 15);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (14, 2, 800.00, 6, 16),
     (15, 3, 1200.00, 6, 7),
     (16, 1, 8500.00, 6, 11);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (17, 1, 4500.50, 7, 12),
     (18, 2, 2800.00, 7, 23),
     (19, 3, 950.00, 7, 24);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (20, 2, 950.00, 8, 5),
     (21, 1, 1200.00, 8, 22);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (22, 1, 8500.00, 9, 11),
     (23, 2, 675.00, 9, 10);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (24, 2, 8500.00, 10, 11),
     (25, 1, 12000.00, 10, 15),
@@ -250,20 +250,20 @@ VALUES
     (27, 2, 3200.00, 10, 13);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (28, 3, 1200.50, 11, 1),
     (29, 2, 800.00, 11, 16);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (30, 1, 8500.00, 12, 11),
     (31, 4, 950.00, 12, 5),
     (32, 2, 800.50, 12, 8);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (33, 1, 4500.00, 13, 26),
     (34, 2, 2800.00, 13, 28),
@@ -271,82 +271,82 @@ VALUES
     (36, 3, 1200.50, 13, 27);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (37, 2, 3500.00, 14, 3),
     (38, 1, 1800.25, 14, 4),
     (39, 3, 800.75, 14, 2);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (40, 1, 12500.00, 15, 15);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (41, 2, 1200.50, 16, 1),
     (42, 1, 3500.00, 16, 3),
     (43, 1, 1800.00, 16, 9);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (44, 3, 1500.00, 17, 6),
     (45, 2, 1200.00, 17, 7),
     (46, 1, 4500.50, 17, 12);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (47, 4, 2500.00, 18, 17),
     (48, 2, 1800.50, 18, 18),
     (49, 6, 1200.00, 18, 19);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (50, 1, 8500.00, 19, 11),
     (51, 2, 2800.00, 19, 14),
     (52, 1, 1200.00, 19, 21);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (53, 5, 1200.50, 20, 1),
     (54, 2, 3500.00, 20, 3),
     (55, 3, 1800.00, 20, 9);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (56, 2, 1200.50, 21, 1),
     (57, 3, 800.00, 21, 16),
     (58, 1, 3200.00, 21, 13);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (59, 1, 8500.00, 22, 11),
     (60, 2, 4500.50, 22, 12),
     (61, 1, 700.00, 22, 10);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (62, 2, 8500.00, 23, 11),
     (63, 1, 2800.00, 23, 14),
     (64, 4, 950.00, 23, 5);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (65, 3, 1200.00, 24, 21),
     (66, 2, 1500.00, 24, 22),
     (67, 1, 2800.00, 24, 23);
 
 INSERT INTO
-    sale_detail (id, quantity, price, sale_id, product_id)
+    sale_detail (id, stock, price, sale_id, product_id)
 VALUES
     (68, 2, 4500.00, 25, 26),
     (69, 1, 8500.00, 25, 11),

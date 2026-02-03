@@ -17,7 +17,7 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SaleDetailResponse {
     private Long id;
-    private Integer quantity;
+    private Integer stock;
     private String productName;
     private BigDecimal unitPrice;
     private BigDecimal subtotal;

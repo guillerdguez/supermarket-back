@@ -29,7 +29,7 @@ public class TestFixtures {
                 .name("Premium Rice")
                 .category("Food")
                 .price(new BigDecimal("2.50"))
-                .quantity(stock)
+                .stock(stock)
                 .build();
     }
     public static ProductRequest validProductRequest() {
@@ -37,7 +37,7 @@ public class TestFixtures {
                 .name("New Product")
                 .category("Cleaning")
                 .price(new BigDecimal("10.00"))
-                .quantity(50)
+                .stock(50)
                 .build();
     }
     public static ProductRequest invalidProductRequest() {
@@ -45,7 +45,7 @@ public class TestFixtures {
                 .name("")
                 .category("")
                 .price(new BigDecimal("-10.00"))
-                .quantity(-5)
+                .stock(-5)
                 .build();
     }
     public static ProductResponse productResponse() {
@@ -54,7 +54,7 @@ public class TestFixtures {
                 .name("Premium Rice")
                 .category("Food")
                 .price(new BigDecimal("2.50"))
-                .quantity(100)
+                .stock(100)
                 .build();
     }
     public static Branch defaultBranch() {
@@ -90,7 +90,7 @@ public class TestFixtures {
                 .details(List.of(
                         SaleDetailRequest.builder()
                                 .productId(1L)
-                                .quantity(5)
+                                .stock(5)
                                 .build()))
                 .build();
     }
@@ -99,8 +99,8 @@ public class TestFixtures {
                 .branchId(1L)
                 .date(LocalDate.now())
                 .details(List.of(
-                        SaleDetailRequest.builder().productId(1L).quantity(2).build(),
-                        SaleDetailRequest.builder().productId(2L).quantity(3).build()))
+                        SaleDetailRequest.builder().productId(1L).stock(2).build(),
+                        SaleDetailRequest.builder().productId(2L).stock(3).build()))
                 .build();
     }
     public static SaleRequest invalidSaleRequest() {
@@ -119,7 +119,7 @@ public class TestFixtures {
                 .details(new ArrayList<>())
                 .build();
         SaleDetail detail = SaleDetail.builder()
-                .quantity(5)
+                .stock(5)
                 .price(new BigDecimal("2.50"))
                 .product(defaultProduct())
                 .sale(sale)
@@ -138,21 +138,21 @@ public class TestFixtures {
                 .details(List.of(
                         SaleDetailResponse.builder()
                                 .productName("Premium Rice")
-                                .quantity(5)
+                                .stock(5)
                                 .unitPrice(new BigDecimal("2.50"))
                                 .subtotal(new BigDecimal("12.50"))
                                 .build()))
                 .build();
     }
-    public static SaleDetailRequest saleDetailRequest(Long productId, Integer quantity) {
+    public static SaleDetailRequest saleDetailRequest(Long productId, Integer stock) {
         return SaleDetailRequest.builder()
                 .productId(productId)
-                .quantity(quantity)
+                .stock(stock)
                 .build();
     }
-    public static SaleDetail saleDetailWithProductAndQuantity(Product product, Integer quantity) {
+    public static SaleDetail saleDetailWithProductAndstock(Product product, Integer stock) {
         return SaleDetail.builder()
-                .quantity(quantity)
+                .stock(stock)
                 .product(product)
                 .price(product.getPrice())
                 .build();
