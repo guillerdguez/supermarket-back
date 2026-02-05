@@ -1,43 +1,67 @@
- 
----
+ ---
 
 ## 🛒 Supermarket Management System — Portfolio Junior
 
 ### ¿Qué es este proyecto?
 
-API REST completa que simula la gestión de un supermercado real, desarrollada con **Spring Boot 3.4.1**.
+API REST completa que simula la gestión de un supermercado real, desarrollada con **Spring Boot 3.4.1** y **Java 17**.
 El sistema maneja sucursales, productos y ventas, aplicando principios de **Clean Architecture** y **SOLID** para asegurar un código ordenado y escalable.
 
-El objetivo es **demostrar buenas prácticas de desarrollo backend**: uso de DTOs, validaciones, manejo de excepciones, control de transacciones y testing.
+El entorno de desarrollo está contenerizado mediante **Docker**, utilizando MySQL para la persistencia de datos y H2 para entornos de prueba.
 
----
-
-## ✨ Características principales
+### ✨ Características principales
 
 ✅ **CRUD completo** para sucursales, productos y ventas.
-✅ **Control transaccional de stock** (no permite ventas si falta inventario).
-✅ **Paginación y filtros** avanzados para el catálogo de productos.
-✅ **Manejo global de errores** (respuestas JSON estandarizadas).
-✅ **Validaciones automáticas** (Jakarta Validation) para datos seguros.
+✅ **Infraestructura Dockerizada** (MySQL 8.0 vía Docker Compose).
+✅ **Control transaccional de stock** (Atomicidad en ventas masivas).
+✅ **Paginación y filtros** avanzados (Criteria API / Specifications).
+✅ **Sistema de Alertas:** Endpoint dedicado para productos con bajo stock.
+✅ **Manejo global de errores** (`@RestControllerAdvice` y respuestas JSON estandarizadas).
+✅ **Validaciones robustas** (Jakarta Validation) en DTOs.
+✅ **Testing Unitario:** Cobertura con JUnit 5 y Mockito.
 ✅ **Documentación interactiva** con Swagger UI.
-✅ **Base de datos H2** (memoria) para desarrollo rápido y **MySQL** para producción.
 
 ---
 
-## 🔄 Flujo de una venta (explicado fácil)
+## 🚀 Guía de Inicio Rápido (Local)
 
-Cuando se registra una venta, la API sigue estos pasos estrictos para evitar errores:
+El proyecto requiere **Docker** para la base de datos y **Java 17**.
 
-1. **Validación Inicial**
-Verifica que la sucursal y los productos existan en la base de datos.
-2. **Verificación de Stock**
-Comprueba si hay suficiente cantidad de cada producto antes de procesar nada.
-3. **Cálculo Automático**
-El servidor calcula los subtotales y el total final (no confía en los datos del cliente).
-4. **Transacción Segura**
-Descuenta el stock y guarda la venta. Si algo falla aquí, **se revierte todo** para no dejar datos corruptos.
-5. **Respuesta**
-Devuelve la venta con estado `REGISTERED` y el total confirmado.
+### 1. Levantar infraestructura (Base de Datos)
+
+Ejecuta el siguiente comando en la raíz del proyecto para iniciar MySQL en el puerto `3307`:
+
+```bash
+docker-compose up -d
+
+```
+
+### 2. Ejecutar la aplicación
+
+Una vez la base de datos esté lista, inicia la aplicación Spring Boot:
+
+```bash
+./mvnw spring-boot:run
+
+```
+
+*La aplicación cargará automáticamente datos de prueba (`data.sql`) al iniciar.*
+
+---
+
+## 🔄 Flujo de una venta (Lógica de Negocio)
+
+La clase `SaleServiceImpl` implementa un flujo transaccional estricto:
+
+1. **Validación de Existencia:** Verifica sucursal y productos.
+2. **Bloqueo y Reducción de Stock:**
+* Agrupa cantidades por producto.
+* Verifica disponibilidad en tiempo real.
+* Lanza `InsufficientStockException` si falta inventario.
+
+
+3. **Cálculo de Totales:** El backend calcula subtotales y total (ignora precios enviados por cliente).
+4. **Persistencia Transaccional:** Si falla el guardado de algún detalle, se hace **rollback** del stock descontado.
 
 ---
 
@@ -45,28 +69,27 @@ Devuelve la venta con estado `REGISTERED` y el total confirmado.
 
 ### 📍 Sucursales (`/branches`)
 
-* `GET /branches` — Listar todas las sucursales.
-* `POST /branches` — Crear nueva sucursal.
-* `DELETE /branches/{id}` — Eliminar sucursal (protegido si tiene datos asociados).
-
----
+* `GET /branches`: Listar todas.
+* `POST /branches`: Crear (valida nombres únicos).
+* `DELETE /branches/{id}`: Borrado lógico/físico (protegido si tiene ventas).
 
 ### 🛍️ Productos (`/products`)
 
-* `GET /products` — Catálogo con **paginación y filtros** (nombre, precio, categoría).
-* `GET /products/all` — Lista simple sin paginar (ideal para selectores/combos).
-* `GET /products/{id}` — Ver detalle de un producto.
-* `POST /products` — Crear producto (valida nombre único).
-* `PUT /products/{id}` — Actualizar precio o stock.
-* `DELETE /products/{id}` — Eliminar producto.
+* `GET /products`: Catálogo paginado. Filtros disponibles:
+* `name`: Búsqueda parcial.
+* `category`: Filtrado exacto.
+* `minPrice` / `maxPrice`: Rango de precios.
 
----
 
-### 💰 Ventas (`/sales`) — **Funcionalidad Core**
+* `GET /products/all`: Lista completa (para dropdowns).
+* `GET /products/low-stock`: **[Nuevo]** Alerta de stock bajo (param `amount` opcional, default 10).
+* `POST /products`: Alta de producto.
 
-* `POST /sales` — Registrar nueva venta (descuenta stock).
-* `PUT /sales/{id}` — Modificar venta (recalcula y ajusta el stock automáticamente).
-* `DELETE /sales/{id}` — Cancelar venta (**devuelve el stock** a los productos).
+### 💰 Ventas (`/sales`)
+
+* `POST /sales`: Registrar venta (Transaction Script).
+* `PUT /sales/{id}`: Modificar venta (Gestiona devolución y recálculo de stock).
+* `DELETE /sales/{id}`: Cancelar venta (Restaura el stock automáticamente).
 
 ---
 
@@ -75,7 +98,7 @@ Devuelve la venta con estado `REGISTERED` y el total confirmado.
 ```json
 {
   "branchId": 1,
-  "date": "2026-01-19",
+  "date": "2026-02-05",
   "details": [
     { "productId": 1, "stock": 5 },
     { "productId": 3, "stock": 2 }
@@ -84,38 +107,28 @@ Devuelve la venta con estado `REGISTERED` y el total confirmado.
 
 ```
 
-La API responde con:
-
-* Estado de la venta (`REGISTERED`)
-* Total calculado automáticamente
-* Stock actualizado en base de datos
+**Respuesta exitosa:** Status `201 Created` con desglose de subtotales.
 
 ---
 
-## 🔎 Herramientas disponibles
+## 🔎 Herramientas y Accesos
 
-### Swagger UI
-
-Interfaz visual para probar la API sin escribir código.
-`http://localhost:8080/swagger-ui/index.html`
-
-### Consola H2
-
-Acceso directo a la base de datos en memoria.
-`http://localhost:8080/h2-console`
-
-* **JDBC URL:** `jdbc:h2:mem:supermarketdb`
+| Herramienta | URL / Credenciales |
+| --- | --- |
+| **Swagger UI** | `http://localhost:8080/swagger-ui/index.html` |
+| **API Docs (JSON)** | `http://localhost:8080/v3/api-docs` |
+| **MySQL (Docker)** | `jdbc:mysql://localhost:3307/supermarketdb` |
+| **Credenciales DB** | User: `root` / Pass: `123456` |
 
 ---
 
-## 🛠️ Tecnologías
+## 🛠️ Stack Tecnológico
 
 | Capa | Tecnologías |
 | --- | --- |
-| **Backend** | Spring Boot 3.4.1, Spring Data JPA |
-| **Arquitectura** | Layered Architecture, DTOs, SOLID |
+| **Backend** | Java 17, Spring Boot 3.4.1 |
+| **Datos** | Spring Data JPA, Hibernate, MySQL 8.0 (Docker) |
 | **Validación** | Jakarta Bean Validation |
-| **Base de datos** | H2 (Dev), MySQL (Prod) |
-| **Documentación** | SpringDoc OpenAPI, Swagger UI |
-| **Productividad** | Lombok, Maven Wrapper |
-| **Testing** | JUnit 5, Mockito, MockMvc |
+| **Testing** | JUnit 5, Mockito, Spring Boot Test |
+| **API Doc** | SpringDoc OpenAPI (Swagger) |
+| **Herramientas** | Maven Wrapper, Lombok, Docker Compose |
