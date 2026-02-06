@@ -28,76 +28,163 @@ public class StockServiceImpl implements StockService {
     @Override
     @Transactional
     public List<Product> validateAndReduceStockBatch(List<SaleDetailRequest> details) {
-        if (details == null || details.isEmpty()) {
-            throw new IllegalArgumentException("The details list cannot be empty");
-        }
+        log.info("Starting stock reduction for {} items", details.size());
 
-        Map<Long, Integer> totalQuantities = new HashMap<>();
-        for (SaleDetailRequest item : details) {
-            if (item == null || item.getProductId() == null) {
-                throw new IllegalArgumentException("Invalid detail: productId is required");
-            }
-            if (item.getStock() == null || item.getStock() <= 0) {
-                throw new IllegalArgumentException("Invalid stock for productId: " + item.getProductId());
-            }
-            totalQuantities.merge(item.getProductId(), item.getStock(), Integer::sum);
-        }
+        validateDetailsList(details);
 
-        List<Product> products = productRepository.findAllById(totalQuantities.keySet());
+        Map<Long, Integer> totalsByProduct = calculateTotalsByProduct(details);
 
-        if (products.size() != totalQuantities.size()) {
-            Set<Long> foundIds = products.stream().map(Product::getId).collect(Collectors.toSet());
-            List<Long> missingIds = totalQuantities.keySet().stream()
-                    .filter(id -> !foundIds.contains(id))
-                    .toList();
-            throw new ResourceNotFoundException("Products not found with IDs: " + missingIds);
-        }
+        List<Product> products = findProductsWithValidation(totalsByProduct.keySet());
 
-        for (Product product : products) {
-            Integer needed = totalQuantities.get(product.getId());
-            if (product.getStock() == null || product.getStock() < needed) {
-                throw new InsufficientStockException(
-                        String.format("Insufficient stock for %s (id=%d). Requested: %d, Available: %d",
-                                product.getName(), product.getId(), needed,
-                                product.getStock() == null ? 0 : product.getStock()));
-            }
-            product.setStock(product.getStock() - needed);
-        }
-        return productRepository.saveAll(products);
+        verifyAvailableStock(products, totalsByProduct);
+
+        reduceProductStock(products, totalsByProduct);
+
+        return saveUpdatedProducts(products);
     }
 
     @Override
     @Transactional
     public void restoreStockBatch(List<SaleDetail> existingDetails) {
-    //revisar
         if (existingDetails == null || existingDetails.isEmpty()) {
+            log.debug("Empty list, nothing to restore");
             return;
         }
-        Map<Long, Integer> quantitiesByProduct = existingDetails.stream()
-                .map(saleDetail -> {
-                    if (saleDetail.getProduct() == null || saleDetail.getProduct().getId() == null) {
-                        throw new ResourceNotFoundException("SaleDetail contains null product or without id");
-                    }
-                    return saleDetail;
-                })
-                .collect(Collectors.groupingBy(saleDetail -> saleDetail.getProduct().getId(),
-                        Collectors.summingInt(SaleDetail::getStock)));
 
-        List<Product> products = productRepository.findAllById(quantitiesByProduct.keySet());
+        log.info("Restoring stock for {} items", existingDetails.size());
 
-        if (products.size() != quantitiesByProduct.size()) {
-            Set<Long> foundIds = products.stream().map(Product::getId).collect(Collectors.toSet());
-            List<Long> missingIds = quantitiesByProduct.keySet().stream()
+        validateExistingDetails(existingDetails);
+
+        Map<Long, Integer> quantitiesByProduct = extractQuantitiesByProduct(existingDetails);
+
+        List<Product> products = findProductsWithValidation(quantitiesByProduct.keySet());
+
+        restoreProductStock(products, quantitiesByProduct);
+
+        saveUpdatedProducts(products);
+    }
+
+    private void validateDetailsList(List<SaleDetailRequest> details) {
+        if (details == null || details.isEmpty()) {
+            throw new IllegalArgumentException("Details list cannot be empty");
+        }
+
+        for (int i = 0; i < details.size(); i++) {
+            SaleDetailRequest item = details.get(i);
+            if (item == null || item.getProductId() == null) {
+                throw new IllegalArgumentException(
+                        String.format("Invalid detail at position %d: productId required", i)
+                );
+            }
+            if (item.getStock() == null || item.getStock() <= 0) {
+                throw new IllegalArgumentException(
+                        String.format("Invalid stock (%d) for productId: %d",
+                                item.getStock(), item.getProductId())
+                );
+            }
+        }
+    }
+
+    private Map<Long, Integer> calculateTotalsByProduct(List<SaleDetailRequest> details) {
+        Map<Long, Integer> totals = new HashMap<>();
+        for (SaleDetailRequest item : details) {
+            totals.merge(item.getProductId(), item.getStock(), Integer::sum);
+        }
+        log.debug("Grouped {} details into {} products",
+                details.size(), totals.size());
+        return totals;
+    }
+
+    private List<Product> findProductsWithValidation(Set<Long> productIds) {
+        List<Product> products = productRepository.findAllById(productIds);
+
+        if (products.size() != productIds.size()) {
+            Set<Long> foundIds = products.stream()
+                    .map(Product::getId)
+                    .collect(Collectors.toSet());
+
+            List<Long> missingIds = productIds.stream()
                     .filter(id -> !foundIds.contains(id))
+                    .sorted()
                     .toList();
-            throw new ResourceNotFoundException("Products not found: " + missingIds);
+
+            throw new ResourceNotFoundException(
+                    "Products not found with IDs: " + missingIds
+            );
         }
 
+        log.debug("Found {} products", products.size());
+        return products;
+    }
+
+    private void verifyAvailableStock(
+            List<Product> products,
+            Map<Long, Integer> requiredQuantities
+    ) {
         for (Product product : products) {
-            Integer toRestore = quantitiesByProduct.get(product.getId());
-            product.setStock((product.getStock() == null ? 0 : product.getStock()) + toRestore);
-        }
+            Integer needed = requiredQuantities.get(product.getId());
+            Integer available = product.getStock() == null ? 0 : product.getStock();
 
-        productRepository.saveAll(products);
+            if (available < needed) {
+                throw new InsufficientStockException(
+                        String.format("Insufficient stock for '%s' (ID: %d). " +
+                                        "Required: %d, Available: %d",
+                                product.getName(), product.getId(), needed, available)
+                );
+            }
+        }
+        log.debug("Stock verified for {} products", products.size());
+    }
+
+    private void reduceProductStock(
+            List<Product> products,
+            Map<Long, Integer> reductions
+    ) {
+        for (Product product : products) {
+            Integer quantity = reductions.get(product.getId());
+            Integer currentStock = product.getStock();
+            product.setStock(currentStock - quantity);
+
+            log.debug("Reduced {}: {} → {} (-{})",
+                    product.getName(), currentStock, product.getStock(), quantity);
+        }
+    }
+
+    private void restoreProductStock(
+            List<Product> products,
+            Map<Long, Integer> restorations
+    ) {
+        for (Product product : products) {
+            Integer quantity = restorations.get(product.getId());
+            Integer currentStock = product.getStock() == null ? 0 : product.getStock();
+            product.setStock(currentStock + quantity);
+
+            log.debug("Restored {}: {} → {} (+{})",
+                    product.getName(), currentStock, product.getStock(), quantity);
+        }
+    }
+
+    private List<Product> saveUpdatedProducts(List<Product> products) {
+        List<Product> saved = productRepository.saveAll(products);
+        log.info("Stock updated for {} products", saved.size());
+        return saved;
+    }
+
+    private void validateExistingDetails(List<SaleDetail> details) {
+        for (SaleDetail detail : details) {
+            if (detail.getProduct() == null || detail.getProduct().getId() == null) {
+                throw new ResourceNotFoundException(
+                        "SaleDetail contains null product or without id"
+                );
+            }
+        }
+    }
+
+    private Map<Long, Integer> extractQuantitiesByProduct(List<SaleDetail> details) {
+        return details.stream()
+                .collect(Collectors.groupingBy(
+                        detail -> detail.getProduct().getId(),
+                        Collectors.summingInt(SaleDetail::getStock)
+                ));
     }
 }
