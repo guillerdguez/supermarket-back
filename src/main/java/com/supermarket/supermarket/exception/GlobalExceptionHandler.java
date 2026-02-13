@@ -1,11 +1,16 @@
 package com.supermarket.supermarket.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,9 +21,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private ResponseEntity<Map<String, Object>> buildResponse(String error, Object message, HttpStatus status) {
         Map<String, Object> response = new HashMap<>();
@@ -29,7 +33,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(response);
     }
 
-    // 1. Validation Errors (@Valid) - HTTP 400
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors()
@@ -38,48 +41,83 @@ public class GlobalExceptionHandler {
                         error -> error.getField(),
                         error -> error.getDefaultMessage(),
                         (existing, replacement) -> existing));
-
         return buildResponse("Validation Failed", fieldErrors, HttpStatus.BAD_REQUEST);
     }
 
-    // 2. Resource Not Found (404)
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidToken(InvalidTokenException ex) {
+        log.warn("Invalid token: {}", ex.getMessage());
+        return buildResponse("Unauthorized", ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<Map<String, Object>> handleExpiredJwt(ExpiredJwtException ex) {
+        log.warn("Expired JWT token");
+        return buildResponse("Unauthorized", "Token has expired", HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler({MalformedJwtException.class, SignatureException.class})
+    public ResponseEntity<Map<String, Object>> handleMalformedJwt(Exception ex) {
+        log.warn("Malformed JWT token: {}", ex.getMessage());
+        return buildResponse("Unauthorized", "Invalid token format", HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
+        log.warn("Bad credentials provided");
+        return buildResponse("Unauthorized", "Invalid email or password", HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthenticationException(AuthenticationException ex) {
+        log.warn("Authentication failed: {}", ex.getMessage());
+        return buildResponse("Unauthorized", "Authentication failed", HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Access denied: {}", ex.getMessage());
+        return buildResponse("Forbidden", "You don't have permission to access this resource", HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(InsufficientPermissionsException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientPermissions(InsufficientPermissionsException ex) {
+        log.warn("Insufficient permissions: {}", ex.getMessage());
+        return buildResponse("Forbidden", ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException ex) {
         log.warn("Resource not found: {}", ex.getMessage());
         return buildResponse("Not Found", ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    // 3. Insufficient Stock (400)
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<Map<String, Object>> handleInsufficientStock(InsufficientStockException ex) {
         log.warn("Inventory conflict: {}", ex.getMessage());
         return buildResponse("Inventory Conflict", ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    // 4. Duplicate Resources (409)
+    @ExceptionHandler({InvalidSaleStateException.class, InvalidOperationException.class})
+    public ResponseEntity<Map<String, Object>> handleInvalidOperations(RuntimeException ex) {
+        log.warn("Invalid operation attempt: {}", ex.getMessage());
+        return buildResponse("Invalid Operation", ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateResource(DuplicateResourceException ex) {
         log.warn("Duplicate record: {}", ex.getMessage());
         return buildResponse("Conflict", ex.getMessage(), HttpStatus.CONFLICT);
     }
 
-    // 5. Invalid Sale State or Operation (400)
-    @ExceptionHandler({ InvalidSaleStateException.class, InvalidOperationException.class })
-    public ResponseEntity<Map<String, Object>> handleInvalidOperations(RuntimeException ex) {
-        log.warn("Invalid operation attempt: {}", ex.getMessage());
-        return buildResponse("Invalid Operation", ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    // 6. Concurrency Control (409) - Critical for Supermarkets
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<Map<String, Object>> handleConcurrencyError(ObjectOptimisticLockingFailureException ex) {
         log.warn("Concurrency conflict: {}", ex.getMessage());
         return buildResponse("Concurrency Conflict",
-                "The product stock was modified by another process. Please refresh and try again.",
+                "The resource was modified by another process. Please refresh and try again.",
                 HttpStatus.CONFLICT);
     }
 
-    // 7. Database Integrity (409)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
         log.error("Database integrity error: {}", ex.getMessage());
@@ -88,7 +126,18 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT);
     }
 
-    // 8. General Internal Server Error (500)
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleRateLimitExceeded(RateLimitExceededException ex) {
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("error", "Too Many Requests");
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.TOO_MANY_REQUESTS.value());
+        response.put("retryAfter", "300");
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleAllExceptions(Exception ex) {
         log.error("Unexpected error occurred: ", ex);
