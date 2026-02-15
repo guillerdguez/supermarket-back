@@ -1,4 +1,33 @@
--- SUCCURSALES (branch)
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    active BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    details VARCHAR(1000),
+    ip_address VARCHAR(50),
+    timestamp DATETIME NOT NULL,
+    status VARCHAR(20) NOT NULL
+);
+
+INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, role, active) VALUES
+(1, 'admin', 'admin@supermarket.com', '$2a$10$Xx9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'System', 'Administrator', 'ADMIN', true),
+(2, 'manager1', 'manager@supermarket.com', '$2a$10$Yy9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhXz', 'Store', 'Manager', 'MANAGER', true),
+(3, 'cashier1', 'cashier@supermarket.com', '$2a$10$Zz9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhYa', 'John', 'Cashier', 'CASHIER', true),
+(4, 'testuser', 'user@supermarket.com', '$2a$10$Aa9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhZb', 'Test', 'User', 'USER', true);
+
+ALTER TABLE users AUTO_INCREMENT = 5;
+ALTER TABLE audit_logs AUTO_INCREMENT = 1;
+
 INSERT IGNORE INTO branch (id, name, address) VALUES
 (1, 'Central Branch', '123 Main Avenue, Central City'),
 (2, 'North Branch', '456 North Street, North Zone'),
@@ -6,7 +35,6 @@ INSERT IGNORE INTO branch (id, name, address) VALUES
 (4, 'East Branch', '101 East Street, East Zone'),
 (5, 'West Branch', '202 West Avenue, West Zone');
 
--- PRODUCTOS (product)
 INSERT IGNORE INTO product (id, name, category, price, stock) VALUES
 (1, 'Whole Milk 1L', 'Dairy', 1200.50, 150),
 (2, 'Natural Yogurt', 'Dairy', 800.75, 200),
@@ -39,7 +67,6 @@ INSERT IGNORE INTO product (id, name, category, price, stock) VALUES
 (29, 'All-purpose Cleaner', 'Cleaning', 3200.00, 100),
 (30, 'Disinfectant 500ml', 'Cleaning', 1800.00, 130);
 
--- VENTAS (sale)
 INSERT IGNORE INTO sale (id, date, status, total, branch_id) VALUES
 (1, '2024-12-01', 'REGISTERED', 28501.50, 1),
 (2, '2024-12-01', 'REGISTERED', 12000.00, 1),
@@ -67,7 +94,6 @@ INSERT IGNORE INTO sale (id, date, status, total, branch_id) VALUES
 (24, '2024-12-04', 'REGISTERED', 17300.75, 5),
 (25, '2024-12-04', 'REGISTERED', 29600.00, 5);
 
--- DETALLE DE VENTAS (sale_detail)
 INSERT IGNORE INTO sale_detail (id, stock, price, sale_id, product_id) VALUES
 (1, 2, 1200.50, 1, 1), (2, 1, 3500.00, 1, 3), (3, 3, 1500.00, 1, 6), (4, 1, 8500.00, 1, 11), (5, 2, 2500.00, 1, 17),
 (6, 1, 12000.00, 2, 25),
@@ -95,7 +121,6 @@ INSERT IGNORE INTO sale_detail (id, stock, price, sale_id, product_id) VALUES
 (65, 3, 1200.00, 24, 21), (66, 2, 1500.00, 24, 22), (67, 1, 2800.00, 24, 23),
 (68, 2, 4500.00, 25, 26), (69, 1, 8500.00, 25, 11), (70, 3, 2500.00, 25, 17);
 
--- REINICIO DE CONTADORES AUTO_INCREMENT
 ALTER TABLE branch AUTO_INCREMENT = 26;
 ALTER TABLE product AUTO_INCREMENT = 31;
 ALTER TABLE sale AUTO_INCREMENT = 26;
