@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.service.impl;
+package com.supermarket.supermarket.service.business.impl;
 
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientStockException;
@@ -6,7 +6,7 @@ import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.model.SaleDetail;
 import com.supermarket.supermarket.repository.ProductRepository;
-import com.supermarket.supermarket.service.StockService;
+import com.supermarket.supermarket.service.business.StockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

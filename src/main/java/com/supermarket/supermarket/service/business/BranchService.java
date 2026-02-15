@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.service;
+package com.supermarket.supermarket.service.business;
 
 import java.util.List;
 
