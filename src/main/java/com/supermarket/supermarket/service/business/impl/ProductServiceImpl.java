@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.service.impl;
+package com.supermarket.supermarket.service.business.impl;
 
 import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
@@ -9,7 +9,7 @@ import com.supermarket.supermarket.mapper.ProductMapper;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
-import com.supermarket.supermarket.service.ProductService;
+import com.supermarket.supermarket.service.business.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponse> getLowStockProducts(Integer threshold) {
         log.info("Fetching products with stock less than: {}", threshold);
 
-         List<Product> products = productRepo.findBystockLessThan(threshold);
+         List<Product> products = productRepo.findByStockLessThan(threshold);
 
          return productMapper.toResponseList(products);
     }

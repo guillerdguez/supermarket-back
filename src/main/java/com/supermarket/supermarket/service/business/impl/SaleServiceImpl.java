@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.service.impl;
+package com.supermarket.supermarket.service.business.impl;
 
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
@@ -13,8 +13,8 @@ import com.supermarket.supermarket.model.SaleDetail;
 import com.supermarket.supermarket.model.SaleStatus;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
-import com.supermarket.supermarket.service.SaleService;
-import com.supermarket.supermarket.service.StockService;
+import com.supermarket.supermarket.service.business.SaleService;
+import com.supermarket.supermarket.service.business.StockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

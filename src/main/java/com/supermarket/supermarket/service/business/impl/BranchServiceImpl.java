@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.service.impl;
+package com.supermarket.supermarket.service.business.impl;
 
 import com.supermarket.supermarket.dto.branch.BranchRequest;
 import com.supermarket.supermarket.dto.branch.BranchResponse;
@@ -9,7 +9,7 @@ import com.supermarket.supermarket.mapper.BranchMapper;
 import com.supermarket.supermarket.model.Branch;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
-import com.supermarket.supermarket.service.BranchService;
+import com.supermarket.supermarket.service.business.BranchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
