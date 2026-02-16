@@ -10,7 +10,7 @@ import com.supermarket.supermarket.mapper.ProductMapper;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
-import com.supermarket.supermarket.service.impl.ProductServiceImpl;
+import com.supermarket.supermarket.service.business.impl.ProductServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -225,14 +225,14 @@ class ProductServiceTest {
                 .stock(5)
                 .build();
 
-        given(productRepository.findBystockLessThan(10)).willReturn(lowStockProducts);
+        given(productRepository.findByStockLessThan(10)).willReturn(lowStockProducts);
         given(productMapper.toResponseList(lowStockProducts)).willReturn(List.of(lowStockResponse));
 
         List<ProductResponse> result = productService.getLowStockProducts(10);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getStock()).isEqualTo(5);
-        then(productRepository).should().findBystockLessThan(10);
+        then(productRepository).should().findByStockLessThan(10);
     }
 
     @Test
@@ -246,7 +246,7 @@ class ProductServiceTest {
                 ProductResponse.builder().id(2L).stock(4).build()
         );
 
-        given(productRepository.findBystockLessThan(5)).willReturn(lowStockProducts);
+        given(productRepository.findByStockLessThan(5)).willReturn(lowStockProducts);
         given(productMapper.toResponseList(lowStockProducts)).willReturn(responses);
 
         List<ProductResponse> result = productService.getLowStockProducts(5);
@@ -259,12 +259,12 @@ class ProductServiceTest {
     @Test
     @DisplayName("GET LOW STOCK - should return empty list when no products below threshold")
     void getLowStockProducts_WhenNoLowStock_ShouldReturnEmptyList() {
-        given(productRepository.findBystockLessThan(10)).willReturn(List.of());
+        given(productRepository.findByStockLessThan(10)).willReturn(List.of());
 
         List<ProductResponse> result = productService.getLowStockProducts(10);
 
         assertThat(result).isEmpty();
-        then(productRepository).should().findBystockLessThan(10);
+        then(productRepository).should().findByStockLessThan(10);
     }
 
     @Test
@@ -277,7 +277,7 @@ class ProductServiceTest {
                 .stock(0)
                 .build();
 
-        given(productRepository.findBystockLessThan(0)).willReturn(zeroStockProducts);
+        given(productRepository.findByStockLessThan(0)).willReturn(zeroStockProducts);
         given(productMapper.toResponseList(zeroStockProducts)).willReturn(List.of(response));
 
         List<ProductResponse> result = productService.getLowStockProducts(0);

@@ -8,7 +8,7 @@ import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.fixtures.TestFixtures;
-import com.supermarket.supermarket.service.SaleService;
+import com.supermarket.supermarket.service.business.SaleService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

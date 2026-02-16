@@ -7,7 +7,7 @@ import com.supermarket.supermarket.fixtures.TestFixtures;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.model.SaleDetail;
 import com.supermarket.supermarket.repository.ProductRepository;
-import com.supermarket.supermarket.service.impl.StockServiceImpl;
+import com.supermarket.supermarket.service.business.impl.StockServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
