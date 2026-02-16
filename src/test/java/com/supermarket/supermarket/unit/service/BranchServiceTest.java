@@ -10,7 +10,7 @@ import com.supermarket.supermarket.mapper.BranchMapper;
 import com.supermarket.supermarket.model.Branch;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
-import com.supermarket.supermarket.service.impl.BranchServiceImpl;
+import com.supermarket.supermarket.service.business.impl.BranchServiceImpl;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
