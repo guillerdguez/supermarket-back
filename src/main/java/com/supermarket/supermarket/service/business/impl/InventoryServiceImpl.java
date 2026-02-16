@@ -47,7 +47,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .collect(Collectors.toList());
     }
 
-
+    @Override
     @Transactional
     public void validateAndReduceStock(Long branchId, Long productId, Integer quantity) {
         BranchInventory inventory = findInventory(branchId, productId);
@@ -58,7 +58,7 @@ public class InventoryServiceImpl implements InventoryService {
                 productId, branchId, quantity, inventory.getStock());
     }
 
-
+    @Override
     @Transactional
     public void restoreStock(Long branchId, Long productId, Integer quantity) {
         BranchInventory inventory = findInventory(branchId, productId);

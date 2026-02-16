@@ -13,5 +13,6 @@ public interface InventoryService {
 
     List<LowStockAlertResponse> getLowStockGlobal();
 
-
+    void validateAndReduceStock(Long branchId, Long productId, Integer quantity);
+    void restoreStock(Long branchId, Long productId, Integer quantity);
 }
