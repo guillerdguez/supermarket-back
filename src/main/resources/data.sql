@@ -19,14 +19,57 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     status VARCHAR(20) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS branch (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    address VARCHAR(200) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS product (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    category VARCHAR(50),
+    price DECIMAL(19, 2),
+    version INT
+);
+
+CREATE TABLE IF NOT EXISTS branch_inventory (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    branch_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    stock INT NOT NULL,
+    min_stock INT NOT NULL DEFAULT 5,
+    last_restock_date DATETIME,
+    version BIGINT,
+    UNIQUE KEY uk_branch_product (branch_id, product_id),
+    FOREIGN KEY (branch_id) REFERENCES branch(id),
+    FOREIGN KEY (product_id) REFERENCES product(id)
+);
+
+CREATE TABLE IF NOT EXISTS sale (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    date DATE,
+    status VARCHAR(20),
+    total DECIMAL(19, 2),
+    branch_id BIGINT NOT NULL,
+    FOREIGN KEY (branch_id) REFERENCES branch(id)
+);
+
+CREATE TABLE IF NOT EXISTS sale_detail (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    stock INT NOT NULL,
+    price DECIMAL(19, 2),
+    sale_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    FOREIGN KEY (sale_id) REFERENCES sale(id),
+    FOREIGN KEY (product_id) REFERENCES product(id)
+);
+
 INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, role, active) VALUES
 (1, 'admin', 'admin@supermarket.com', '$2a$10$Xx9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'System', 'Administrator', 'ADMIN', true),
 (2, 'manager1', 'manager@supermarket.com', '$2a$10$Yy9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhXz', 'Store', 'Manager', 'MANAGER', true),
 (3, 'cashier1', 'cashier@supermarket.com', '$2a$10$Zz9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhYa', 'John', 'Cashier', 'CASHIER', true),
 (4, 'testuser', 'user@supermarket.com', '$2a$10$Aa9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhZb', 'Test', 'User', 'USER', true);
-
-ALTER TABLE users AUTO_INCREMENT = 5;
-ALTER TABLE audit_logs AUTO_INCREMENT = 1;
 
 INSERT IGNORE INTO branch (id, name, address) VALUES
 (1, 'Central Branch', '123 Main Avenue, Central City'),
@@ -35,37 +78,42 @@ INSERT IGNORE INTO branch (id, name, address) VALUES
 (4, 'East Branch', '101 East Street, East Zone'),
 (5, 'West Branch', '202 West Avenue, West Zone');
 
-INSERT IGNORE INTO product (id, name, category, price, stock) VALUES
-(1, 'Whole Milk 1L', 'Dairy', 1200.50, 150),
-(2, 'Natural Yogurt', 'Dairy', 800.75, 200),
-(3, 'Mozzarella Cheese 500g', 'Dairy', 3500.00, 80),
-(4, 'Butter 250g', 'Dairy', 1800.25, 120),
-(5, 'Heavy Cream 200ml', 'Dairy', 950.00, 100),
-(6, 'Apples 1kg', 'Fruits and Vegetables', 1500.00, 300),
-(7, 'Bananas 1kg', 'Fruits and Vegetables', 1200.00, 250),
-(8, 'Carrots 1kg', 'Fruits and Vegetables', 800.50, 180),
-(9, 'Tomatoes 1kg', 'Fruits and Vegetables', 1800.00, 150),
-(10, 'Lettuce Unit', 'Fruits and Vegetables', 700.00, 200),
-(11, 'Chicken Breast 1kg', 'Meats', 8500.00, 75),
-(12, 'Ground Beef 500g', 'Meats', 4500.50, 60),
-(13, 'Sausages 500g', 'Meats', 3200.00, 90),
-(14, 'Bacon 250g', 'Meats', 2800.00, 110),
-(15, 'Beef Steak 500g', 'Meats', 12000.00, 40),
-(16, 'Mineral Water 1.5L', 'Beverages', 800.00, 300),
-(17, 'Cola Soda 2L', 'Beverages', 2500.00, 200),
-(18, 'Orange Juice 1L', 'Beverages', 1800.50, 150),
-(19, 'National Beer 330ml', 'Beverages', 1200.00, 180),
-(20, 'Red Wine 750ml', 'Beverages', 8500.00, 50),
-(21, 'White Bread 500g', 'Bakery', 1200.00, 220),
-(22, 'Whole Wheat Bread 500g', 'Bakery', 1500.00, 180),
-(23, 'Croissants 4 units', 'Bakery', 2800.00, 120),
-(24, 'Chocolate Cookies', 'Bakery', 950.00, 250),
-(25, 'Chocolate Cake', 'Bakery', 12000.00, 20),
-(26, 'Liquid Detergent 1L', 'Cleaning', 4500.00, 80),
-(27, 'Hand Soap', 'Cleaning', 1200.50, 150),
-(28, 'Toilet Paper 4 rolls', 'Cleaning', 2800.00, 120),
-(29, 'All-purpose Cleaner', 'Cleaning', 3200.00, 100),
-(30, 'Disinfectant 500ml', 'Cleaning', 1800.00, 130);
+INSERT IGNORE INTO product (id, name, category, price, version) VALUES
+(1, 'Whole Milk 1L', 'Dairy', 1200.50, 0),
+(2, 'Natural Yogurt', 'Dairy', 800.75, 0),
+(3, 'Mozzarella Cheese 500g', 'Dairy', 3500.00, 0),
+(4, 'Butter 250g', 'Dairy', 1800.25, 0),
+(5, 'Heavy Cream 200ml', 'Dairy', 950.00, 0),
+(6, 'Apples 1kg', 'Fruits and Vegetables', 1500.00, 0),
+(7, 'Bananas 1kg', 'Fruits and Vegetables', 1200.00, 0),
+(8, 'Carrots 1kg', 'Fruits and Vegetables', 800.50, 0),
+(9, 'Tomatoes 1kg', 'Fruits and Vegetables', 1800.00, 0),
+(10, 'Lettuce Unit', 'Fruits and Vegetables', 700.00, 0),
+(11, 'Chicken Breast 1kg', 'Meats', 8500.00, 0),
+(12, 'Ground Beef 500g', 'Meats', 4500.50, 0),
+(13, 'Sausages 500g', 'Meats', 3200.00, 0),
+(14, 'Bacon 250g', 'Meats', 2800.00, 0),
+(15, 'Beef Steak 500g', 'Meats', 12000.00, 0),
+(16, 'Mineral Water 1.5L', 'Beverages', 800.00, 0),
+(17, 'Cola Soda 2L', 'Beverages', 2500.00, 0),
+(18, 'Orange Juice 1L', 'Beverages', 1800.50, 0),
+(19, 'National Beer 330ml', 'Beverages', 1200.00, 0),
+(20, 'Red Wine 750ml', 'Beverages', 8500.00, 0),
+(21, 'White Bread 500g', 'Bakery', 1200.00, 0),
+(22, 'Whole Wheat Bread 500g', 'Bakery', 1500.00, 0),
+(23, 'Croissants 4 units', 'Bakery', 2800.00, 0),
+(24, 'Chocolate Cookies', 'Bakery', 950.00, 0),
+(25, 'Chocolate Cake', 'Bakery', 12000.00, 0),
+(26, 'Liquid Detergent 1L', 'Cleaning', 4500.00, 0),
+(27, 'Hand Soap', 'Cleaning', 1200.50, 0),
+(28, 'Toilet Paper 4 rolls', 'Cleaning', 2800.00, 0),
+(29, 'All-purpose Cleaner', 'Cleaning', 3200.00, 0),
+(30, 'Disinfectant 500ml', 'Cleaning', 1800.00, 0);
+
+INSERT IGNORE INTO branch_inventory (branch_id, product_id, stock, min_stock, last_restock_date, version)
+SELECT b.id, p.id, 50, 10, NOW(), 0
+FROM product p
+CROSS JOIN branch b;
 
 INSERT IGNORE INTO sale (id, date, status, total, branch_id) VALUES
 (1, '2024-12-01', 'REGISTERED', 28501.50, 1),
@@ -121,7 +169,10 @@ INSERT IGNORE INTO sale_detail (id, stock, price, sale_id, product_id) VALUES
 (65, 3, 1200.00, 24, 21), (66, 2, 1500.00, 24, 22), (67, 1, 2800.00, 24, 23),
 (68, 2, 4500.00, 25, 26), (69, 1, 8500.00, 25, 11), (70, 3, 2500.00, 25, 17);
 
-ALTER TABLE branch AUTO_INCREMENT = 26;
+ALTER TABLE users AUTO_INCREMENT = 5;
+ALTER TABLE audit_logs AUTO_INCREMENT = 1;
+ALTER TABLE branch AUTO_INCREMENT = 6;
 ALTER TABLE product AUTO_INCREMENT = 31;
+ALTER TABLE branch_inventory AUTO_INCREMENT = 151;
 ALTER TABLE sale AUTO_INCREMENT = 26;
 ALTER TABLE sale_detail AUTO_INCREMENT = 71;
