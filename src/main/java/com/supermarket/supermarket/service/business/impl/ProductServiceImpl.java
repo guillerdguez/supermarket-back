@@ -84,15 +84,7 @@ public class ProductServiceImpl implements ProductService {
         productRepo.delete(product);
         log.info("Product deleted successfully - ID: {}", id);
     }
-    @Transactional(readOnly = true)
-    @Override
-    public List<ProductResponse> getLowStockProducts(Integer threshold) {
-        log.info("Fetching products with stock less than: {}", threshold);
 
-         List<Product> products = productRepo.findByStockLessThan(threshold);
-
-         return productMapper.toResponseList(products);
-    }
     private Product findProduct(Long id) {
         return productRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + id));

@@ -13,6 +13,5 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     boolean existsByName(String name);
 
-    List<Product> findByStockLessThan(Integer stock);
 
 }
