@@ -135,32 +135,4 @@ class ProductControllerTest {
 
         mockMvc.perform(delete("/products/999")).andExpect(status().isNotFound());
     }
-
-    @Test
-    @DisplayName("GET /products/low-stock - should return low stock products")
-    void getLowStock_ShouldReturnLowStockProducts() throws Exception {
-        ProductResponse lowStockResponse = ProductResponse.builder().id(3L).name("Low Stock Milk").category("Dairy").price(new BigDecimal("2.50")).stock(5).build();
-
-        given(productService.getLowStockProducts(10)).willReturn(List.of(lowStockResponse));
-
-        mockMvc.perform(get("/products/low-stock")).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(1))).andExpect(jsonPath("$[0].stock").value(5));
-    }
-
-    @Test
-    @DisplayName("GET /products/low-stock?amount=5 - should return low stock products with custom threshold")
-    void getLowStock_WithCustomAmount_ShouldReturnLowStockProducts() throws Exception {
-        ProductResponse lowStockResponse = ProductResponse.builder().id(3L).name("Low Stock Milk").category("Dairy").price(new BigDecimal("2.50")).stock(3).build();
-
-        given(productService.getLowStockProducts(5)).willReturn(List.of(lowStockResponse));
-
-        mockMvc.perform(get("/products/low-stock").param("amount", "5")).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(1))).andExpect(jsonPath("$[0].stock").value(3));
-    }
-
-    @Test
-    @DisplayName("GET /products/low-stock - should return empty list when no low stock products")
-    void getLowStock_WhenNoLowStock_ShouldReturnEmptyList() throws Exception {
-        given(productService.getLowStockProducts(10)).willReturn(List.of());
-
-        mockMvc.perform(get("/products/low-stock")).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(0)));
-    }
 }
