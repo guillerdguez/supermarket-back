@@ -1,63 +1,92 @@
 package com.supermarket.supermarket.integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.supermarket.supermarket.dto.auth.AuthResponse;
+import com.supermarket.supermarket.fixtures.TestFixtures;
+import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.repository.ProductRepository;
+import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.repository.UserRepository;
+import com.supermarket.supermarket.service.security.RateLimitService;
+import com.supermarket.supermarket.service.security.TokenBlacklistService;
+ import com.supermarket.supermarket.helper.TestUserHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Sql(scripts = "/test-data.sql")
+@ActiveProfiles("test")
 class PreAuthorizeIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
-    private ObjectMapper objectMapper;
+    private ProductRepository productRepository;
+    @Autowired
+    private SaleRepository saleRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private TestUserHelper testUserHelper;
 
-    private String obtainToken(String email, String password) throws Exception {
-        String response = mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        AuthResponse authResponse = objectMapper.readValue(response, AuthResponse.class);
-        return authResponse.getToken();
+    @MockitoBean
+    private RateLimitService rateLimitService;
+    @MockitoBean
+    private TokenBlacklistService tokenBlacklistService;
+
+    private Long testProductId;
+    private String adminToken;
+    private String cashierToken;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        saleRepository.deleteAll();
+        productRepository.deleteAll();
+        userRepository.deleteAll();
+
+        Product product = Product.builder()
+                .name("Test Product")
+                .category("Test Category")
+                .price(new BigDecimal("10.00"))
+                .build();
+        product = productRepository.save(product);
+        testProductId = product.getId();
+
+        adminToken = testUserHelper.registerAndGetToken(
+                TestFixtures.adminRegisterRequest(), UserRole.ADMIN);
+        cashierToken = testUserHelper.registerAndGetToken(
+                TestFixtures.cashierRegisterRequest(), UserRole.CASHIER);
     }
 
     @Test
-    @DisplayName("CASHIER can view but not delete products")
+    @DisplayName("CASHIER role should view products but fail to delete them")
     void cashierCannotDeleteProducts() throws Exception {
-        String token = obtainToken("cashier@supermarket.com", "Cashier123!");
-
         mockMvc.perform(get("/products")
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + cashierToken))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(delete("/products/1")
-                .header("Authorization", "Bearer " + token))
+        mockMvc.perform(delete("/products/" + testProductId)
+                        .header("Authorization", "Bearer " + cashierToken))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @DisplayName("ADMIN can delete products")
+    @DisplayName("ADMIN role should successfully delete products")
     void adminCanDeleteProducts() throws Exception {
-        String token = obtainToken("admin@supermarket.com", "Admin123!");
-
-        mockMvc.perform(delete("/products/1")
-                .header("Authorization", "Bearer " + token))
+        mockMvc.perform(delete("/products/" + testProductId)
+                        .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNoContent());
     }
 }
