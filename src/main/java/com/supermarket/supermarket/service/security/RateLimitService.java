@@ -1,6 +1,7 @@
 package com.supermarket.supermarket.service.security;
 
 import com.supermarket.supermarket.exception.RateLimitExceededException;
+import com.supermarket.supermarket.exception.RateLimitServiceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,27 +23,23 @@ public class RateLimitService {
 
     public void checkRateLimit(String key) {
         String redisKey = RATE_LIMIT_PREFIX + key;
-        Integer currentAttempts = (Integer) redisTemplate.opsForValue().get(redisKey);
+        try {
+             Long currentAttempts = redisTemplate.opsForValue().increment(redisKey);
 
-        if (currentAttempts == null) {
-            redisTemplate.opsForValue().set(redisKey, 1, Duration.ofMinutes(BLOCK_TIME_MINUTES));
-            log.debug("First attempt for key: {}", key);
-            return;
+            if (currentAttempts == 1) {
+                 redisTemplate.expire(redisKey, Duration.ofMinutes(BLOCK_TIME_MINUTES));
+            }
+
+            if (currentAttempts > MAX_ATTEMPTS) {
+                Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+                throw new RateLimitExceededException(
+                        String.format("Too many attempts. Retry in %d seconds", ttl)
+                );
+            }
+        } catch (Exception e) {
+         throw new RateLimitServiceException("Error checking rate limit", e);
         }
-
-        if (currentAttempts >= MAX_ATTEMPTS) {
-            Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
-            log.warn("Rate limit exceeded for key: {}. Blocked for {} seconds", key, ttl);
-            throw new RateLimitExceededException(
-                String.format("Too many attempts. Please try again in %d seconds", 
-                    ttl != null ? ttl : BLOCK_TIME_MINUTES * 60)
-            );
-        }
-
-        redisTemplate.opsForValue().increment(redisKey);
-        log.debug("Attempt {} of {} for key: {}", currentAttempts + 1, MAX_ATTEMPTS, key);
     }
-
     public void resetRateLimit(String key) {
         String redisKey = RATE_LIMIT_PREFIX + key;
         redisTemplate.delete(redisKey);
