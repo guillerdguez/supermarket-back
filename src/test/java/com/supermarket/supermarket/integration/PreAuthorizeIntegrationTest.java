@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Sql(scripts = "/test-data.sql") // Necesitas crear este archivo
+@Sql(scripts = "/test-data.sql")
 class PreAuthorizeIntegrationTest {
 
     @Autowired
