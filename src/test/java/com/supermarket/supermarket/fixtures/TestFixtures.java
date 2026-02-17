@@ -20,43 +20,45 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestFixtures {
+
     public static Product defaultProduct() {
-        return productWithIdAndStock(1L, 100);
+        return productWithId(1L);
     }
-    public static Product productWithIdAndStock(Long id, int stock) {
+
+    public static Product productWithId(Long id) {
         return Product.builder()
                 .id(id)
                 .name("Premium Rice")
                 .category("Food")
                 .price(new BigDecimal("2.50"))
-                .stock(stock)
                 .build();
     }
+
     public static ProductRequest validProductRequest() {
         return ProductRequest.builder()
                 .name("New Product")
                 .category("Cleaning")
                 .price(new BigDecimal("10.00"))
-                .stock(50)
                 .build();
     }
+
     public static ProductRequest invalidProductRequest() {
         return ProductRequest.builder()
                 .name("")
                 .category("")
                 .price(new BigDecimal("-10.00"))
-                .stock(-5)
                 .build();
     }
+
     public static ProductResponse productResponse() {
         return ProductResponse.builder()
                 .id(1L)
                 .name("Premium Rice")
                 .category("Food")
                 .price(new BigDecimal("2.50"))
-                .stock(100)
                 .build();
     }
+
     public static Branch defaultBranch() {
         return Branch.builder()
                 .id(1L)
@@ -64,18 +66,21 @@ public class TestFixtures {
                 .address("123 Main St")
                 .build();
     }
+
     public static BranchRequest validBranchRequest() {
         return BranchRequest.builder()
                 .name("New Branch")
                 .address("456 North Ave")
                 .build();
     }
+
     public static BranchRequest invalidBranchRequest() {
         return BranchRequest.builder()
                 .name("")
                 .address("")
                 .build();
     }
+
     public static BranchResponse branchResponse() {
         return BranchResponse.builder()
                 .id(1L)
@@ -83,6 +88,7 @@ public class TestFixtures {
                 .address("123 Main St")
                 .build();
     }
+
     public static SaleRequest validSaleRequest() {
         return SaleRequest.builder()
                 .branchId(1L)
@@ -94,6 +100,7 @@ public class TestFixtures {
                                 .build()))
                 .build();
     }
+
     public static SaleRequest saleRequestWithMultipleProducts() {
         return SaleRequest.builder()
                 .branchId(1L)
@@ -103,12 +110,14 @@ public class TestFixtures {
                         SaleDetailRequest.builder().productId(2L).stock(3).build()))
                 .build();
     }
+
     public static SaleRequest invalidSaleRequest() {
         return SaleRequest.builder()
                 .branchId(null)
                 .details(List.of())
                 .build();
     }
+
     public static Sale saleWithDetails() {
         Sale sale = Sale.builder()
                 .id(100L)
@@ -118,6 +127,7 @@ public class TestFixtures {
                 .branch(defaultBranch())
                 .details(new ArrayList<>())
                 .build();
+
         SaleDetail detail = SaleDetail.builder()
                 .stock(5)
                 .price(new BigDecimal("2.50"))
@@ -127,6 +137,7 @@ public class TestFixtures {
         sale.getDetails().add(detail);
         return sale;
     }
+
     public static SaleResponse saleResponse() {
         return SaleResponse.builder()
                 .id(100L)
@@ -144,13 +155,15 @@ public class TestFixtures {
                                 .build()))
                 .build();
     }
+
     public static SaleDetailRequest saleDetailRequest(Long productId, Integer stock) {
         return SaleDetailRequest.builder()
                 .productId(productId)
                 .stock(stock)
                 .build();
     }
-    public static SaleDetail saleDetailWithProductAndstock(Product product, Integer stock) {
+
+    public static SaleDetail saleDetailWithProductAndStock(Product product, Integer stock) {
         return SaleDetail.builder()
                 .stock(stock)
                 .product(product)
