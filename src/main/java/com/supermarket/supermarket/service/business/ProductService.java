@@ -23,5 +23,4 @@ public interface ProductService {
 
     void delete(Long id);
 
-    List<ProductResponse> getLowStockProducts(Integer threshold);
 }

@@ -22,5 +22,4 @@ public class ProductResponse {
     private String name;
     private String category;
     private BigDecimal price;
-    private Integer stock;
 }
