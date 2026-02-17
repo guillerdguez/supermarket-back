@@ -1,5 +1,6 @@
 package com.supermarket.supermarket.fixtures;
 
+import com.supermarket.supermarket.dto.auth.RegisterRequest;
 import com.supermarket.supermarket.dto.branch.BranchRequest;
 import com.supermarket.supermarket.dto.branch.BranchResponse;
 import com.supermarket.supermarket.dto.product.ProductRequest;
@@ -168,6 +169,38 @@ public class TestFixtures {
                 .stock(stock)
                 .product(product)
                 .price(product.getPrice())
+                .build();
+    }
+
+
+
+    public static RegisterRequest adminRegisterRequest() {
+        return RegisterRequest.builder()
+                .username("admin-test")
+                .email("admin@test.com")
+                .password("Admin123!")
+                .firstName("Admin")
+                .lastName("Test")
+                .build();
+    }
+
+    public static RegisterRequest cashierRegisterRequest() {
+        return RegisterRequest.builder()
+                .username("cashier-test")
+                .email("cashier@test.com")
+                .password("Cashier123!")
+                .firstName("Cashier")
+                .lastName("Test")
+                .build();
+    }
+
+    public static RegisterRequest managerRegisterRequest() {
+        return RegisterRequest.builder()
+                .username("manager-test")
+                .email("manager@test.com")
+                .password("Manager123!")
+                .firstName("Manager")
+                .lastName("Test")
                 .build();
     }
 }

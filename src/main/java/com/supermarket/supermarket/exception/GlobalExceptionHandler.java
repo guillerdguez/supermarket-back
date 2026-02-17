@@ -11,6 +11,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,8 +39,8 @@ public class GlobalExceptionHandler {
         Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(
-                        error -> error.getField(),
-                        error -> error.getDefaultMessage(),
+                        FieldError::getField,
+                        FieldError::getDefaultMessage,
                         (existing, replacement) -> existing));
         return buildResponse("Validation Failed", fieldErrors, HttpStatus.BAD_REQUEST);
     }
@@ -126,13 +127,19 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<Map<String, Object>> handleRateLimitExceeded(RateLimitExceededException ex) {
+    @ExceptionHandler({RateLimitExceededException.class, RateLimitServiceException.class})
+    public ResponseEntity<Map<String, Object>> handleRateLimitExceeded(Exception ex) {
         log.warn("Rate limit exceeded: {}", ex.getMessage());
+
+        String message = ex.getMessage();
+        if (ex instanceof RateLimitServiceException && ex.getCause() != null) {
+            message = ex.getCause().getMessage();
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("error", "Too Many Requests");
-        response.put("message", ex.getMessage());
+        response.put("message", message);
         response.put("status", HttpStatus.TOO_MANY_REQUESTS.value());
         response.put("retryAfter", "300");
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
