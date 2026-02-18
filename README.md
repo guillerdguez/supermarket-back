@@ -1,134 +1,169 @@
- ---
-
-## 🛒 Supermarket Management System — Portfolio Junior
-
-### ¿Qué es este proyecto?
-
-API REST completa que simula la gestión de un supermercado real, desarrollada con **Spring Boot 3.4.1** y **Java 17**.
-El sistema maneja sucursales, productos y ventas, aplicando principios de **Clean Architecture** y **SOLID** para asegurar un código ordenado y escalable.
-
-El entorno de desarrollo está contenerizado mediante **Docker**, utilizando MySQL para la persistencia de datos y H2 para entornos de prueba.
-
-### ✨ Características principales
-
-✅ **CRUD completo** para sucursales, productos y ventas.
-✅ **Infraestructura Dockerizada** (MySQL 8.0 vía Docker Compose).
-✅ **Control transaccional de stock** (Atomicidad en ventas masivas).
-✅ **Paginación y filtros** avanzados (Criteria API / Specifications).
-✅ **Sistema de Alertas:** Endpoint dedicado para productos con bajo stock.
-✅ **Manejo global de errores** (`@RestControllerAdvice` y respuestas JSON estandarizadas).
-✅ **Validaciones robustas** (Jakarta Validation) en DTOs.
-✅ **Testing Unitario:** Cobertura con JUnit 5 y Mockito.
-✅ **Documentación interactiva** con Swagger UI.
-
+ 
 ---
 
-## 🚀 Guía de Inicio Rápido (Local)
+# 🛒 Supermarket Management System (SMS) API
 
-El proyecto requiere **Docker** para la base de datos y **Java 17**.
+**Enterprise-Grade REST API** diseñada para la gestión integral de inventarios distribuidos, control de caja y ventas seguras.
 
-### 1. Levantar infraestructura (Base de Datos)
+## 💡 Sobre el Proyecto
 
-Ejecuta el siguiente comando en la raíz del proyecto para iniciar MySQL en el puerto `3307`:
+Este proyecto es el núcleo backend de un sistema ERP para retail. Ha sido diseñado siguiendo principios de **Clean Architecture y SOLID**, priorizando la integridad financiera, la trazabilidad de operaciones y la seguridad.
+
+El sistema resuelve el problema de la gestión de stock en múltiples sucursales y asegura que cada transacción sea atómica y auditable.
+
+## 🗺️ Roadmap Técnico (Próximas Features)
+
+El desarrollo actual se centra en consolidar la lógica de negocio del servidor:
+
+* **Fase 2: Gestión de Caja (Cash Management):** Apertura y cierre de turnos con arqueo de caja y detección de diferencias.
+* **Fase 3: Logística Interna:** Transferencias de stock entre sucursales con estados de aprobación.
+* **Fase 4: Reportes Operativos:** Endpoints de inteligencia de negocio para análisis de ventas y rendimiento de cajeros.
+
+## ✨ Características Técnicas Implementadas
+
+Este backend implementa lógica de negocio compleja más allá de un simple CRUD:
+
+* 🏗️ **Arquitectura Robusta:** Diseño modular en capas (`Controller`, `Service`, `Repository`, `Domain`).
+* 🔐 **Seguridad Avanzada:**
+* Autenticación vía **JWT** (JSON Web Tokens).
+* **Rate Limiting** con Redis para prevenir fuerza bruta.
+* **Token Blacklist** para invalidación real de sesiones al hacer Logout.
+
+
+* ⚡ **Integridad Transaccional:** Gestión estricta (`@Transactional`) en ventas y movimientos de inventario.
+* 🛡️ **Auditoría:** Trazabilidad completa (**Quién, Cuándo, Qué**) en operaciones críticas.
+* 🔍 **Especificaciones JPA:** Filtrado dinámico y paginación eficiente de catálogos.
+* 🐳 **Containerización:** Entorno MySQL y Redis orquestado con **Docker Compose**.
+* 🧪 **Testing:** Cobertura de integración y unitaria con **JUnit 5 y Mockito**.
+
+## 🛠️ Tech Stack
+
+| Área | Tecnología | Propósito |
+| --- | --- | --- |
+| **Core** | Java 17, Spring Boot 3.4 | Lógica y Framework principal |
+| **Persistencia** | Spring Data JPA / Hibernate | ORM y manejo de datos |
+| **Base de Datos** | MySQL 8.0 (Prod) / H2 (Test) | Almacenamiento relacional |
+| **Caché / NoSQL** | Redis | Rate Limiting y Blacklist de Tokens |
+| **Seguridad** | Spring Security | RBAC (Role-Based Access Control) |
+| **DevOps** | Docker Compose | Despliegue de infraestructura |
+| **Docs** | OpenAPI (Swagger) | Documentación interactiva |
+
+## 🚀 Guía de Despliegue (Local)
+
+### Prerrequisitos
+
+* Java JDK 17 o superior.
+* Docker Desktop activo.
+
+### 1. Iniciar Infraestructura
+
+Levanta los contenedores de MySQL y Redis:
 
 ```bash
 docker-compose up -d
 
 ```
 
-### 2. Ejecutar la aplicación
+### 2. Ejecutar Aplicación
 
-Una vez la base de datos esté lista, inicia la aplicación Spring Boot:
+Inicia el servidor Spring Boot (esto cargará datos de prueba automáticamente):
 
 ```bash
 ./mvnw spring-boot:run
 
 ```
 
-*La aplicación cargará automáticamente datos de prueba (`data.sql`) al iniciar.*
+## 🔄 Lógica de Negocio: El Ciclo de Venta
 
----
+La clase `SaleServiceImpl` garantiza principios **ACID** y trazabilidad:
 
-## 🔄 Flujo de una venta (Lógica de Negocio)
-
-La clase `SaleServiceImpl` implementa un flujo transaccional estricto:
-
-1. **Validación de Existencia:** Verifica sucursal y productos.
-2. **Bloqueo y Reducción de Stock:**
-* Agrupa cantidades por producto.
-* Verifica disponibilidad en tiempo real.
-* Lanza `InsufficientStockException` si falta inventario.
+1. **Auditoría Automática:** Se captura al usuario autenticado del contexto de seguridad para vincularlo a la venta (*Author*).
+2. **Bloqueo de Inventario (Lock):**
+* Verificación de stock en la sucursal específica.
+* **Fail-fast:** Si falta stock de un ítem, la transacción se aborta (`InsufficientStockException`).
 
 
-3. **Cálculo de Totales:** El backend calcula subtotales y total (ignora precios enviados por cliente).
-4. **Persistencia Transaccional:** Si falla el guardado de algún detalle, se hace **rollback** del stock descontado.
+3. **Cálculo Inmutable:** El backend calcula los precios basándose en la base de datos, ignorando valores externos.
+4. **Persistencia Atómica:** Cabecera y detalles se guardan juntos. En caso de error, se hace rollback del stock descontado.
 
----
-
-## 📌 Endpoints principales
+## 📡 Endpoints Principales
 
 ### 📍 Sucursales (`/branches`)
 
-* `GET /branches`: Listar todas.
-* `POST /branches`: Crear (valida nombres únicos).
-* `DELETE /branches/{id}`: Borrado lógico/físico (protegido si tiene ventas).
+* `POST /branches` - Alta de sucursal (Validación de unicidad).
+* `GET /branches` - Listado general.
 
-### 🛍️ Productos (`/products`)
+### 🛍️ Inventario (`/products`)
 
-* `GET /products`: Catálogo paginado. Filtros disponibles:
-* `name`: Búsqueda parcial.
-* `category`: Filtrado exacto.
-* `minPrice` / `maxPrice`: Rango de precios.
+* `GET /products` - Búsqueda paginada con filtros (`name`, `category`, `price`).
+* `GET /products/low-stock` - **Alert System**: Detecta productos a reponer en cada sucursal.
 
+### 💰 Transacciones (`/sales`)
 
-* `GET /products/all`: Lista completa (para dropdowns).
-* `GET /products/low-stock`: **[Nuevo]** Alerta de stock bajo (param `amount` opcional, default 10).
-* `POST /products`: Alta de producto.
+* `POST /sales` - Procesar nueva venta (Requiere rol **CASHIER** o superior).
+* `POST /sales/{id}/cancel` - **Anulación**: Revierte la venta y restaura el stock automáticamente (Solo **ADMIN/MANAGER**).
+* *(Nota: Las ventas son inmutables, no se permiten ediciones PUT, solo cancelaciones).*
 
-### 💰 Ventas (`/sales`)
+### 🔐 Auth & Auditoría
 
-* `POST /sales`: Registrar venta (Transaction Script).
-* `PUT /sales/{id}`: Modificar venta (Gestiona devolución y recálculo de stock).
-* `DELETE /sales/{id}`: Cancelar venta (Restaura el stock automáticamente).
+* `POST /api/auth/login` - Obtención de Token JWT.
+* `POST /api/auth/logout` - Invalida el token actual en Redis.
 
----
+## 📝 Ejemplo de Venta (Payload)
 
-## 🧾 Ejemplo de venta (JSON)
+**Request (`POST /sales`):**
 
 ```json
 {
   "branchId": 1,
-  "date": "2026-02-05",
+  "date": "2026-02-18",
   "details": [
-    { "productId": 1, "stock": 5 },
-    { "productId": 3, "stock": 2 }
+    {
+      "productId": 10,
+      "stock": 2
+    },
+    {
+      "productId": 5,
+      "stock": 1
+    }
   ]
 }
 
 ```
 
-**Respuesta exitosa:** Status `201 Created` con desglose de subtotales.
+**Respuesta (201 Created):**
 
----
+```json
+{
+    "id": 125,
+    "total": 3500.00,
+    "status": "REGISTERED",
+    "cashierName": "juan.perez",
+    "createdAt": "2026-02-18 10:30:00",
+    "details": [
+        {
+            "productId": 10,
+            "quantity": 2,
+            "subtotal": 2000.00
+        },
+        {
+            "productId": 5,
+            "quantity": 1,
+            "subtotal": 1500.00
+        }
+    ]
+}
 
-## 🔎 Herramientas y Accesos
+```
 
-| Herramienta | URL / Credenciales |
+## 🔎 Accesos
+
+| Recurso | URL |
 | --- | --- |
 | **Swagger UI** | `http://localhost:8080/swagger-ui/index.html` |
-| **API Docs (JSON)** | `http://localhost:8080/v3/api-docs` |
-| **MySQL (Docker)** | `jdbc:mysql://localhost:3307/supermarketdb` |
-| **Credenciales DB** | User: `root` / Pass: `123456` |
+| **Docs JSON** | `http://localhost:8080/v3/api-docs` |
+| **DB (MySQL)** | `jdbc:mysql://localhost:3307/supermarketdb` |
 
 ---
 
-## 🛠️ Stack Tecnológico
-
-| Capa | Tecnologías |
-| --- | --- |
-| **Backend** | Java 17, Spring Boot 3.4.1 |
-| **Datos** | Spring Data JPA, Hibernate, MySQL 8.0 (Docker) |
-| **Validación** | Jakarta Bean Validation |
-| **Testing** | JUnit 5, Mockito, Spring Boot Test |
-| **API Doc** | SpringDoc OpenAPI (Swagger) |
-| **Herramientas** | Maven Wrapper, Lombok, Docker Compose |
+**Autor:** Guillermo - Java Backend Developer
