@@ -22,6 +22,36 @@ import java.util.List;
 
 public class TestFixtures {
 
+    public static RegisterRequest userRegisterRequest() {
+        return RegisterRequest.builder()
+                .username("test-user")
+                .email("user@test.com")
+                .password("Password123!")
+                .firstName("Test")
+                .lastName("User")
+                .build();
+    }
+
+    public static RegisterRequest adminRegisterRequest() {
+        return RegisterRequest.builder()
+                .username("admin-test")
+                .email("admin@test.com")
+                .password("Admin123!")
+                .firstName("Admin")
+                .lastName("Test")
+                .build();
+    }
+
+    public static RegisterRequest cashierRegisterRequest() {
+        return RegisterRequest.builder()
+                .username("cashier-test")
+                .email("cashier@test.com")
+                .password("Cashier123!")
+                .firstName("Cashier")
+                .lastName("Test")
+                .build();
+    }
+
     public static Product defaultProduct() {
         return productWithId(1L);
     }
@@ -102,16 +132,6 @@ public class TestFixtures {
                 .build();
     }
 
-    public static SaleRequest saleRequestWithMultipleProducts() {
-        return SaleRequest.builder()
-                .branchId(1L)
-                .date(LocalDate.now())
-                .details(List.of(
-                        SaleDetailRequest.builder().productId(1L).stock(2).build(),
-                        SaleDetailRequest.builder().productId(2L).stock(3).build()))
-                .build();
-    }
-
     public static SaleRequest invalidSaleRequest() {
         return SaleRequest.builder()
                 .branchId(null)
@@ -154,53 +174,6 @@ public class TestFixtures {
                                 .unitPrice(new BigDecimal("2.50"))
                                 .subtotal(new BigDecimal("12.50"))
                                 .build()))
-                .build();
-    }
-
-    public static SaleDetailRequest saleDetailRequest(Long productId, Integer stock) {
-        return SaleDetailRequest.builder()
-                .productId(productId)
-                .stock(stock)
-                .build();
-    }
-
-    public static SaleDetail saleDetailWithProductAndStock(Product product, Integer stock) {
-        return SaleDetail.builder()
-                .stock(stock)
-                .product(product)
-                .price(product.getPrice())
-                .build();
-    }
-
-
-
-    public static RegisterRequest adminRegisterRequest() {
-        return RegisterRequest.builder()
-                .username("admin-test")
-                .email("admin@test.com")
-                .password("Admin123!")
-                .firstName("Admin")
-                .lastName("Test")
-                .build();
-    }
-
-    public static RegisterRequest cashierRegisterRequest() {
-        return RegisterRequest.builder()
-                .username("cashier-test")
-                .email("cashier@test.com")
-                .password("Cashier123!")
-                .firstName("Cashier")
-                .lastName("Test")
-                .build();
-    }
-
-    public static RegisterRequest managerRegisterRequest() {
-        return RegisterRequest.builder()
-                .username("manager-test")
-                .email("manager@test.com")
-                .password("Manager123!")
-                .firstName("Manager")
-                .lastName("Test")
                 .build();
     }
 }
