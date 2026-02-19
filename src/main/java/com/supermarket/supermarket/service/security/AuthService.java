@@ -1,6 +1,9 @@
 package com.supermarket.supermarket.service.security;
 
-import com.supermarket.supermarket.dto.auth.*;
+import com.supermarket.supermarket.dto.auth.AuthResponse;
+import com.supermarket.supermarket.dto.auth.LoginRequest;
+import com.supermarket.supermarket.dto.auth.RegisterRequest;
+import com.supermarket.supermarket.dto.auth.UserResponse;
 import com.supermarket.supermarket.exception.DuplicateResourceException;
 import com.supermarket.supermarket.exception.RateLimitExceededException;
 import com.supermarket.supermarket.model.AuditStatus;
@@ -16,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -57,8 +61,7 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .role(UserRole.USER)
-                .active(true)
+                .role(UserRole.CASHIER).active(true)
                 .build();
         User savedUser = userRepository.save(user);
         String token = jwtService.generateToken(savedUser);
@@ -70,6 +73,7 @@ public class AuthService {
                 .user(convertToUserResponse(savedUser))
                 .build();
     }
+
     public AuthResponse login(LoginRequest request) {
         String rateLimitKey = "login:" + request.getEmail();
 
@@ -108,6 +112,7 @@ public class AuthService {
             throw e;
         }
     }
+
     private UserResponse convertToUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())

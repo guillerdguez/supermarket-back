@@ -1,5 +1,6 @@
 package com.supermarket.supermarket.controller;
 
+import com.supermarket.supermarket.dto.sale.CancelSaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.service.business.SaleService;
@@ -10,14 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -29,7 +23,6 @@ import java.util.List;
 @Tag(name = "Sales", description = "Endpoints for supermarket sales management")
 @SecurityRequirement(name = "Bearer Authentication")
 public class SaleController {
-
     private final SaleService saleService;
 
     @GetMapping
@@ -58,11 +51,13 @@ public class SaleController {
         return ResponseEntity.created(location).body(created);
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    @Operation(summary = "Update an existing sale - Requires ADMIN or MANAGER role")
-    public ResponseEntity<SaleResponse> update(@PathVariable Long id, @Valid @RequestBody SaleRequest request) {
-        return ResponseEntity.ok(saleService.update(id, request));
+    @Operation(summary = "Cancel a sale - Requires ADMIN or MANAGER role")
+    public ResponseEntity<SaleResponse> cancel(
+            @PathVariable Long id,
+            @Valid @RequestBody CancelSaleRequest request) {
+        return ResponseEntity.ok(saleService.cancel(id, request));
     }
 
     @DeleteMapping("/{id}")
