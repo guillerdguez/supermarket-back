@@ -1,6 +1,7 @@
 package com.supermarket.supermarket.integration;
 
-import com.supermarket.supermarket.fixtures.TestFixtures;
+import com.supermarket.supermarket.dto.auth.AuthResponse;
+import com.supermarket.supermarket.helper.TestUserHelper;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.model.UserRole;
 import com.supermarket.supermarket.repository.ProductRepository;
@@ -8,7 +9,6 @@ import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.repository.UserRepository;
 import com.supermarket.supermarket.service.security.RateLimitService;
 import com.supermarket.supermarket.service.security.TokenBlacklistService;
- import com.supermarket.supermarket.helper.TestUserHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 
+import static com.supermarket.supermarket.fixtures.auth.AuthFixtures.adminRegisterRequest;
+import static com.supermarket.supermarket.fixtures.auth.AuthFixtures.cashierRegisterRequest;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,7 +31,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class PreAuthorizeIntegrationTest {
-
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -40,12 +41,10 @@ class PreAuthorizeIntegrationTest {
     private UserRepository userRepository;
     @Autowired
     private TestUserHelper testUserHelper;
-
     @MockitoBean
     private RateLimitService rateLimitService;
     @MockitoBean
     private TokenBlacklistService tokenBlacklistService;
-
     private Long testProductId;
     private String adminToken;
     private String cashierToken;
@@ -55,7 +54,6 @@ class PreAuthorizeIntegrationTest {
         saleRepository.deleteAll();
         productRepository.deleteAll();
         userRepository.deleteAll();
-
         Product product = Product.builder()
                 .name("Test Product")
                 .category("Test Category")
@@ -63,11 +61,10 @@ class PreAuthorizeIntegrationTest {
                 .build();
         product = productRepository.save(product);
         testProductId = product.getId();
-
         adminToken = testUserHelper.registerAndGetToken(
-                TestFixtures.adminRegisterRequest(), UserRole.ADMIN);
+                adminRegisterRequest(), UserRole.ADMIN);
         cashierToken = testUserHelper.registerAndGetToken(
-                TestFixtures.cashierRegisterRequest(), UserRole.CASHIER);
+                cashierRegisterRequest(), UserRole.CASHIER);
     }
 
     @Test
@@ -76,7 +73,6 @@ class PreAuthorizeIntegrationTest {
         mockMvc.perform(get("/products")
                         .header("Authorization", "Bearer " + cashierToken))
                 .andExpect(status().isOk());
-
         mockMvc.perform(delete("/products/" + testProductId)
                         .header("Authorization", "Bearer " + cashierToken))
                 .andExpect(status().isForbidden());
