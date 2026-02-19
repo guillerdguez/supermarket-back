@@ -52,7 +52,14 @@ CREATE TABLE IF NOT EXISTS sale (
     status VARCHAR(20),
     total DECIMAL(19, 2),
     branch_id BIGINT NOT NULL,
-    FOREIGN KEY (branch_id) REFERENCES branch(id)
+    created_by_id BIGINT,
+    created_at DATETIME,
+    cancelled_by_id BIGINT,
+    cancellation_reason VARCHAR(255),
+    cancelled_at DATETIME,
+    FOREIGN KEY (branch_id) REFERENCES branch(id),
+    FOREIGN KEY (created_by_id) REFERENCES users(id),
+    FOREIGN KEY (cancelled_by_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS sale_detail (
@@ -69,8 +76,7 @@ INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, 
 (1, 'admin', 'admin@supermarket.com', '$2a$10$Xx9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'System', 'Administrator', 'ADMIN', true),
 (2, 'manager1', 'manager@supermarket.com', '$2a$10$Yy9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhXz', 'Store', 'Manager', 'MANAGER', true),
 (3, 'cashier1', 'cashier@supermarket.com', '$2a$10$Zz9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhYa', 'John', 'Cashier', 'CASHIER', true),
-(4, 'testuser', 'user@supermarket.com', '$2a$10$Aa9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhZb', 'Test', 'User', 'USER', true);
-
+(4, 'testuser', 'user@supermarket.com', '$2a$10$Aa9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhZb', 'Test', 'User', 'CASHIER', true);
 INSERT IGNORE INTO branch (id, name, address) VALUES
 (1, 'Central Branch', '123 Main Avenue, Central City'),
 (2, 'North Branch', '456 North Street, North Zone'),

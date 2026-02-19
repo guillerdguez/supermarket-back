@@ -33,7 +33,7 @@ public class TestUserHelper {
                 .andExpect(status().isCreated());
 
          var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado tras registro"));
+                .orElseThrow(() -> new RuntimeException("User not found after registration"));
         user.setRole(role);
         userRepository.save(user);
 

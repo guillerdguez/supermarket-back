@@ -50,7 +50,7 @@ class SecurityIntegrationTest {
     void shouldAuthenticateAndAccessProtectedEndpoint() throws Exception {
         String token = testUserHelper.registerAndGetToken(
                 userRegisterRequest(),
-                UserRole.USER
+                UserRole.CASHIER
         );
         mockMvc.perform(get("/branches")
                         .header("Authorization", "Bearer " + token))
