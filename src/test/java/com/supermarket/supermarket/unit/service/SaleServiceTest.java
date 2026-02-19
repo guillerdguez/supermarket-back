@@ -5,12 +5,8 @@ import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.exception.InsufficientStockException;
 import com.supermarket.supermarket.exception.InvalidSaleStateException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
-import com.supermarket.supermarket.fixtures.TestFixtures;
 import com.supermarket.supermarket.mapper.SaleMapper;
-import com.supermarket.supermarket.model.Branch;
-import com.supermarket.supermarket.model.Product;
-import com.supermarket.supermarket.model.Sale;
-import com.supermarket.supermarket.model.SaleStatus;
+import com.supermarket.supermarket.model.*;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
@@ -22,8 +18,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.Optional;
 
+import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.defaultBranch;
+import static com.supermarket.supermarket.fixtures.product.ProductFixtures.defaultProduct;
+import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,42 +34,33 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class SaleServiceTest {
-
     @Mock
     private SaleRepository saleRepository;
-
     @Mock
     private InventoryService inventoryService;
-
     @Mock
     private BranchRepository branchRepository;
-
     @Mock
     private ProductRepository productRepository;
-
     @Mock
     private SaleMapper saleMapper;
-
     @InjectMocks
     private SaleServiceImpl saleService;
 
     @Test
     @DisplayName("CREATE - should create sale and reduce stock")
     void create_WithSufficientStock_ShouldCreate() {
-        SaleRequest request = TestFixtures.validSaleRequest();
-        Branch branch = TestFixtures.defaultBranch();
-        Product product = TestFixtures.defaultProduct();
-        Sale sale = TestFixtures.saleWithDetails();
-        SaleResponse response = TestFixtures.saleResponse();
-
+        SaleRequest request = validSaleRequest();
+        Branch branch = defaultBranch();
+        Product product = defaultProduct();
+        Sale sale = saleWithDetails();
+        SaleResponse response = saleResponse();
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(saleMapper.toEntity(request)).willReturn(sale);
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
         given(saleRepository.save(any(Sale.class))).willReturn(sale);
         given(saleMapper.toResponse(sale)).willReturn(response);
-
         SaleResponse result = saleService.create(request);
-
         assertThat(result).isNotNull();
         then(inventoryService).should().validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
         then(productRepository).should().findById(1L);
@@ -79,18 +70,15 @@ class SaleServiceTest {
     @Test
     @DisplayName("CREATE - should throw exception when stock is insufficient")
     void create_WithInsufficientStock_ShouldThrowException() {
-        SaleRequest request = TestFixtures.validSaleRequest();
-        Branch branch = TestFixtures.defaultBranch();
-        Sale sale = TestFixtures.saleWithDetails();
-
+        SaleRequest request = validSaleRequest();
+        Branch branch = defaultBranch();
+        Sale sale = saleWithDetails();
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(saleMapper.toEntity(request)).willReturn(sale);
         willThrow(new InsufficientStockException("Insufficient stock"))
                 .given(inventoryService).validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
-
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(InsufficientStockException.class);
-
         then(inventoryService).should().validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
         then(productRepository).shouldHaveNoInteractions();
         then(saleRepository).should(never()).save(any());
@@ -99,16 +87,13 @@ class SaleServiceTest {
     @Test
     @DisplayName("CREATE - should throw exception when branch not found")
     void create_WhenBranchNotFound_ShouldThrowException() {
-        SaleRequest request = TestFixtures.validSaleRequest();
+        SaleRequest request = validSaleRequest();
         request.setBranchId(999L);
-        Sale sale = TestFixtures.saleWithDetails();
-
+        Sale sale = saleWithDetails();
         given(branchRepository.findById(999L)).willReturn(Optional.empty());
         given(saleMapper.toEntity(request)).willReturn(sale);
-
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(ResourceNotFoundException.class);
-
         then(inventoryService).shouldHaveNoInteractions();
         then(productRepository).shouldHaveNoInteractions();
         then(saleRepository).should(never()).save(any());
@@ -117,19 +102,16 @@ class SaleServiceTest {
     @Test
     @DisplayName("CREATE - should throw exception when product not found")
     void create_WhenProductNotFound_ShouldThrowException() {
-        SaleRequest request = TestFixtures.validSaleRequest();
+        SaleRequest request = validSaleRequest();
         request.getDetails().get(0).setProductId(999L);
-        Branch branch = TestFixtures.defaultBranch();
-        Sale sale = TestFixtures.saleWithDetails();
-
+        Branch branch = defaultBranch();
+        Sale sale = saleWithDetails();
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(saleMapper.toEntity(request)).willReturn(sale);
         given(productRepository.findById(999L)).willReturn(Optional.empty());
-
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Product not found");
-
         then(inventoryService).should().validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
         then(productRepository).should().findById(999L);
         then(saleRepository).should(never()).save(any());
@@ -139,22 +121,19 @@ class SaleServiceTest {
     @DisplayName("UPDATE - should update sale")
     void update_ShouldUpdateSale() {
         Long id = 100L;
-        SaleRequest request = TestFixtures.validSaleRequest();
-        Sale existingSale = TestFixtures.saleWithDetails();
+        SaleRequest request = validSaleRequest();
+        Sale existingSale = saleWithDetails();
         existingSale.setId(id);
         existingSale.setStatus(SaleStatus.REGISTERED);
-        Product product = TestFixtures.defaultProduct();
-        SaleResponse response = TestFixtures.saleResponse();
-
+        Product product = defaultProduct();
+        SaleResponse response = saleResponse();
         given(saleRepository.findWithDetailsById(id)).willReturn(Optional.of(existingSale));
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
         given(saleRepository.save(existingSale)).willReturn(existingSale);
         given(saleMapper.toResponse(existingSale)).willReturn(response);
-
         SaleResponse result = saleService.update(id, request);
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(100L);
-
         then(inventoryService).should().restoreStockBatch(existingSale.getBranch().getId(), existingSale.getDetails());
         then(inventoryService).should().validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
         then(saleRepository).should().save(existingSale);
@@ -164,12 +143,10 @@ class SaleServiceTest {
     @DisplayName("UPDATE - should throw exception when sale is cancelled")
     void update_WhenSaleCancelled_ShouldThrowException() {
         Long id = 100L;
-        SaleRequest request = TestFixtures.validSaleRequest();
-        Sale cancelledSale = TestFixtures.saleWithDetails();
+        SaleRequest request = validSaleRequest();
+        Sale cancelledSale = saleWithDetails();
         cancelledSale.setStatus(SaleStatus.CANCELLED);
-
         given(saleRepository.findWithDetailsById(id)).willReturn(Optional.of(cancelledSale));
-
         assertThatThrownBy(() -> saleService.update(id, request))
                 .isInstanceOf(InvalidSaleStateException.class);
     }
@@ -178,16 +155,13 @@ class SaleServiceTest {
     @DisplayName("GET BY ID - should return sale")
     void getById_ShouldReturnSale() {
         Long id = 100L;
-        Sale sale = TestFixtures.saleWithDetails();
-        SaleResponse response = TestFixtures.saleResponse();
-
+        Sale sale = saleWithDetails();
+        SaleResponse response = saleResponse();
         given(saleRepository.findWithDetailsById(id)).willReturn(Optional.of(sale));
         given(saleMapper.toResponse(sale)).willReturn(response);
-
         SaleResponse result = saleService.getById(id);
-
         assertThat(result).isNotNull();
-        assertThat(result.getTotal()).isEqualTo(TestFixtures.saleResponse().getTotal());
+        assertThat(result.getTotal()).isEqualTo(saleResponse().getTotal());
     }
 
     @Test
@@ -195,7 +169,6 @@ class SaleServiceTest {
     void getById_WhenNotFound_ShouldThrowException() {
         Long id = 999L;
         given(saleRepository.findWithDetailsById(id)).willReturn(Optional.empty());
-
         assertThatThrownBy(() -> saleService.getById(id))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
@@ -204,13 +177,10 @@ class SaleServiceTest {
     @DisplayName("DELETE - should delete sale and restore stock")
     void delete_ShouldDeleteSale() {
         Long id = 100L;
-        Sale sale = TestFixtures.saleWithDetails();
+        Sale sale = saleWithDetails();
         sale.setStatus(SaleStatus.REGISTERED);
-
         given(saleRepository.findById(id)).willReturn(Optional.of(sale));
-
         saleService.delete(id);
-
         then(inventoryService).should().restoreStockBatch(sale.getBranch().getId(), sale.getDetails());
         then(saleRepository).should().delete(sale);
     }
@@ -219,13 +189,10 @@ class SaleServiceTest {
     @DisplayName("DELETE - should not restore stock if sale is cancelled")
     void delete_WhenSaleCancelled_ShouldNotRestoreStock() {
         Long id = 100L;
-        Sale sale = TestFixtures.saleWithDetails();
+        Sale sale = saleWithDetails();
         sale.setStatus(SaleStatus.CANCELLED);
-
         given(saleRepository.findById(id)).willReturn(Optional.of(sale));
-
         saleService.delete(id);
-
         then(inventoryService).shouldHaveNoInteractions();
         then(saleRepository).should().delete(sale);
     }
@@ -235,10 +202,8 @@ class SaleServiceTest {
     void delete_WhenNotFound_ShouldThrowException() {
         Long id = 999L;
         given(saleRepository.findById(id)).willReturn(Optional.empty());
-
         assertThatThrownBy(() -> saleService.delete(id))
                 .isInstanceOf(ResourceNotFoundException.class);
-
         then(inventoryService).shouldHaveNoInteractions();
         then(saleRepository).should(never()).delete(any());
     }

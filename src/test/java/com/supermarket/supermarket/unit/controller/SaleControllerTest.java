@@ -3,13 +3,10 @@ package com.supermarket.supermarket.unit.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.supermarket.supermarket.controller.SaleController;
-import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
-import com.supermarket.supermarket.fixtures.TestFixtures;
 import com.supermarket.supermarket.service.business.SaleService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +19,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
+import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.*;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,13 +27,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 @ExtendWith(MockitoExtension.class)
 class SaleControllerTest {
     private MockMvc mockMvc;
-
     @Mock
     private SaleService saleService;
-
     private ObjectMapper objectMapper;
     private SaleController saleController;
 
@@ -52,7 +49,7 @@ class SaleControllerTest {
     @Test
     @DisplayName("GET /sales - should return list")
     void getAll_ShouldReturnList() throws Exception {
-        given(saleService.getAll()).willReturn(List.of(TestFixtures.saleResponse()));
+        given(saleService.getAll()).willReturn(List.of(saleResponse()));
         mockMvc.perform(get("/sales"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
@@ -61,7 +58,7 @@ class SaleControllerTest {
     @Test
     @DisplayName("GET /sales/{id} - should return sale")
     void getById_ShouldReturnSale() throws Exception {
-        given(saleService.getById(100L)).willReturn(TestFixtures.saleResponse());
+        given(saleService.getById(100L)).willReturn(saleResponse());
         mockMvc.perform(get("/sales/100"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(12.50));
@@ -79,11 +76,11 @@ class SaleControllerTest {
     @Test
     @DisplayName("POST /sales - should create sale")
     void create_ShouldReturn201() throws Exception {
-        SaleResponse response = TestFixtures.saleResponse();
-        given(saleService.create(any(SaleRequest.class))).willReturn(response);
+        SaleResponse response = saleResponse();
+        given(saleService.create(any())).willReturn(response);
         mockMvc.perform(post("/sales")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(TestFixtures.validSaleRequest())))
+                        .content(objectMapper.writeValueAsString(validSaleRequest())))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"))
                 .andExpect(jsonPath("$.total").value(12.50));
@@ -94,18 +91,18 @@ class SaleControllerTest {
     void create_WithInvalidRequest_ShouldReturn400() throws Exception {
         mockMvc.perform(post("/sales")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(TestFixtures.invalidSaleRequest())))
+                        .content(objectMapper.writeValueAsString(invalidSaleRequest())))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     @DisplayName("PUT /sales/{id} - should update sale")
     void update_ShouldReturnUpdatedSale() throws Exception {
-        SaleResponse response = TestFixtures.saleResponse();
-        given(saleService.update(eq(100L), any(SaleRequest.class))).willReturn(response);
+        SaleResponse response = saleResponse();
+        given(saleService.update(eq(100L), any())).willReturn(response);
         mockMvc.perform(put("/sales/100")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(TestFixtures.validSaleRequest())))
+                        .content(objectMapper.writeValueAsString(validSaleRequest())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(12.50));
     }

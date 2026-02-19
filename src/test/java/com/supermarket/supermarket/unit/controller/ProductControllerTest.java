@@ -3,11 +3,9 @@ package com.supermarket.supermarket.unit.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.supermarket.supermarket.controller.ProductController;
-import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
 import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
-import com.supermarket.supermarket.fixtures.TestFixtures;
 import com.supermarket.supermarket.service.business.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,29 +24,22 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.math.BigDecimal;
 import java.util.List;
 
+import static com.supermarket.supermarket.fixtures.product.ProductFixtures.*;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductControllerTest {
     private MockMvc mockMvc;
-
     @Mock
     private ProductService productService;
-
     private ObjectMapper objectMapper;
     private ProductController productController;
 
@@ -57,82 +48,96 @@ class ProductControllerTest {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         productController = new ProductController(productService);
-
         PageableHandlerMethodArgumentResolver pageableResolver = new PageableHandlerMethodArgumentResolver();
         SortHandlerMethodArgumentResolver sortResolver = new SortHandlerMethodArgumentResolver();
-
-        mockMvc = MockMvcBuilders.standaloneSetup(productController).setCustomArgumentResolvers(pageableResolver, sortResolver).setControllerAdvice(new GlobalExceptionHandler()).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(productController)
+                .setCustomArgumentResolvers(pageableResolver, sortResolver)
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
     }
 
     @Test
     @DisplayName("GET /products - should return paginated list")
     void getAll_ShouldReturnPaginatedList() throws Exception {
-        Page<ProductResponse> productPage = new PageImpl<>(List.of(TestFixtures.productResponse()), PageRequest.of(0, 10), 1);
-
+        Page<ProductResponse> productPage = new PageImpl<>(List.of(productResponse()), PageRequest.of(0, 10), 1);
         given(productService.getAll(any(Specification.class), any(Pageable.class))).willReturn(productPage);
-
-        mockMvc.perform(get("/products").param("page", "0").param("size", "10")).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.totalElements").value(1));
+        mockMvc.perform(get("/products").param("page", "0").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
     @DisplayName("GET /products/all - should return simple list")
     void getAllList_ShouldReturnList() throws Exception {
-        given(productService.getAllForDropdown()).willReturn(List.of(TestFixtures.productResponse()));
-
-        mockMvc.perform(get("/products/all")).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(1)));
+        given(productService.getAllForDropdown()).willReturn(List.of(productResponse()));
+        mockMvc.perform(get("/products/all"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
     }
 
     @Test
     @DisplayName("GET /products/{id} - should return product")
     void getById_ShouldReturnProduct() throws Exception {
-        given(productService.getById(1L)).willReturn(TestFixtures.productResponse());
-
-        mockMvc.perform(get("/products/1")).andExpect(status().isOk()).andExpect(jsonPath("$.name").value("Premium Rice"));
+        given(productService.getById(1L)).willReturn(productResponse());
+        mockMvc.perform(get("/products/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Premium Rice"));
     }
 
     @Test
     @DisplayName("GET /products/{id} - should return 404 when not found")
     void getById_WhenNotFound_ShouldReturn404() throws Exception {
         given(productService.getById(999L)).willThrow(new ResourceNotFoundException("Product not found"));
-
-        mockMvc.perform(get("/products/999")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/products/999"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("POST /products - should create product")
     void create_ShouldReturn201() throws Exception {
-        ProductResponse response = TestFixtures.productResponse();
-        given(productService.create(any(ProductRequest.class))).willReturn(response);
-
-        mockMvc.perform(post("/products").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(TestFixtures.validProductRequest()))).andExpect(status().isCreated()).andExpect(header().exists("Location")).andExpect(jsonPath("$.name").value("Premium Rice"));
+        ProductResponse response = productResponse();
+        given(productService.create(any())).willReturn(response);
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validProductRequest())))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(jsonPath("$.name").value("Premium Rice"));
     }
 
     @Test
     @DisplayName("POST /products - should return 400 when invalid request")
     void create_WithInvalidRequest_ShouldReturn400() throws Exception {
-        mockMvc.perform(post("/products").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(TestFixtures.invalidProductRequest()))).andExpect(status().isBadRequest());
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidProductRequest())))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     @DisplayName("PUT /products/{id} - should update product")
     void update_ShouldReturnUpdatedProduct() throws Exception {
-        ProductResponse response = TestFixtures.productResponse();
-        given(productService.update(eq(1L), any(ProductRequest.class))).willReturn(response);
-
-        mockMvc.perform(put("/products/1").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(TestFixtures.validProductRequest()))).andExpect(status().isOk()).andExpect(jsonPath("$.name").value("Premium Rice"));
+        ProductResponse response = productResponse();
+        given(productService.update(eq(1L), any())).willReturn(response);
+        mockMvc.perform(put("/products/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validProductRequest())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Premium Rice"));
     }
 
     @Test
     @DisplayName("DELETE /products/{id} - should return 204")
     void delete_ShouldReturnNoContent() throws Exception {
-        mockMvc.perform(delete("/products/1")).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/products/1"))
+                .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("DELETE /products/{id} - should return 404 when not found")
     void delete_WhenNotFound_ShouldReturn404() throws Exception {
         doThrow(new ResourceNotFoundException("Product not found")).when(productService).delete(999L);
-
-        mockMvc.perform(delete("/products/999")).andExpect(status().isNotFound());
+        mockMvc.perform(delete("/products/999"))
+                .andExpect(status().isNotFound());
     }
 }
