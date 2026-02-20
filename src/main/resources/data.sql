@@ -33,6 +33,21 @@ CREATE TABLE IF NOT EXISTS product (
     version INT
 );
 
+CREATE TABLE IF NOT EXISTS cash_registers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    branch_id BIGINT NOT NULL,
+    opening_balance DECIMAL(19, 2) NOT NULL,
+    closing_balance DECIMAL(19, 2),
+    opening_time DATETIME NOT NULL,
+    closing_time DATETIME,
+    status VARCHAR(20) NOT NULL,
+    opened_by_id BIGINT NOT NULL,
+    closed_by_id BIGINT,
+    FOREIGN KEY (branch_id) REFERENCES branch(id),
+    FOREIGN KEY (opened_by_id) REFERENCES users(id),
+    FOREIGN KEY (closed_by_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS branch_inventory (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     branch_id BIGINT NOT NULL,
@@ -52,12 +67,14 @@ CREATE TABLE IF NOT EXISTS sale (
     status VARCHAR(20),
     total DECIMAL(19, 2),
     branch_id BIGINT NOT NULL,
+    cash_register_id BIGINT,
     created_by_id BIGINT,
     created_at DATETIME,
     cancelled_by_id BIGINT,
     cancellation_reason VARCHAR(255),
     cancelled_at DATETIME,
     FOREIGN KEY (branch_id) REFERENCES branch(id),
+    FOREIGN KEY (cash_register_id) REFERENCES cash_registers(id),
     FOREIGN KEY (created_by_id) REFERENCES users(id),
     FOREIGN KEY (cancelled_by_id) REFERENCES users(id)
 );
@@ -72,11 +89,22 @@ CREATE TABLE IF NOT EXISTS sale_detail (
     FOREIGN KEY (product_id) REFERENCES product(id)
 );
 
+CREATE TABLE IF NOT EXISTS payments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sale_id BIGINT NOT NULL,
+    amount DECIMAL(19, 2) NOT NULL,
+    payment_type VARCHAR(20) NOT NULL,
+    payment_date DATETIME NOT NULL,
+    reference VARCHAR(255),
+    FOREIGN KEY (sale_id) REFERENCES sale(id)
+);
+
 INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, role, active) VALUES
 (1, 'admin', 'admin@supermarket.com', '$2a$10$Xx9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'System', 'Administrator', 'ADMIN', true),
 (2, 'manager1', 'manager@supermarket.com', '$2a$10$Yy9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhXz', 'Store', 'Manager', 'MANAGER', true),
 (3, 'cashier1', 'cashier@supermarket.com', '$2a$10$Zz9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhYa', 'John', 'Cashier', 'CASHIER', true),
 (4, 'testuser', 'user@supermarket.com', '$2a$10$Aa9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhZb', 'Test', 'User', 'CASHIER', true);
+
 INSERT IGNORE INTO branch (id, name, address) VALUES
 (1, 'Central Branch', '123 Main Avenue, Central City'),
 (2, 'North Branch', '456 North Street, North Zone'),
@@ -179,6 +207,8 @@ ALTER TABLE users AUTO_INCREMENT = 5;
 ALTER TABLE audit_logs AUTO_INCREMENT = 1;
 ALTER TABLE branch AUTO_INCREMENT = 6;
 ALTER TABLE product AUTO_INCREMENT = 31;
+ALTER TABLE cash_registers AUTO_INCREMENT = 1;
 ALTER TABLE branch_inventory AUTO_INCREMENT = 151;
 ALTER TABLE sale AUTO_INCREMENT = 26;
 ALTER TABLE sale_detail AUTO_INCREMENT = 71;
+ALTER TABLE payments AUTO_INCREMENT = 1;
