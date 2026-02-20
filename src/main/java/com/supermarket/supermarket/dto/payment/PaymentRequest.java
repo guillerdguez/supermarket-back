@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.dto.cashregister;
+package com.supermarket.supermarket.dto.payment;
 
 import com.supermarket.supermarket.model.PaymentType;
 import jakarta.validation.constraints.NotNull;
