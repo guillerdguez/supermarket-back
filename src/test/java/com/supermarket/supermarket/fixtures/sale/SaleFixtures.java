@@ -7,6 +7,7 @@ import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailResponse;
 import com.supermarket.supermarket.fixtures.branch.BranchFixtures;
 import com.supermarket.supermarket.fixtures.product.ProductFixtures;
+import com.supermarket.supermarket.fixtures.user.UserFixtures;
 import com.supermarket.supermarket.model.*;
 import lombok.experimental.UtilityClass;
 
@@ -18,18 +19,6 @@ import java.util.List;
 
 @UtilityClass
 public class SaleFixtures {
-
-    public static User defaultCashier() {
-        return User.builder()
-                .id(1L)
-                .username("cashier-test")
-                .email("cashier@test.com")
-                .firstName("John")
-                .lastName("Cashier")
-                .role(UserRole.CASHIER)
-                .active(true)
-                .build();
-    }
 
     public static SaleRequest validSaleRequest() {
         return SaleRequest.builder()
@@ -65,8 +54,7 @@ public class SaleFixtures {
     public static Sale saleWithDetails() {
         Branch branch = BranchFixtures.defaultBranch();
         Product product = ProductFixtures.defaultProduct();
-        User cashier = defaultCashier();
-
+        User cashier = UserFixtures.defaultCashier();
         Sale sale = Sale.builder()
                 .id(100L)
                 .date(LocalDate.now())
@@ -77,7 +65,6 @@ public class SaleFixtures {
                 .createdAt(LocalDateTime.now())
                 .details(new ArrayList<>())
                 .build();
-
         SaleDetail detail = SaleDetail.builder()
                 .stock(5)
                 .price(new BigDecimal("2.50"))
