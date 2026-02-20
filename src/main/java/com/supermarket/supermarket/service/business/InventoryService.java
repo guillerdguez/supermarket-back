@@ -21,4 +21,6 @@ public interface InventoryService {
     void validateAndReduceStockBatch(Long branchId, List<SaleDetailRequest> details);
 
     void restoreStockBatch(Long branchId, List<SaleDetail> details);
+
+    void increaseStock(Long branchId, Long productId, Integer quantity);
 }

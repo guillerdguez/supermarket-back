@@ -13,7 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -68,6 +70,15 @@ public class InventoryServiceImpl implements InventoryService {
                 productId, branchId, quantity, inventory.getStock());
     }
 
+    @Override
+    @Transactional
+    public void increaseStock(Long branchId, Long productId, Integer quantity) {
+        BranchInventory inventory = findInventory(branchId, productId);
+        inventory.setStock(inventory.getStock() + quantity);
+        branchInventoryRepository.save(inventory);
+        log.info("Increased stock for product {} in branch {} by {}. New stock: {}",
+                productId, branchId, quantity, inventory.getStock());
+    }
 
     @Transactional
     public void validateAndReduceStockBatch(Long branchId, List<SaleDetailRequest> details) {
