@@ -1,0 +1,26 @@
+package com.supermarket.supermarket.dto.cashregister;
+
+import com.supermarket.supermarket.model.PaymentType;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.*;
+import java.math.BigDecimal;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentRequest {
+    @NotNull(message = "Sale ID is required")
+    private Long saleId;
+
+    @NotNull(message = "Amount is required")
+    @Positive(message = "Amount must be positive")
+    private BigDecimal amount;
+
+    @NotNull(message = "Payment type is required")
+    private PaymentType paymentType;
+
+    private String reference;
+}
