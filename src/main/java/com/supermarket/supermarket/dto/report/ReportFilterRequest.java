@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.dto;
+package com.supermarket.supermarket.dto.report;
 
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.AllArgsConstructor;
