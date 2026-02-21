@@ -1,11 +1,13 @@
 package com.supermarket.supermarket.integration;
 
-import com.supermarket.supermarket.dto.auth.AuthResponse;
 import com.supermarket.supermarket.helper.TestUserHelper;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.repository.BranchInventoryRepository;
+import com.supermarket.supermarket.repository.PaymentRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.repository.StockTransferRepository;
 import com.supermarket.supermarket.repository.UserRepository;
 import com.supermarket.supermarket.service.security.RateLimitService;
 import com.supermarket.supermarket.service.security.TokenBlacklistService;
@@ -31,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class PreAuthorizeIntegrationTest {
+
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -41,6 +44,13 @@ class PreAuthorizeIntegrationTest {
     private UserRepository userRepository;
     @Autowired
     private TestUserHelper testUserHelper;
+    @Autowired
+    private PaymentRepository paymentRepository;
+    @Autowired
+    private StockTransferRepository stockTransferRepository;
+    @Autowired
+    private BranchInventoryRepository branchInventoryRepository;
+
     @MockitoBean
     private RateLimitService rateLimitService;
     @MockitoBean
@@ -49,11 +59,18 @@ class PreAuthorizeIntegrationTest {
     private String adminToken;
     private String cashierToken;
 
+
     @BeforeEach
     void setUp() throws Exception {
+        paymentRepository.deleteAll();
+        stockTransferRepository.deleteAll();
+        branchInventoryRepository.deleteAll();
+
         saleRepository.deleteAll();
+
         productRepository.deleteAll();
         userRepository.deleteAll();
+
         Product product = Product.builder()
                 .name("Test Product")
                 .category("Test Category")
@@ -61,6 +78,7 @@ class PreAuthorizeIntegrationTest {
                 .build();
         product = productRepository.save(product);
         testProductId = product.getId();
+
         adminToken = testUserHelper.registerAndGetToken(
                 adminRegisterRequest(), UserRole.ADMIN);
         cashierToken = testUserHelper.registerAndGetToken(
