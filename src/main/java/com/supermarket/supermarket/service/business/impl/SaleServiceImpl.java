@@ -3,7 +3,6 @@ package com.supermarket.supermarket.service.business.impl;
 import com.supermarket.supermarket.dto.sale.CancelSaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
-import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientPermissionsException;
 import com.supermarket.supermarket.exception.InvalidSaleStateException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
@@ -31,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,33 +44,49 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     public SaleResponse create(SaleRequest request) {
+        Sale sale = buildSale(request);
+        List<SaleDetail> details = buildSaleDetails(request, sale);
+
+        sale.getDetails().addAll(details);
+        sale.setTotal(calculateTotal(details));
+
+        return saleMapper.toResponse(saleRepo.save(sale));
+    }
+
+    private Sale buildSale(SaleRequest request) {
         User currentUser = getCurrentUser();
+        Branch branch = branchRepository.findById(request.getBranchId())
+                .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
 
         Sale sale = saleMapper.toEntity(request);
         sale.setStatus(SaleStatus.REGISTERED);
         sale.setDetails(new ArrayList<>());
         sale.setCreatedBy(currentUser);
+        sale.setBranch(branch);
+        return sale;
+    }
 
-        assignBranch(sale, request.getBranchId());
+    private List<SaleDetail> buildSaleDetails(SaleRequest request, Sale sale) {
         inventoryService.validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
 
-        BigDecimal saleTotal = BigDecimal.ZERO;
-        List<SaleDetail> saleDetails = new ArrayList<>();
-        for (SaleDetailRequest detailRequest : request.getDetails()) {
-            Product product = productRepository.findById(detailRequest.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-            SaleDetail saleDetail = SaleDetail.builder()
-                    .sale(sale)
-                    .product(product)
-                    .stock(detailRequest.getStock())
-                    .price(product.getPrice())
-                    .build();
-            saleDetails.add(saleDetail);
-            saleTotal = saleTotal.add(product.getPrice().multiply(BigDecimal.valueOf(detailRequest.getStock())));
-        }
-        sale.getDetails().addAll(saleDetails);
-        sale.setTotal(saleTotal);
-        return saleMapper.toResponse(saleRepo.save(sale));
+        return request.getDetails().stream()
+                .map(detailRequest -> {
+                    Product product = productRepository.findById(detailRequest.getProductId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                    return SaleDetail.builder()
+                            .sale(sale)
+                            .product(product)
+                            .stock(detailRequest.getStock())
+                            .price(product.getPrice())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private BigDecimal calculateTotal(List<SaleDetail> details) {
+        return details.stream()
+                .map(detail -> detail.getPrice().multiply(BigDecimal.valueOf(detail.getStock())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
