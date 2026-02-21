@@ -40,7 +40,7 @@ import java.util.Optional;
 import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.defaultBranch;
 import static com.supermarket.supermarket.fixtures.product.ProductFixtures.defaultProduct;
 import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.cancelledSaleResponse;
- import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.saleResponse;
+import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.saleResponse;
 import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.saleWithDetails;
 import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.validCancelRequest;
 import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.validSaleRequest;
@@ -133,10 +133,8 @@ class SaleServiceTest {
     void create_WhenBranchNotFound_ShouldThrowException() {
         SaleRequest request = validSaleRequest();
         request.setBranchId(999L);
-        Sale sale = saleWithDetails();
 
         given(branchRepository.findById(999L)).willReturn(Optional.empty());
-        given(saleMapper.toEntity(request)).willReturn(sale);
 
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(ResourceNotFoundException.class);
