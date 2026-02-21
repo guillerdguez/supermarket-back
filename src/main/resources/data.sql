@@ -1,4 +1,3 @@
-
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -121,7 +120,6 @@ CREATE TABLE IF NOT EXISTS payments (
     FOREIGN KEY (sale_id) REFERENCES sale(id)
 );
 
-
 INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, role, active) VALUES
 (1, 'admin', 'admin@supermarket.com', '$2a$10$Xx9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'System', 'Administrator', 'ADMIN', true),
 (2, 'manager1', 'manager@supermarket.com', '$2a$10$Yy9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhXz', 'Store', 'Manager', 'MANAGER', true),
@@ -155,20 +153,44 @@ INSERT IGNORE INTO product (id, name, category, price, version) VALUES
 INSERT IGNORE INTO branch_inventory (branch_id, product_id, stock, min_stock, last_restock_date, version)
 SELECT b.id, p.id, 50, 10, NOW(), 0 FROM product p CROSS JOIN branch b;
 
-INSERT IGNORE INTO sale (id, date, status, total, branch_id) VALUES
-(1, '2024-12-01', 'REGISTERED', 28501.50, 1), (2, '2024-12-01', 'REGISTERED', 12000.00, 1),
-(3, '2024-12-02', 'REGISTERED', 17600.75, 1), (4, '2024-12-02', 'CANCELLED', 8500.00, 1),
-(5, '2024-12-03', 'REGISTERED', 32400.00, 1), (6, '2024-12-01', 'REGISTERED', 15800.50, 2),
-(7, '2024-12-02', 'REGISTERED', 22400.00, 2), (8, '2024-12-03', 'REGISTERED', 3100.00, 2),
-(9, '2024-12-03', 'REGISTERED', 9850.75, 2), (10, '2024-12-04', 'REGISTERED', 45200.00, 2),
-(11, '2024-12-01', 'REGISTERED', 7200.00, 3), (12, '2024-12-02', 'REGISTERED', 15300.50, 3),
-(13, '2024-12-02', 'REGISTERED', 26800.00, 3), (14, '2024-12-03', 'REGISTERED', 18950.00, 3),
-(15, '2024-12-04', 'CANCELLED', 12500.00, 3), (16, '2024-12-01', 'REGISTERED', 8200.00, 4),
-(17, '2024-12-02', 'REGISTERED', 15450.50, 4), (18, '2024-12-03', 'REGISTERED', 23600.00, 4),
-(19, '2024-12-04', 'REGISTERED', 19200.75, 4), (20, '2024-12-04', 'REGISTERED', 30800.00, 4),
-(21, '2024-12-01', 'REGISTERED', 11200.00, 5), (22, '2024-12-02', 'REGISTERED', 18650.50, 5),
-(23, '2024-12-03', 'REGISTERED', 25400.00, 5), (24, '2024-12-04', 'REGISTERED', 17300.75, 5),
-(25, '2024-12-04', 'REGISTERED', 29600.00, 5);
+INSERT IGNORE INTO cash_registers (id, branch_id, opening_balance, closing_balance, opening_time, closing_time, status, opened_by_id, closed_by_id) VALUES
+(1, 1, 10000.00, 38600.00, '2024-12-01 08:00:00', '2024-12-01 20:00:00', 'CLOSED', 3, 2),
+(2, 1, 10000.00, 50100.75, '2024-12-02 08:00:00', '2024-12-02 20:00:00', 'CLOSED', 3, 2),
+(3, 1, 10000.00, 42400.00, '2024-12-03 08:00:00', '2024-12-03 20:00:00', 'CLOSED', 3, 2),
+(4, 2, 10000.00, 25900.50, '2024-12-01 08:00:00', '2024-12-01 20:00:00', 'CLOSED', 3, 2),
+(5, 2, 10000.00, 32300.00, '2024-12-02 08:00:00', '2024-12-02 20:00:00', 'CLOSED', 3, 2),
+(6, 3, 10000.00, 17200.00, '2024-12-01 08:00:00', '2024-12-01 20:00:00', 'CLOSED', 4, 2),
+(7, 3, 10000.00, 42100.50, '2024-12-02 08:00:00', '2024-12-02 20:00:00', 'CLOSED', 4, 2),
+(8, 4, 10000.00, 18200.00, '2024-12-01 08:00:00', '2024-12-01 20:00:00', 'CLOSED', 3, 1),
+(9, 5, 10000.00, 21200.00, '2024-12-01 08:00:00', '2024-12-01 20:00:00', 'CLOSED', 4, 1),
+(10, 1, 10000.00, NULL, '2024-12-04 08:00:00', NULL, 'OPEN', 3, NULL);
+
+INSERT IGNORE INTO sale (id, date, status, total, branch_id, cash_register_id, created_by_id, created_at, cancelled_by_id, cancellation_reason, cancelled_at) VALUES
+(1,  '2024-12-01', 'REGISTERED', 28501.50, 1, 1, 3, '2024-12-01 09:30:00', NULL, NULL, NULL),
+(2,  '2024-12-01', 'REGISTERED', 12000.00, 1, 1, 3, '2024-12-01 11:00:00', NULL, NULL, NULL),
+(3,  '2024-12-02', 'REGISTERED', 17600.75, 1, 2, 3, '2024-12-02 10:00:00', NULL, NULL, NULL),
+(4,  '2024-12-02', 'CANCELLED',  8500.00,  1, 2, 3, '2024-12-02 12:00:00', 2, 'Customer changed mind', '2024-12-02 12:30:00'),
+(5,  '2024-12-03', 'REGISTERED', 32400.00, 1, 3, 3, '2024-12-03 09:00:00', NULL, NULL, NULL),
+(6,  '2024-12-01', 'REGISTERED', 15800.50, 2, 4, 4, '2024-12-01 10:00:00', NULL, NULL, NULL),
+(7,  '2024-12-02', 'REGISTERED', 22400.00, 2, 5, 4, '2024-12-02 09:30:00', NULL, NULL, NULL),
+(8,  '2024-12-03', 'REGISTERED', 3100.00,  2, NULL, 4, '2024-12-03 14:00:00', NULL, NULL, NULL),
+(9,  '2024-12-03', 'REGISTERED', 9850.75,  2, NULL, 3, '2024-12-03 15:30:00', NULL, NULL, NULL),
+(10, '2024-12-04', 'REGISTERED', 45200.00, 2, NULL, 4, '2024-12-04 10:00:00', NULL, NULL, NULL),
+(11, '2024-12-01', 'REGISTERED', 7200.00,  3, 6, 4, '2024-12-01 09:00:00', NULL, NULL, NULL),
+(12, '2024-12-02', 'REGISTERED', 15300.50, 3, 7, 4, '2024-12-02 11:00:00', NULL, NULL, NULL),
+(13, '2024-12-02', 'REGISTERED', 26800.00, 3, 7, 3, '2024-12-02 13:00:00', NULL, NULL, NULL),
+(14, '2024-12-03', 'REGISTERED', 18950.00, 3, NULL, 3, '2024-12-03 10:30:00', NULL, NULL, NULL),
+(15, '2024-12-04', 'CANCELLED',  12500.00, 3, NULL, 4, '2024-12-04 09:00:00', 1, 'Duplicate sale entry', '2024-12-04 09:15:00'),
+(16, '2024-12-01', 'REGISTERED', 8200.00,  4, 8, 3, '2024-12-01 10:00:00', NULL, NULL, NULL),
+(17, '2024-12-02', 'REGISTERED', 15450.50, 4, NULL, 3, '2024-12-02 11:00:00', NULL, NULL, NULL),
+(18, '2024-12-03', 'REGISTERED', 23600.00, 4, NULL, 4, '2024-12-03 09:30:00', NULL, NULL, NULL),
+(19, '2024-12-04', 'REGISTERED', 19200.75, 4, NULL, 3, '2024-12-04 10:00:00', NULL, NULL, NULL),
+(20, '2024-12-04', 'REGISTERED', 30800.00, 4, NULL, 4, '2024-12-04 12:00:00', NULL, NULL, NULL),
+(21, '2024-12-01', 'REGISTERED', 11200.00, 5, 9, 3, '2024-12-01 09:30:00', NULL, NULL, NULL),
+(22, '2024-12-02', 'REGISTERED', 18650.50, 5, NULL, 4, '2024-12-02 10:00:00', NULL, NULL, NULL),
+(23, '2024-12-03', 'REGISTERED', 25400.00, 5, NULL, 3, '2024-12-03 11:00:00', NULL, NULL, NULL),
+(24, '2024-12-04', 'REGISTERED', 17300.75, 5, NULL, 4, '2024-12-04 09:30:00', NULL, NULL, NULL),
+(25, '2024-12-04', 'REGISTERED', 29600.00, 5, NULL, 3, '2024-12-04 11:00:00', NULL, NULL, NULL);
 
 INSERT IGNORE INTO sale_detail (id, stock, price, sale_id, product_id) VALUES
 (1, 2, 1200.50, 1, 1), (2, 1, 3500.00, 1, 3), (3, 3, 1500.00, 1, 6), (4, 1, 8500.00, 1, 11), (5, 2, 2500.00, 1, 17),
@@ -186,14 +208,51 @@ INSERT IGNORE INTO sale_detail (id, stock, price, sale_id, product_id) VALUES
 (61, 1, 700.00, 22, 10), (62, 2, 8500.00, 23, 11), (63, 1, 2800.00, 23, 14), (64, 4, 950.00, 23, 5), (65, 3, 1200.00, 24, 21),
 (66, 2, 1500.00, 24, 22), (67, 1, 2800.00, 24, 23), (68, 2, 4500.00, 25, 26), (69, 1, 8500.00, 25, 11), (70, 3, 2500.00, 25, 17);
 
+INSERT IGNORE INTO payments (id, sale_id, amount, payment_type, payment_date, reference) VALUES
+(1,  1,  28501.50, 'CASH',     '2024-12-01 09:35:00', NULL),
+(2,  2,  12000.00, 'CARD',     '2024-12-01 11:05:00', 'REF-001'),
+(3,  3,  17600.75, 'CASH',     '2024-12-02 10:10:00', NULL),
+(4,  5,  20000.00, 'CASH',     '2024-12-03 09:05:00', NULL),
+(5,  5,  12400.00, 'CARD',     '2024-12-03 09:07:00', 'REF-002'),
+(6,  6,  15800.50, 'TRANSFER', '2024-12-01 10:05:00', 'TRF-001'),
+(7,  7,  22400.00, 'CARD',     '2024-12-02 09:35:00', 'REF-003'),
+(8,  8,  3100.00,  'CASH',     '2024-12-03 14:05:00', NULL),
+(9,  9,  9850.75,  'CASH',     '2024-12-03 15:35:00', NULL),
+(10, 10, 45200.00, 'CARD',     '2024-12-04 10:05:00', 'REF-004'),
+(11, 11, 7200.00,  'CASH',     '2024-12-01 09:05:00', NULL),
+(12, 12, 15300.50, 'CARD',     '2024-12-02 11:05:00', 'REF-005'),
+(13, 13, 26800.00, 'CASH',     '2024-12-02 13:05:00', NULL),
+(14, 14, 18950.00, 'TRANSFER', '2024-12-03 10:35:00', 'TRF-002'),
+(15, 16, 8200.00,  'CASH',     '2024-12-01 10:05:00', NULL),
+(16, 17, 15450.50, 'CARD',     '2024-12-02 11:05:00', 'REF-006'),
+(17, 18, 23600.00, 'CASH',     '2024-12-03 09:35:00', NULL),
+(18, 19, 19200.75, 'CARD',     '2024-12-04 10:05:00', 'REF-007'),
+(19, 20, 30800.00, 'CASH',     '2024-12-04 12:05:00', NULL),
+(20, 21, 11200.00, 'CASH',     '2024-12-01 09:35:00', NULL),
+(21, 22, 18650.50, 'CARD',     '2024-12-02 10:05:00', 'REF-008'),
+(22, 23, 25400.00, 'CASH',     '2024-12-03 11:05:00', NULL),
+(23, 24, 17300.75, 'TRANSFER', '2024-12-04 09:35:00', 'TRF-003'),
+(24, 25, 29600.00, 'CARD',     '2024-12-04 11:05:00', 'REF-009');
+
+INSERT IGNORE INTO stock_transfers (id, source_branch_id, target_branch_id, product_id, quantity, status, requested_by_id, approved_by_id, requested_at, approved_at, completed_at, rejection_reason, version) VALUES
+(1, 1, 2, 11, 10, 'COMPLETED', 3, 2, '2024-12-01 07:00:00', '2024-12-01 07:30:00', '2024-12-01 08:00:00', NULL, 0),
+(2, 2, 3, 1,  20, 'COMPLETED', 4, 1, '2024-12-01 07:00:00', '2024-12-01 07:30:00', '2024-12-01 08:00:00', NULL, 0),
+(3, 3, 4, 5,  15, 'COMPLETED', 4, 2, '2024-12-02 07:00:00', '2024-12-02 07:30:00', '2024-12-02 08:00:00', NULL, 0),
+(4, 1, 5, 3,  8,  'COMPLETED', 3, 1, '2024-12-02 07:00:00', '2024-12-02 07:30:00', '2024-12-02 08:00:00', NULL, 0),
+(5, 4, 2, 17, 12, 'APPROVED',  3, 2, '2024-12-03 09:00:00', '2024-12-03 09:30:00', NULL, NULL, 0),
+(6, 5, 1, 26, 6,  'APPROVED',  4, 1, '2024-12-03 10:00:00', '2024-12-03 10:30:00', NULL, NULL, 0),
+(7, 2, 4, 12, 5,  'PENDING',   3, NULL, '2024-12-04 08:00:00', NULL, NULL, NULL, 0),
+(8, 3, 5, 7,  10, 'PENDING',   4, NULL, '2024-12-04 09:00:00', NULL, NULL, NULL, 0),
+(9, 1, 3, 15, 3,  'REJECTED',  3, 2, '2024-12-03 11:00:00', '2024-12-03 11:30:00', NULL, 'Insufficient demand in target branch', 0),
+(10, 5, 2, 20, 4, 'CANCELLED', 4, NULL, '2024-12-04 10:00:00', NULL, NULL, NULL, 0);
 
 ALTER TABLE users AUTO_INCREMENT = 5;
 ALTER TABLE audit_logs AUTO_INCREMENT = 1;
 ALTER TABLE branch AUTO_INCREMENT = 6;
 ALTER TABLE product AUTO_INCREMENT = 31;
-ALTER TABLE cash_registers AUTO_INCREMENT = 1;
+ALTER TABLE cash_registers AUTO_INCREMENT = 11;
 ALTER TABLE branch_inventory AUTO_INCREMENT = 151;
-ALTER TABLE stock_transfers AUTO_INCREMENT = 1;
+ALTER TABLE stock_transfers AUTO_INCREMENT = 11;
 ALTER TABLE sale AUTO_INCREMENT = 26;
 ALTER TABLE sale_detail AUTO_INCREMENT = 71;
-ALTER TABLE payments AUTO_INCREMENT = 1;
+ALTER TABLE payments AUTO_INCREMENT = 25;
