@@ -84,29 +84,26 @@ public class InventoryServiceImpl implements InventoryService {
     public void validateAndReduceStockBatch(Long branchId, List<SaleDetailRequest> details) {
         log.info("Reducing batch stock for branch {} with {} items", branchId, details.size());
 
-        validateDetailRequests(details);
-
-        Map<Long, Integer> requiredQuantities = details.stream()
-                .collect(Collectors.groupingBy(
-                        SaleDetailRequest::getProductId,
-                        Collectors.summingInt(SaleDetailRequest::getStock)
-                ));
-
+        Map<Long, Integer> requiredQuantities = buildQuantityMap(details);
         List<BranchInventory> inventories = loadInventories(branchId, requiredQuantities.keySet());
-
-        validateAllProductsExist(inventories, requiredQuantities.keySet());
-
         verifySufficientStockBatch(inventories, requiredQuantities);
 
-        inventories.forEach(inv -> {
-            int needed = requiredQuantities.get(inv.getProduct().getId());
-            inv.setStock(inv.getStock() - needed);
-        });
-
+        applyStockReduction(inventories, requiredQuantities);
         branchInventoryRepository.saveAll(inventories);
-        log.info("Stock reduced for {} products in branch {}", inventories.size(), branchId);
     }
 
+    private Map<Long, Integer> buildQuantityMap(List<SaleDetailRequest> details) {
+        validateDetailRequests(details);
+        return details.stream().collect(Collectors.groupingBy(
+                SaleDetailRequest::getProductId,
+                Collectors.summingInt(SaleDetailRequest::getStock)
+        ));
+    }
+
+    private void applyStockReduction(List<BranchInventory> inventories, Map<Long, Integer> required) {
+        inventories.forEach(inv -> inv.setStock(inv.getStock() - required.get(inv.getProduct().getId())));
+    }
+    
 
     @Transactional
     public void restoreStockBatch(Long branchId, List<SaleDetail> details) {
