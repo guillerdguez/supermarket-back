@@ -16,12 +16,12 @@ import com.supermarket.supermarket.model.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.SaleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -41,6 +41,7 @@ public class SaleServiceImpl implements SaleService {
     private final ProductRepository productRepository;
     private final SaleMapper saleMapper;
     private final InventoryService inventoryService;
+    private final SecurityUtils securityUtils;
 
     @Override
     public SaleResponse create(SaleRequest request) {
@@ -161,6 +162,6 @@ public class SaleServiceImpl implements SaleService {
     }
 
     private User getCurrentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return securityUtils.getCurrentUser();
     }
 }

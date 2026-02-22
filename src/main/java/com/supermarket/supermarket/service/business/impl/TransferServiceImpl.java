@@ -17,11 +17,11 @@ import com.supermarket.supermarket.model.UserRole;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.StockTransferRepository;
+import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.TransferService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +39,7 @@ public class TransferServiceImpl implements TransferService {
     private final ProductRepository productRepository;
     private final InventoryService inventoryService;
     private final TransferMapper transferMapper;
+    private final SecurityUtils securityUtils;
 
     @Override
     public TransferResponse requestTransfer(TransferRequest request) {
@@ -224,6 +225,6 @@ public class TransferServiceImpl implements TransferService {
     }
 
     private User getCurrentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return securityUtils.getCurrentUser();
     }
 }
