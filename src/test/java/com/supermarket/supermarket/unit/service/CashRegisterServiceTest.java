@@ -8,9 +8,13 @@ import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.fixtures.branch.BranchFixtures;
 import com.supermarket.supermarket.fixtures.user.UserFixtures;
 import com.supermarket.supermarket.mapper.CashRegisterMapper;
-import com.supermarket.supermarket.model.*;
+import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.CashRegister;
+import com.supermarket.supermarket.model.CashRegisterStatus;
+import com.supermarket.supermarket.model.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
+import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.impl.CashRegisterServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,17 +32,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class CashRegisterServiceTest {
+
     @Mock
     private CashRegisterRepository cashRegisterRepository;
     @Mock
     private BranchRepository branchRepository;
     @Mock
     private CashRegisterMapper cashRegisterMapper;
+    @Mock
+    private SecurityUtils securityUtils;
+
     @InjectMocks
     private CashRegisterServiceImpl cashRegisterService;
 
@@ -51,17 +55,13 @@ class CashRegisterServiceTest {
     @BeforeEach
     void setUp() {
         mockUser = UserFixtures.defaultCashier();
-        Authentication authentication = mock(Authentication.class);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
-        lenient().when(authentication.getPrincipal()).thenReturn(mockUser);
-        SecurityContextHolder.setContext(securityContext);
-
         branch = BranchFixtures.defaultBranch();
     }
 
     @Test
     void openRegister_shouldCreateNewOpenRegister() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         OpenRegisterRequest request = new OpenRegisterRequest(branch.getId(), new BigDecimal("100.00"));
         CashRegister savedRegister = CashRegister.builder()
                 .id(100L)
@@ -96,6 +96,8 @@ class CashRegisterServiceTest {
 
     @Test
     void openRegister_whenRegisterAlreadyOpen_shouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         OpenRegisterRequest request = new OpenRegisterRequest(branch.getId(), new BigDecimal("100.00"));
         given(branchRepository.findById(branch.getId())).willReturn(Optional.of(branch));
         given(cashRegisterRepository.findByBranchIdAndStatus(branch.getId(), CashRegisterStatus.OPEN))
@@ -107,6 +109,8 @@ class CashRegisterServiceTest {
 
     @Test
     void closeRegister_shouldCloseRegister() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         Long registerId = 100L;
         CloseRegisterRequest request = new CloseRegisterRequest(new BigDecimal("150.00"));
         CashRegister register = CashRegister.builder()

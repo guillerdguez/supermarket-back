@@ -6,14 +6,18 @@ import com.supermarket.supermarket.dto.cashregister.OpenRegisterRequest;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.CashRegisterMapper;
-import com.supermarket.supermarket.model.*;
+import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.CashRegister;
+import com.supermarket.supermarket.model.CashRegisterStatus;
+import com.supermarket.supermarket.model.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
+import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.CashRegisterService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -23,6 +27,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final CashRegisterRepository cashRegisterRepository;
     private final BranchRepository branchRepository;
     private final CashRegisterMapper cashRegisterMapper;
+    private final SecurityUtils securityUtils;
 
     @Override
     public CashRegisterResponse openRegister(OpenRegisterRequest request) {
@@ -73,6 +78,6 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     private User getCurrentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return securityUtils.getCurrentUser();
     }
 }

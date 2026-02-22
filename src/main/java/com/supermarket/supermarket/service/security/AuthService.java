@@ -10,6 +10,7 @@ import com.supermarket.supermarket.model.AuditStatus;
 import com.supermarket.supermarket.model.User;
 import com.supermarket.supermarket.model.UserRole;
 import com.supermarket.supermarket.repository.UserRepository;
+import com.supermarket.supermarket.security.SecurityUser;
 import com.supermarket.supermarket.validator.PasswordValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,10 +62,12 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .role(UserRole.CASHIER).active(true)
+                .role(UserRole.CASHIER)
+                .active(true)
                 .build();
         User savedUser = userRepository.save(user);
-        String token = jwtService.generateToken(savedUser);
+        SecurityUser securityUser = new SecurityUser(savedUser);
+        String token = jwtService.generateToken(securityUser);
         auditService.logAction(savedUser.getEmail(), "REGISTER_SUCCESS",
                 "New user registered", AuditStatus.SUCCESS);
         log.info("User registered successfully: {}", savedUser.getEmail());
@@ -76,9 +79,7 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         String rateLimitKey = "login:" + request.getEmail();
-
         rateLimitService.checkRateLimit(rateLimitKey);
-
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -86,22 +87,17 @@ public class AuthService {
                             request.getPassword()
                     )
             );
-
-            User user = (User) authentication.getPrincipal();
-            String token = jwtService.generateToken(user);
-
+            SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
+            User user = securityUser.getUser();
+            String token = jwtService.generateToken(securityUser);
             rateLimitService.resetRateLimit(rateLimitKey);
-
             auditService.logAction(user.getEmail(), "LOGIN_SUCCESS",
                     "User logged in successfully", AuditStatus.SUCCESS);
-
             log.info("User logged in successfully: {}", user.getEmail());
-
             return AuthResponse.builder()
                     .token(token)
                     .user(convertToUserResponse(user))
                     .build();
-
         } catch (RateLimitExceededException e) {
             auditService.logAction(request.getEmail(), "LOGIN_FAILED",
                     "Rate limit exceeded", AuditStatus.FAILED);

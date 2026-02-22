@@ -16,9 +16,9 @@ import com.supermarket.supermarket.model.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.impl.SaleServiceImpl;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,9 +30,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,12 +48,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class SaleServiceTest {
+
     @Mock
     private SaleRepository saleRepository;
     @Mock
@@ -67,6 +63,9 @@ class SaleServiceTest {
     private ProductRepository productRepository;
     @Mock
     private SaleMapper saleMapper;
+    @Mock
+    private SecurityUtils securityUtils;
+
     @InjectMocks
     private SaleServiceImpl saleService;
 
@@ -75,21 +74,13 @@ class SaleServiceTest {
     @BeforeEach
     void setUp() {
         mockUser = defaultCashier();
-        Authentication authentication = mock(Authentication.class);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
-        lenient().when(authentication.getPrincipal()).thenReturn(mockUser);
-        SecurityContextHolder.setContext(securityContext);
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
     }
 
     @Test
     @DisplayName("CREATE - should create sale and reduce stock")
     void create_WithSufficientStock_ShouldCreate() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         SaleRequest request = validSaleRequest();
         Branch branch = defaultBranch();
         Product product = defaultProduct();
@@ -113,6 +104,8 @@ class SaleServiceTest {
     @Test
     @DisplayName("CREATE - should throw exception when stock is insufficient")
     void create_WithInsufficientStock_ShouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         SaleRequest request = validSaleRequest();
         Branch branch = defaultBranch();
         Sale sale = saleWithDetails();
@@ -131,6 +124,8 @@ class SaleServiceTest {
     @Test
     @DisplayName("CREATE - should throw exception when branch not found")
     void create_WhenBranchNotFound_ShouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         SaleRequest request = validSaleRequest();
         request.setBranchId(999L);
 
@@ -146,6 +141,8 @@ class SaleServiceTest {
     @Test
     @DisplayName("CREATE - should throw exception when product not found")
     void create_WhenProductNotFound_ShouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         SaleRequest request = validSaleRequest();
         request.getDetails().get(0).setProductId(999L);
         Branch branch = defaultBranch();
@@ -164,6 +161,8 @@ class SaleServiceTest {
     @Test
     @DisplayName("CANCEL - should cancel sale and restore stock")
     void cancel_ShouldCancelSaleAndRestoreStock() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         Long id = 100L;
         CancelSaleRequest request = validCancelRequest();
         Sale sale = saleWithDetails();
@@ -188,6 +187,8 @@ class SaleServiceTest {
     @Test
     @DisplayName("CANCEL - should throw exception when sale is already cancelled")
     void cancel_WhenAlreadyCancelled_ShouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
         Long id = 100L;
         CancelSaleRequest request = validCancelRequest();
         Sale sale = saleWithDetails();

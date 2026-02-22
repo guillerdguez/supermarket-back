@@ -20,9 +20,9 @@ import com.supermarket.supermarket.model.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.StockTransferRepository;
+import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.impl.TransferServiceImpl;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,9 +31,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,8 +41,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,6 +56,9 @@ class TransferServiceTest {
     private InventoryService inventoryService;
     @Mock
     private TransferMapper transferMapper;
+    @Mock
+    private SecurityUtils securityUtils;
+
     @InjectMocks
     private TransferServiceImpl transferService;
 
@@ -79,12 +77,6 @@ class TransferServiceTest {
         sourceBranch = BranchFixtures.defaultBranch();
         targetBranch = Branch.builder().id(2L).name("North Branch").address("456 North Ave").build();
         product = ProductFixtures.defaultProduct();
-        mockSecurityContext(cashier);
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
     }
 
     @Nested
@@ -93,6 +85,8 @@ class TransferServiceTest {
         @Test
         @DisplayName("should create PENDING transfer when stock is sufficient")
         void requestTransfer_Success() {
+            given(securityUtils.getCurrentUser()).willReturn(cashier);
+
             TransferRequest request = TransferFixtures.validTransferRequest();
             TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.PENDING).build();
 
@@ -188,7 +182,8 @@ class TransferServiceTest {
         @Test
         @DisplayName("should approve a PENDING transfer and set approvedBy")
         void approveTransfer_Success() {
-            mockSecurityContext(manager);
+            given(securityUtils.getCurrentUser()).willReturn(manager);
+
             StockTransfer transfer = buildTransfer(TransferStatus.PENDING);
             TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.APPROVED).build();
 
@@ -231,7 +226,8 @@ class TransferServiceTest {
         @Test
         @DisplayName("should reject a PENDING transfer and store reason")
         void rejectTransfer_Success() {
-            mockSecurityContext(manager);
+            given(securityUtils.getCurrentUser()).willReturn(manager);
+
             StockTransfer transfer = buildTransfer(TransferStatus.PENDING);
             RejectTransferRequest request = TransferFixtures.validRejectRequest();
             TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.REJECTED).build();
@@ -266,7 +262,7 @@ class TransferServiceTest {
         @Test
         @DisplayName("should complete transfer, reduce source stock and increase target stock")
         void completeTransfer_Success() {
-            mockSecurityContext(manager);
+ 
             StockTransfer transfer = buildTransfer(TransferStatus.APPROVED);
             TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.COMPLETED).build();
 
@@ -333,7 +329,8 @@ class TransferServiceTest {
         @Test
         @DisplayName("should allow requester to cancel their own PENDING transfer")
         void cancelTransfer_ByRequester_Success() {
-            mockSecurityContext(cashier);
+            given(securityUtils.getCurrentUser()).willReturn(cashier);
+
             StockTransfer transfer = buildTransfer(TransferStatus.PENDING);
             TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.CANCELLED).build();
 
@@ -350,7 +347,8 @@ class TransferServiceTest {
         @Test
         @DisplayName("should allow ADMIN to cancel any PENDING transfer")
         void cancelTransfer_ByAdmin_Success() {
-            mockSecurityContext(admin);
+            given(securityUtils.getCurrentUser()).willReturn(admin);
+
             StockTransfer transfer = buildTransfer(TransferStatus.PENDING);
             TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.CANCELLED).build();
 
@@ -366,7 +364,8 @@ class TransferServiceTest {
         @Test
         @DisplayName("should throw InsufficientPermissionsException when non-requester non-admin tries to cancel")
         void cancelTransfer_ByOtherUser_Throws() {
-            mockSecurityContext(manager);
+            given(securityUtils.getCurrentUser()).willReturn(manager);
+
             StockTransfer transfer = buildTransfer(TransferStatus.PENDING);
             given(transferRepository.findById(1L)).willReturn(Optional.of(transfer));
 
@@ -443,13 +442,5 @@ class TransferServiceTest {
                 .requestedBy(cashier)
                 .requestedAt(LocalDateTime.now())
                 .build();
-    }
-
-    private void mockSecurityContext(User user) {
-        Authentication authentication = mock(Authentication.class);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
-        lenient().when(authentication.getPrincipal()).thenReturn(user);
-        SecurityContextHolder.setContext(securityContext);
     }
 }
