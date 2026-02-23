@@ -1,13 +1,11 @@
 package com.supermarket.supermarket.mapper;
 
-import org.springframework.stereotype.Component;
-
 import com.supermarket.supermarket.dto.branch.BranchRequest;
 import com.supermarket.supermarket.dto.branch.BranchResponse;
 import com.supermarket.supermarket.model.Branch;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class BranchMapper {

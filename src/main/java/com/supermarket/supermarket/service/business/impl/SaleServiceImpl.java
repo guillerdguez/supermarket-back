@@ -3,6 +3,7 @@ package com.supermarket.supermarket.service.business.impl;
 import com.supermarket.supermarket.dto.sale.CancelSaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
+import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientPermissionsException;
 import com.supermarket.supermarket.exception.InvalidSaleStateException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
@@ -30,6 +31,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -68,12 +72,30 @@ public class SaleServiceImpl implements SaleService {
     }
 
     private List<SaleDetail> buildSaleDetails(SaleRequest request, Sale sale) {
+        Set<Long> uniqueProductIds = request.getDetails().stream()
+                .map(SaleDetailRequest::getProductId)
+                .collect(Collectors.toSet());
+
+        List<Product> products = productRepository.findAllById(uniqueProductIds);
+
+        if (products.size() != uniqueProductIds.size()) {
+            Set<Long> foundIds = products.stream()
+                    .map(Product::getId)
+                    .collect(Collectors.toSet());
+            List<Long> missingIds = uniqueProductIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .toList();
+            throw new ResourceNotFoundException("Products not found with IDs: " + missingIds);
+        }
+
+        Map<Long, Product> productMap = products.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
         inventoryService.validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
 
         return request.getDetails().stream()
                 .map(detailRequest -> {
-                    Product product = productRepository.findById(detailRequest.getProductId())
-                            .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                    Product product = productMap.get(detailRequest.getProductId());
                     return SaleDetail.builder()
                             .sale(sale)
                             .product(product)
@@ -81,7 +103,7 @@ public class SaleServiceImpl implements SaleService {
                             .price(product.getPrice())
                             .build();
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private BigDecimal calculateTotal(List<SaleDetail> details) {
