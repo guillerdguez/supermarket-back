@@ -1,9 +1,9 @@
 package com.supermarket.supermarket.dto.sale;
 
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailResponse;
+import com.supermarket.supermarket.model.CashRegisterStatus;
 import com.supermarket.supermarket.model.SaleStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,10 +24,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SaleResponse {
     private Long id;
-
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
-
     private SaleStatus status;
     private BigDecimal total;
     private Long branchId;
@@ -35,17 +33,14 @@ public class SaleResponse {
     private Long createdById;
     private String createdByUsername;
     private String createdByEmail;
-
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
-
     private Long cancelledById;
     private String cancelledByUsername;
     private String cancellationReason;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime cancelledAt;
-
     private List<SaleDetailResponse> details;
-
-
+    private Long cashRegisterId;
+    private CashRegisterStatus cashRegisterStatus;
 }
