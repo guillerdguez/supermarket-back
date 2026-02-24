@@ -6,9 +6,17 @@ import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailResponse;
 import com.supermarket.supermarket.fixtures.branch.BranchFixtures;
+import com.supermarket.supermarket.fixtures.cashregister.CashRegisterFixtures;
 import com.supermarket.supermarket.fixtures.product.ProductFixtures;
 import com.supermarket.supermarket.fixtures.user.UserFixtures;
-import com.supermarket.supermarket.model.*;
+import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.CashRegister;
+import com.supermarket.supermarket.model.CashRegisterStatus;
+import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.model.Sale;
+import com.supermarket.supermarket.model.SaleDetail;
+import com.supermarket.supermarket.model.SaleStatus;
+import com.supermarket.supermarket.model.User;
 import lombok.experimental.UtilityClass;
 
 import java.math.BigDecimal;
@@ -55,6 +63,8 @@ public class SaleFixtures {
         Branch branch = BranchFixtures.defaultBranch();
         Product product = ProductFixtures.defaultProduct();
         User cashier = UserFixtures.defaultCashier();
+        CashRegister cashRegister = CashRegisterFixtures.openRegister();
+
         Sale sale = Sale.builder()
                 .id(100L)
                 .date(LocalDate.now())
@@ -63,14 +73,17 @@ public class SaleFixtures {
                 .branch(branch)
                 .createdBy(cashier)
                 .createdAt(LocalDateTime.now())
+                .cashRegister(cashRegister)
                 .details(new ArrayList<>())
                 .build();
+
         SaleDetail detail = SaleDetail.builder()
                 .stock(5)
                 .price(new BigDecimal("2.50"))
                 .product(product)
                 .sale(sale)
                 .build();
+
         sale.getDetails().add(detail);
         return sale;
     }
@@ -87,6 +100,8 @@ public class SaleFixtures {
                 .createdByUsername("cashier-test")
                 .createdByEmail("cashier@test.com")
                 .createdAt(LocalDateTime.now())
+                .cashRegisterId(1L)
+                .cashRegisterStatus(CashRegisterStatus.OPEN)
                 .details(List.of(
                         SaleDetailResponse.builder()
                                 .productName("Premium Rice")
@@ -113,6 +128,8 @@ public class SaleFixtures {
                 .cancelledByUsername("manager-test")
                 .cancellationReason("Customer returned items")
                 .cancelledAt(LocalDateTime.now())
+                .cashRegisterId(1L)
+                .cashRegisterStatus(CashRegisterStatus.OPEN)
                 .details(List.of(
                         SaleDetailResponse.builder()
                                 .productName("Premium Rice")
