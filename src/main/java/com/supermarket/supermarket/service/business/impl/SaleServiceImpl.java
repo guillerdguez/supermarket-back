@@ -102,7 +102,7 @@ public class SaleServiceImpl implements SaleService {
                     return SaleDetail.builder()
                             .sale(sale)
                             .product(product)
-                            .stock(detailRequest.getStock())
+                            .quantity(detailRequest.getQuantity())
                             .price(product.getPrice())
                             .build();
                 })
@@ -111,7 +111,7 @@ public class SaleServiceImpl implements SaleService {
 
     private BigDecimal calculateTotal(List<SaleDetail> details) {
         return details.stream()
-                .map(detail -> detail.getPrice().multiply(BigDecimal.valueOf(detail.getStock())))
+                .map(detail -> detail.getPrice().multiply(BigDecimal.valueOf(detail.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

@@ -96,14 +96,14 @@ public class InventoryServiceImpl implements InventoryService {
         validateDetailRequests(details);
         return details.stream().collect(Collectors.groupingBy(
                 SaleDetailRequest::getProductId,
-                Collectors.summingInt(SaleDetailRequest::getStock)
+                Collectors.summingInt(SaleDetailRequest::getQuantity)
         ));
     }
 
     private void applyStockReduction(List<BranchInventory> inventories, Map<Long, Integer> required) {
         inventories.forEach(inv -> inv.setStock(inv.getStock() - required.get(inv.getProduct().getId())));
     }
-    
+
 
     @Transactional
     public void restoreStockBatch(Long branchId, List<SaleDetail> details) {
@@ -117,7 +117,7 @@ public class InventoryServiceImpl implements InventoryService {
         Map<Long, Integer> quantitiesToRestore = details.stream()
                 .collect(Collectors.groupingBy(
                         d -> d.getProduct().getId(),
-                        Collectors.summingInt(SaleDetail::getStock)
+                        Collectors.summingInt(SaleDetail::getQuantity)
                 ));
 
         List<BranchInventory> inventories = loadInventories(branchId, quantitiesToRestore.keySet());
@@ -159,10 +159,10 @@ public class InventoryServiceImpl implements InventoryService {
             if (item.getProductId() == null) {
                 throw new IllegalArgumentException("Detail at position " + i + " does not have a productId");
             }
-            if (item.getStock() == null || item.getStock() <= 0) {
+            if (item.getQuantity() == null || item.getQuantity() <= 0) {
                 throw new IllegalArgumentException(
                         String.format("Invalid quantity (%d) for product %d",
-                                item.getStock(), item.getProductId())
+                                item.getQuantity(), item.getProductId())
                 );
             }
         }
