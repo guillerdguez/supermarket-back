@@ -160,7 +160,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleRateLimitExceeded(RateLimitExceededException ex) {
         log.warn("Rate limit exceeded: {}", ex.getMessage());
-        String retryAfter = "300";
+        String retryAfter = String.valueOf(ex.getRetryAfterSeconds());
         return ResponseEntity
                 .status(HttpStatus.TOO_MANY_REQUESTS)
                 .header("Retry-After", retryAfter)
