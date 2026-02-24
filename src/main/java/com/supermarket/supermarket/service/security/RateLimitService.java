@@ -14,32 +14,30 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class RateLimitService {
-
     private static final int MAX_ATTEMPTS = 5;
     private static final int BLOCK_TIME_MINUTES = 5;
     private static final String RATE_LIMIT_PREFIX = "rate_limit:";
-
     private final RedisTemplate<String, Object> redisTemplate;
 
     public void checkRateLimit(String key) {
         String redisKey = RATE_LIMIT_PREFIX + key;
         try {
-             Long currentAttempts = redisTemplate.opsForValue().increment(redisKey);
-
+            Long currentAttempts = redisTemplate.opsForValue().increment(redisKey);
             if (currentAttempts == 1) {
-                 redisTemplate.expire(redisKey, Duration.ofMinutes(BLOCK_TIME_MINUTES));
+                redisTemplate.expire(redisKey, Duration.ofMinutes(BLOCK_TIME_MINUTES));
             }
-
             if (currentAttempts > MAX_ATTEMPTS) {
                 Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
-                throw new RateLimitExceededException(
-                        String.format("Too many attempts. Retry in %d seconds", ttl)
-                );
+                throw new RateLimitExceededException(ttl != null ? ttl : BLOCK_TIME_MINUTES * 60L);
             }
+        } catch (RateLimitExceededException e) {
+            throw e;
         } catch (Exception e) {
-         throw new RateLimitServiceException("Error checking rate limit", e);
+            log.error("Rate limit service error for key: {}", key, e);
+            throw new RateLimitServiceException("Rate limit service unavailable", e);
         }
     }
+
     public void resetRateLimit(String key) {
         String redisKey = RATE_LIMIT_PREFIX + key;
         redisTemplate.delete(redisKey);
