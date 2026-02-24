@@ -1,10 +1,7 @@
 package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.transfer.TransferResponse;
-import com.supermarket.supermarket.model.Branch;
-import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.model.StockTransfer;
-import com.supermarket.supermarket.model.User;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,7 +13,7 @@ public class TransferMapper {
     public TransferResponse toResponse(StockTransfer transfer) {
         if (transfer == null) return null;
 
-        TransferResponse response = TransferResponse.builder()
+        return TransferResponse.builder()
                 .id(transfer.getId())
                 .quantity(transfer.getQuantity())
                 .status(transfer.getStatus())
@@ -24,39 +21,17 @@ public class TransferMapper {
                 .approvedAt(transfer.getApprovedAt())
                 .completedAt(transfer.getCompletedAt())
                 .rejectionReason(transfer.getRejectionReason())
+                .sourceBranchId(transfer.getSourceBranch() != null ? transfer.getSourceBranch().getId() : null)
+                .sourceBranchName(transfer.getSourceBranch() != null ? transfer.getSourceBranch().getName() : null)
+                .targetBranchId(transfer.getTargetBranch() != null ? transfer.getTargetBranch().getId() : null)
+                .targetBranchName(transfer.getTargetBranch() != null ? transfer.getTargetBranch().getName() : null)
+                .productId(transfer.getProduct() != null ? transfer.getProduct().getId() : null)
+                .productName(transfer.getProduct() != null ? transfer.getProduct().getName() : null)
+                .requestedById(transfer.getRequestedBy() != null ? transfer.getRequestedBy().getId() : null)
+                .requestedByUsername(transfer.getRequestedBy() != null ? transfer.getRequestedBy().getUsername() : null)
+                .approvedById(transfer.getApprovedBy() != null ? transfer.getApprovedBy().getId() : null)
+                .approvedByUsername(transfer.getApprovedBy() != null ? transfer.getApprovedBy().getUsername() : null)
                 .build();
-
-        Branch source = transfer.getSourceBranch();
-        if (source != null) {
-            response.setSourceBranchId(source.getId());
-            response.setSourceBranchName(source.getName());
-        }
-
-        Branch target = transfer.getTargetBranch();
-        if (target != null) {
-            response.setTargetBranchId(target.getId());
-            response.setTargetBranchName(target.getName());
-        }
-
-        Product product = transfer.getProduct();
-        if (product != null) {
-            response.setProductId(product.getId());
-            response.setProductName(product.getName());
-        }
-
-        User requestedBy = transfer.getRequestedBy();
-        if (requestedBy != null) {
-            response.setRequestedById(requestedBy.getId());
-            response.setRequestedByUsername(requestedBy.getUsername());
-        }
-
-        User approvedBy = transfer.getApprovedBy();
-        if (approvedBy != null) {
-            response.setApprovedById(approvedBy.getId());
-            response.setApprovedByUsername(approvedBy.getUsername());
-        }
-
-        return response;
     }
 
     public List<TransferResponse> toResponseList(List<StockTransfer> transfers) {
