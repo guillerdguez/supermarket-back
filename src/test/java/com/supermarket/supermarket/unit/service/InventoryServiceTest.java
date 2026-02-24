@@ -4,7 +4,10 @@ import com.supermarket.supermarket.dto.inventory.LowStockAlertResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientStockException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
-import com.supermarket.supermarket.model.*;
+import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.BranchInventory;
+import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.model.SaleDetail;
 import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.service.business.impl.InventoryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.time.LocalDateTime;
@@ -168,8 +170,8 @@ class InventoryServiceTest {
         @BeforeEach
         void setUpBatch() {
             detailRequests = List.of(
-                    SaleDetailRequest.builder().productId(1L).stock(5).build(),
-                    SaleDetailRequest.builder().productId(2L).stock(3).build()
+                    SaleDetailRequest.builder().productId(1L).quantity(5).build(),
+                    SaleDetailRequest.builder().productId(2L).quantity(3).build()
             );
         }
 
@@ -201,7 +203,7 @@ class InventoryServiceTest {
         @DisplayName("validateAndReduceStockBatch - should throw when productId is null")
         void validateAndReduceStockBatch_NullProductId() {
             List<SaleDetailRequest> invalid = List.of(
-                    SaleDetailRequest.builder().stock(5).build()
+                    SaleDetailRequest.builder().quantity(5).build()
             );
             assertThatThrownBy(() -> inventoryService.validateAndReduceStockBatch(1L, invalid))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -212,7 +214,7 @@ class InventoryServiceTest {
         @DisplayName("validateAndReduceStockBatch - should throw when quantity is invalid")
         void validateAndReduceStockBatch_InvalidQuantity() {
             List<SaleDetailRequest> invalid = List.of(
-                    SaleDetailRequest.builder().productId(1L).stock(0).build()
+                    SaleDetailRequest.builder().productId(1L).quantity(0).build()
             );
             assertThatThrownBy(() -> inventoryService.validateAndReduceStockBatch(1L, invalid))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -249,8 +251,8 @@ class InventoryServiceTest {
         @DisplayName("restoreStockBatch - should increase stock for all products")
         void restoreStockBatch_Success() {
             Product product2 = Product.builder().id(2L).name("Product 2").build();
-            SaleDetail detail1 = SaleDetail.builder().product(product).stock(5).build();
-            SaleDetail detail2 = SaleDetail.builder().product(product2).stock(3).build();
+            SaleDetail detail1 = SaleDetail.builder().product(product).quantity(5).build();
+            SaleDetail detail2 = SaleDetail.builder().product(product2).quantity(3).build();
             List<SaleDetail> details = List.of(detail1, detail2);
             BranchInventory inv1 = BranchInventory.builder()
                     .id(100L).branch(branch).product(product).stock(20).minStock(5).build();
@@ -290,7 +292,7 @@ class InventoryServiceTest {
         @DisplayName("validateAndReduceStockBatch - should propagate OptimisticLockingFailure when version conflict on saveAll")
         void validateAndReduceStockBatch_OptimisticLockingFailure() {
             List<SaleDetailRequest> requests = List.of(
-                    SaleDetailRequest.builder().productId(1L).stock(5).build()
+                    SaleDetailRequest.builder().productId(1L).quantity(5).build()
             );
             given(branchInventoryRepository.findByBranchIdAndProductIdIn(1L, Set.of(1L)))
                     .willReturn(List.of(inventory));

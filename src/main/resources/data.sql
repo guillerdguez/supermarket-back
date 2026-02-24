@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS sale (
 
 CREATE TABLE IF NOT EXISTS sale_detail (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    stock INT NOT NULL,
+    quantity INT NOT NULL,
     price DECIMAL(19, 2),
     sale_id BIGINT NOT NULL,
     product_id BIGINT NOT NULL,
@@ -202,7 +202,8 @@ INSERT IGNORE INTO sale (id, date, status, total, branch_id, cash_register_id, c
 (24, '2026-02-24', 'REGISTERED', 17300.75, 5, 20, 4, '2026-02-24 09:30:00', NULL, NULL, NULL),
 (25, '2026-02-24', 'REGISTERED', 29600.00, 5, 20, 3, '2026-02-24 11:00:00', NULL, NULL, NULL);
 
-INSERT IGNORE INTO sale_detail (id, stock, price, sale_id, product_id) VALUES
+
+INSERT IGNORE INTO sale_detail (id, quantity, price, sale_id, product_id) VALUES
 (1, 2, 1200.50, 1, 1), (2, 1, 3500.00, 1, 3), (3, 3, 1500.00, 1, 6), (4, 1, 8500.00, 1, 11), (5, 2, 2500.00, 1, 17),
 (6, 1, 12000.00, 2, 25), (7, 4, 800.75, 3, 2), (8, 2, 1800.50, 3, 8), (9, 1, 4500.50, 3, 12), (10, 1, 8500.00, 4, 11),
 (11, 5, 1200.50, 5, 1), (12, 2, 3500.00, 5, 3), (13, 1, 12000.00, 5, 15), (14, 2, 800.00, 6, 16), (15, 3, 1200.00, 6, 7),

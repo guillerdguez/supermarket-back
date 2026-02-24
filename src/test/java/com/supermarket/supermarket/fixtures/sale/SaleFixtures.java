@@ -35,7 +35,7 @@ public class SaleFixtures {
                 .details(List.of(
                         SaleDetailRequest.builder()
                                 .productId(1L)
-                                .stock(5)
+                                .quantity(5)
                                 .build()))
                 .build();
     }
@@ -78,7 +78,7 @@ public class SaleFixtures {
                 .build();
 
         SaleDetail detail = SaleDetail.builder()
-                .stock(5)
+                .quantity(5)
                 .price(new BigDecimal("2.50"))
                 .product(product)
                 .sale(sale)
@@ -105,7 +105,7 @@ public class SaleFixtures {
                 .details(List.of(
                         SaleDetailResponse.builder()
                                 .productName("Premium Rice")
-                                .stock(5)
+                                .quantity(5)
                                 .unitPrice(new BigDecimal("2.50"))
                                 .subtotal(new BigDecimal("12.50"))
                                 .build()))
@@ -133,7 +133,7 @@ public class SaleFixtures {
                 .details(List.of(
                         SaleDetailResponse.builder()
                                 .productName("Premium Rice")
-                                .stock(5)
+                                .quantity(5)
                                 .unitPrice(new BigDecimal("2.50"))
                                 .subtotal(new BigDecimal("12.50"))
                                 .build()))
