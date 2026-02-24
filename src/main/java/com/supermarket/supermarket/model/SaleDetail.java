@@ -1,5 +1,6 @@
 package com.supermarket.supermarket.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -26,7 +27,8 @@ public class SaleDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Integer stock;
+    @Column(nullable = false)
+    private Integer quantity;
     private BigDecimal price;
 
     @ManyToOne(fetch = FetchType.LAZY)
