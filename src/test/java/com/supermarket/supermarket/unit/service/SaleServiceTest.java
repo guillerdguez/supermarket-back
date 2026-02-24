@@ -9,6 +9,7 @@ import com.supermarket.supermarket.exception.InvalidSaleStateException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.SaleMapper;
 import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.CashRegister;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.model.Sale;
 import com.supermarket.supermarket.model.SaleStatus;
@@ -17,6 +18,7 @@ import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
+import com.supermarket.supermarket.service.business.CashRegisterService;
 import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.impl.SaleServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +38,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.defaultBranch;
+import static com.supermarket.supermarket.fixtures.cashregister.CashRegisterFixtures.openRegister;
 import static com.supermarket.supermarket.fixtures.product.ProductFixtures.defaultProduct;
 import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.cancelledSaleResponse;
 import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.saleResponse;
@@ -46,11 +49,12 @@ import static com.supermarket.supermarket.fixtures.user.UserFixtures.defaultCash
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class SaleServiceTest {
@@ -67,21 +71,27 @@ class SaleServiceTest {
     private SaleMapper saleMapper;
     @Mock
     private SecurityUtils securityUtils;
+    @Mock
+    private CashRegisterService cashRegisterService;
 
     @InjectMocks
     private SaleServiceImpl saleService;
 
     private User mockUser;
+    private CashRegister mockOpenRegister;
 
     @BeforeEach
     void setUp() {
         mockUser = defaultCashier();
+        mockOpenRegister = openRegister();
     }
 
     @Test
     @DisplayName("CREATE - should create sale and reduce stock")
     void create_WithSufficientStock_ShouldCreate() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        given(cashRegisterService.getRegisterEntityByBranch(anyLong())).willReturn(mockOpenRegister);
+
         SaleRequest request = validSaleRequest();
         Branch branch = defaultBranch();
         Product product = defaultProduct();
@@ -108,11 +118,11 @@ class SaleServiceTest {
         then(saleRepository).should().save(sale);
     }
 
-
     @Test
     @DisplayName("CREATE - should throw exception when stock is insufficient")
     void create_WithInsufficientStock_ShouldThrowException() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        given(cashRegisterService.getRegisterEntityByBranch(anyLong())).willReturn(mockOpenRegister);
 
         SaleRequest request = validSaleRequest();
         Branch branch = defaultBranch();
@@ -132,7 +142,6 @@ class SaleServiceTest {
                 .isInstanceOf(InsufficientStockException.class);
         then(saleRepository).should(never()).save(any());
     }
-
 
     @Test
     @DisplayName("CREATE - should throw exception when branch not found")
@@ -155,6 +164,7 @@ class SaleServiceTest {
     @DisplayName("CREATE - should throw exception when product not found")
     void create_WhenProductNotFound_ShouldThrowException() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        given(cashRegisterService.getRegisterEntityByBranch(anyLong())).willReturn(mockOpenRegister);
 
         SaleRequest request = validSaleRequest();
         request.getDetails().get(0).setProductId(999L);
@@ -170,6 +180,24 @@ class SaleServiceTest {
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Products not found with IDs: [999]");
+        then(saleRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("CREATE - should throw exception when no open cash register exists")
+    void create_WhenNoOpenRegister_ShouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        given(cashRegisterService.getRegisterEntityByBranch(anyLong()))
+                .willThrow(new ResourceNotFoundException("No open register found for branch"));
+
+        SaleRequest request = validSaleRequest();
+        Branch branch = defaultBranch();
+        given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
+
+        assertThatThrownBy(() -> saleService.create(request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("No open register found for branch");
+        then(inventoryService).shouldHaveNoInteractions();
         then(saleRepository).should(never()).save(any());
     }
 
