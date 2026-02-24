@@ -85,4 +85,11 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private User getCurrentUser() {
         return securityUtils.getCurrentUser();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CashRegister getRegisterEntityByBranch(Long branchId) {
+        return cashRegisterRepository.findByBranchIdAndStatus(branchId, CashRegisterStatus.OPEN)
+                .orElseThrow(() -> new ResourceNotFoundException("No open register found for branch " + branchId));
+    }
 }
