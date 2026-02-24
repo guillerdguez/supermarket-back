@@ -9,6 +9,7 @@ import com.supermarket.supermarket.exception.InvalidSaleStateException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.SaleMapper;
 import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.CashRegister;
 import com.supermarket.supermarket.model.Product;
 import com.supermarket.supermarket.model.Sale;
 import com.supermarket.supermarket.model.SaleDetail;
@@ -18,6 +19,7 @@ import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
+import com.supermarket.supermarket.service.business.CashRegisterService;
 import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.SaleService;
 import lombok.RequiredArgsConstructor;
@@ -46,28 +48,30 @@ public class SaleServiceImpl implements SaleService {
     private final SaleMapper saleMapper;
     private final InventoryService inventoryService;
     private final SecurityUtils securityUtils;
+    private final CashRegisterService cashRegisterService;
 
     @Override
     public SaleResponse create(SaleRequest request) {
         Sale sale = buildSale(request);
         List<SaleDetail> details = buildSaleDetails(request, sale);
-
         sale.getDetails().addAll(details);
         sale.setTotal(calculateTotal(details));
-
         return saleMapper.toResponse(saleRepo.save(sale));
     }
 
     private Sale buildSale(SaleRequest request) {
-        User currentUser = getCurrentUser();
+        User currentUser = securityUtils.getCurrentUser();
         Branch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
+
+        CashRegister cashRegister = cashRegisterService.getRegisterEntityByBranch(branch.getId());
 
         Sale sale = saleMapper.toEntity(request);
         sale.setStatus(SaleStatus.REGISTERED);
         sale.setDetails(new ArrayList<>());
         sale.setCreatedBy(currentUser);
         sale.setBranch(branch);
+        sale.setCashRegister(cashRegister);
         return sale;
     }
 
@@ -77,7 +81,6 @@ public class SaleServiceImpl implements SaleService {
                 .collect(Collectors.toSet());
 
         List<Product> products = productRepository.findAllById(uniqueProductIds);
-
         if (products.size() != uniqueProductIds.size()) {
             Set<Long> foundIds = products.stream()
                     .map(Product::getId)
@@ -138,8 +141,7 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     public SaleResponse cancel(Long id, CancelSaleRequest request) {
-        User currentUser = getCurrentUser();
-
+        User currentUser = securityUtils.getCurrentUser();
         Sale sale = saleRepo.findWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found with id: " + id));
 
@@ -171,19 +173,11 @@ public class SaleServiceImpl implements SaleService {
     public SaleResponse getSaleByIdAndCashier(Long saleId, Long cashierId) {
         Sale sale = saleRepo.findWithDetailsById(saleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found with id: " + saleId));
+
         if (sale.getCreatedBy() == null || !sale.getCreatedBy().getId().equals(cashierId)) {
             throw new InsufficientPermissionsException("You are not allowed to view this sale");
         }
+
         return saleMapper.toResponse(sale);
-    }
-
-    private void assignBranch(Sale sale, Long branchId) {
-        Branch branch = branchRepository.findById(branchId)
-                .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
-        sale.setBranch(branch);
-    }
-
-    private User getCurrentUser() {
-        return securityUtils.getCurrentUser();
     }
 }
