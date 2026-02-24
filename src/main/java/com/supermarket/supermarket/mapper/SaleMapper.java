@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class SaleMapper {
     private final SaleDetailMapper saleDetailMapper;
 
     public SaleResponse toResponse(Sale sale) {
-        if (sale == null)
-            return null;
+        if (sale == null) return null;
+
         return SaleResponse.builder()
                 .id(sale.getId())
                 .date(sale.getDate())
@@ -33,12 +33,14 @@ public class SaleMapper {
                 .cancellationReason(sale.getCancellationReason())
                 .cancelledAt(sale.getCancelledAt())
                 .details(saleDetailMapper.toResponseList(sale.getDetails()))
+                .cashRegisterId(sale.getCashRegister() != null ? sale.getCashRegister().getId() : null)
+                .cashRegisterStatus(sale.getCashRegister() != null ? sale.getCashRegister().getStatus() : null)
                 .build();
     }
 
     public Sale toEntity(SaleRequest request) {
-        if (request == null)
-            return null;
+        if (request == null) return null;
+
         return Sale.builder()
                 .date(request.getDate())
                 .details(request.getDetails() != null ? request.getDetails().stream()
@@ -49,8 +51,7 @@ public class SaleMapper {
     }
 
     public List<SaleResponse> toResponseList(List<Sale> sales) {
-        if (sales == null)
-            return null;
+        if (sales == null) return null;
         return sales.stream()
                 .map(this::toResponse)
                 .toList();
