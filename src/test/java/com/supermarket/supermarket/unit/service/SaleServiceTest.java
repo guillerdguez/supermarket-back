@@ -33,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.defaultBranch;
 import static com.supermarket.supermarket.fixtures.product.ProductFixtures.defaultProduct;
@@ -47,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
@@ -80,7 +82,6 @@ class SaleServiceTest {
     @DisplayName("CREATE - should create sale and reduce stock")
     void create_WithSufficientStock_ShouldCreate() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
-
         SaleRequest request = validSaleRequest();
         Branch branch = defaultBranch();
         Product product = defaultProduct();
@@ -89,7 +90,13 @@ class SaleServiceTest {
 
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(saleMapper.toEntity(request)).willReturn(sale);
-        given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+        Set<Long> productIds = Set.of(1L);
+        given(productRepository.findAllById(productIds)).willReturn(List.of(product));
+
+        willDoNothing().given(inventoryService)
+                .validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
+
         given(saleRepository.save(any(Sale.class))).willReturn(sale);
         given(saleMapper.toResponse(sale)).willReturn(response);
 
@@ -97,9 +104,10 @@ class SaleServiceTest {
 
         assertThat(result).isNotNull();
         then(inventoryService).should().validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
-        then(productRepository).should().findById(1L);
+        then(productRepository).should().findAllById(productIds);
         then(saleRepository).should().save(sale);
     }
+
 
     @Test
     @DisplayName("CREATE - should throw exception when stock is insufficient")
@@ -109,17 +117,22 @@ class SaleServiceTest {
         SaleRequest request = validSaleRequest();
         Branch branch = defaultBranch();
         Sale sale = saleWithDetails();
+        Product product = defaultProduct();
 
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(saleMapper.toEntity(request)).willReturn(sale);
+
+        Set<Long> productIds = Set.of(1L);
+        given(productRepository.findAllById(productIds)).willReturn(List.of(product));
+
         willThrow(new InsufficientStockException("Insufficient stock"))
                 .given(inventoryService).validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
 
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(InsufficientStockException.class);
-        then(productRepository).shouldHaveNoInteractions();
         then(saleRepository).should(never()).save(any());
     }
+
 
     @Test
     @DisplayName("CREATE - should throw exception when branch not found")
@@ -150,11 +163,13 @@ class SaleServiceTest {
 
         given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
         given(saleMapper.toEntity(request)).willReturn(sale);
-        given(productRepository.findById(999L)).willReturn(Optional.empty());
+
+        Set<Long> productIds = Set.of(999L);
+        given(productRepository.findAllById(productIds)).willReturn(List.of());
 
         assertThatThrownBy(() -> saleService.create(request))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Product not found");
+                .hasMessageContaining("Products not found with IDs: [999]");
         then(saleRepository).should(never()).save(any());
     }
 
