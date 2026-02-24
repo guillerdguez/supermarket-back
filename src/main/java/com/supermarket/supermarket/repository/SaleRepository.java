@@ -68,8 +68,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
                 p.id          as productId,
                 p.name        as productName,
                 p.category    as productCategory,
-                SUM(sd.stock) as totalQuantitySold,
-                SUM(sd.price * sd.stock) as totalRevenue
+                 SUM(sd.quantity) as totalQuantitySold,
+                 SUM(sd.price * sd.quantity) as totalRevenue
             FROM SaleDetail sd
             JOIN sd.product p
             JOIN sd.sale s

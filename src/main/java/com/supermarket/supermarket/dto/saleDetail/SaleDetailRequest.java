@@ -1,4 +1,3 @@
-
 package com.supermarket.supermarket.dto.saleDetail;
 
 import jakarta.validation.constraints.Min;
@@ -16,11 +15,11 @@ import lombok.Setter;
 @AllArgsConstructor
 public class SaleDetailRequest {
 
-    @NotNull(message = "stock is required")
-    @Min(value = 1, message = "Minimum stock allowed is 1")
-    private Integer stock;
+    @NotNull(message = "Quantity  is required")
+    @Min(value = 1, message = "Minimum quantity  allowed is 1")
+    private Integer quantity;
 
     @NotNull(message = "Product ID is required")
     private Long productId;
-    
+
 }

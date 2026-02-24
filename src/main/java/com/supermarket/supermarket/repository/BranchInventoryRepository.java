@@ -48,7 +48,7 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
                 p.id          as productId,
                 p.name        as productName,
                 p.category    as productCategory,
-                COALESCE(SUM(sd.stock), 0)  as totalSold,
+                COALESCE(SUM(sd.quantity), 0)  as totalSold,
                 COALESCE(bi.stock, 0)       as currentStock
             FROM Product p
             LEFT JOIN BranchInventory bi ON bi.product.id = p.id

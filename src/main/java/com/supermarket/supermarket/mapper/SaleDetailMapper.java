@@ -1,14 +1,12 @@
 package com.supermarket.supermarket.mapper;
 
-import org.springframework.stereotype.Component;
-
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailResponse;
 import com.supermarket.supermarket.model.SaleDetail;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class SaleDetailMapper {
@@ -18,13 +16,13 @@ public class SaleDetailMapper {
             return null;
 
         BigDecimal subtotal = BigDecimal.ZERO;
-        if (entity.getPrice() != null && entity.getStock() != null) {
-            subtotal = entity.getPrice().multiply(BigDecimal.valueOf(entity.getStock()));
+        if (entity.getPrice() != null && entity.getQuantity() != null) {
+            subtotal = entity.getPrice().multiply(BigDecimal.valueOf(entity.getQuantity()));
         }
 
         return SaleDetailResponse.builder()
                 .id(entity.getId())
-                .stock(entity.getStock())
+                .quantity(entity.getQuantity())
                 .productName(entity.getProduct() != null ? entity.getProduct().getName() : null)
                 .unitPrice(entity.getPrice())
                 .subtotal(subtotal)
@@ -36,7 +34,7 @@ public class SaleDetailMapper {
             return null;
 
         return SaleDetail.builder()
-                .stock(request.getStock())
+                .quantity(request.getQuantity())
                 .build();
     }
 
