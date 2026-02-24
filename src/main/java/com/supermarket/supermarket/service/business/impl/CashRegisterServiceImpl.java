@@ -14,20 +14,25 @@ import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.CashRegisterService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class CashRegisterServiceImpl implements CashRegisterService {
     private final CashRegisterRepository cashRegisterRepository;
     private final BranchRepository branchRepository;
     private final CashRegisterMapper cashRegisterMapper;
     private final SecurityUtils securityUtils;
+
+    public CashRegisterServiceImpl(CashRegisterRepository cashRegisterRepository, BranchRepository branchRepository, CashRegisterMapper cashRegisterMapper, SecurityUtils securityUtils) {
+        this.cashRegisterRepository = cashRegisterRepository;
+        this.branchRepository = branchRepository;
+        this.cashRegisterMapper = cashRegisterMapper;
+        this.securityUtils = securityUtils;
+    }
 
     @Override
     public CashRegisterResponse openRegister(OpenRegisterRequest request) {
