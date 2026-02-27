@@ -14,37 +14,35 @@ import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.CashRegisterService;
+import com.supermarket.supermarket.service.business.NotificationEventService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
+@Slf4j
 public class CashRegisterServiceImpl implements CashRegisterService {
     private final CashRegisterRepository cashRegisterRepository;
     private final BranchRepository branchRepository;
     private final CashRegisterMapper cashRegisterMapper;
     private final SecurityUtils securityUtils;
-
-    public CashRegisterServiceImpl(CashRegisterRepository cashRegisterRepository, BranchRepository branchRepository, CashRegisterMapper cashRegisterMapper, SecurityUtils securityUtils) {
-        this.cashRegisterRepository = cashRegisterRepository;
-        this.branchRepository = branchRepository;
-        this.cashRegisterMapper = cashRegisterMapper;
-        this.securityUtils = securityUtils;
-    }
+    private final NotificationEventService notificationEventService;
 
     @Override
     public CashRegisterResponse openRegister(OpenRegisterRequest request) {
         User currentUser = getCurrentUser();
         Branch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
-
         cashRegisterRepository.findByBranchIdAndStatus(branch.getId(), CashRegisterStatus.OPEN)
                 .ifPresent(reg -> {
                     throw new InvalidOperationException("There is already an open register for this branch");
                 });
-
         CashRegister register = CashRegister.builder()
                 .branch(branch)
                 .openingBalance(request.getOpeningBalance())
@@ -52,7 +50,6 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .status(CashRegisterStatus.OPEN)
                 .openedBy(currentUser)
                 .build();
-
         return cashRegisterMapper.toResponse(cashRegisterRepository.save(register));
     }
 
@@ -61,17 +58,16 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         User currentUser = getCurrentUser();
         CashRegister register = cashRegisterRepository.findById(registerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cash register not found"));
-
         if (register.getStatus() == CashRegisterStatus.CLOSED) {
             throw new InvalidOperationException("Register is already closed");
         }
-
         register.setClosingBalance(request.getClosingBalance());
         register.setClosingTime(LocalDateTime.now());
         register.setStatus(CashRegisterStatus.CLOSED);
         register.setClosedBy(currentUser);
-
-        return cashRegisterMapper.toResponse(cashRegisterRepository.save(register));
+        CashRegister saved = cashRegisterRepository.save(register);
+        notifyIfDiscrepancy(saved);
+        return cashRegisterMapper.toResponse(saved);
     }
 
     @Override
@@ -82,14 +78,27 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         return cashRegisterMapper.toResponse(register);
     }
 
-    private User getCurrentUser() {
-        return securityUtils.getCurrentUser();
-    }
-
     @Override
     @Transactional(readOnly = true)
     public CashRegister getRegisterEntityByBranch(Long branchId) {
         return cashRegisterRepository.findByBranchIdAndStatus(branchId, CashRegisterStatus.OPEN)
                 .orElseThrow(() -> new ResourceNotFoundException("No open register found for branch " + branchId));
+    }
+
+    private User getCurrentUser() {
+        return securityUtils.getCurrentUser();
+    }
+
+    private void notifyIfDiscrepancy(CashRegister register) {
+        if (register.getClosingBalance() == null || register.getOpeningBalance() == null) return;
+        BigDecimal variance = register.getClosingBalance().subtract(register.getOpeningBalance());
+        if (variance.abs().compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                notificationEventService.onCashRegisterDiscrepancy(register, variance);
+            } catch (Exception e) {
+                log.warn("Failed to send discrepancy notification for register {}: {}",
+                        register.getId(), e.getMessage());
+            }
+        }
     }
 }

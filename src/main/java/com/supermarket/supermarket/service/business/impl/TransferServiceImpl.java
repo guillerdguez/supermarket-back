@@ -19,6 +19,7 @@ import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.StockTransferRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.InventoryService;
+import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.TransferService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,40 +34,35 @@ import java.util.List;
 @Slf4j
 @Transactional
 public class TransferServiceImpl implements TransferService {
-
     private final StockTransferRepository transferRepository;
     private final BranchRepository branchRepository;
     private final ProductRepository productRepository;
     private final InventoryService inventoryService;
     private final TransferMapper transferMapper;
     private final SecurityUtils securityUtils;
+    private final NotificationEventService notificationEventService;
 
     @Override
     public TransferResponse requestTransfer(TransferRequest request) {
         log.info("Requesting transfer: source={}, target={}, product={}, quantity={}",
                 request.getSourceBranchId(), request.getTargetBranchId(),
                 request.getProductId(), request.getQuantity());
-
         if (request.getSourceBranchId().equals(request.getTargetBranchId())) {
             throw new InvalidOperationException("Source and target branches must be different");
         }
-
         Branch source = branchRepository.findById(request.getSourceBranchId())
                 .orElseThrow(() -> new ResourceNotFoundException("Source branch not found"));
         Branch target = branchRepository.findById(request.getTargetBranchId())
                 .orElseThrow(() -> new ResourceNotFoundException("Target branch not found"));
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-
         Integer availableStock = inventoryService.getStockInBranch(source.getId(), product.getId());
         if (availableStock < request.getQuantity()) {
             throw new InsufficientStockException(
                     String.format("Insufficient stock in source branch. Available: %d, requested: %d",
                             availableStock, request.getQuantity()));
         }
-
         User currentUser = getCurrentUser();
-
         StockTransfer transfer = StockTransfer.builder()
                 .sourceBranch(source)
                 .targetBranch(target)
@@ -76,8 +72,8 @@ public class TransferServiceImpl implements TransferService {
                 .requestedBy(currentUser)
                 .requestedAt(LocalDateTime.now())
                 .build();
-
         StockTransfer saved = transferRepository.save(transfer);
+        notificationEventService.onTransferRequested(saved);
         log.info("Transfer requested with id: {}", saved.getId());
         return transferMapper.toResponse(saved);
     }
@@ -94,6 +90,7 @@ public class TransferServiceImpl implements TransferService {
         transfer.setApprovedBy(currentUser);
         transfer.setApprovedAt(LocalDateTime.now());
         StockTransfer saved = transferRepository.save(transfer);
+        notificationEventService.onTransferApproved(saved);
         log.info("Transfer approved with id: {}", transferId);
         return transferMapper.toResponse(saved);
     }
@@ -102,18 +99,16 @@ public class TransferServiceImpl implements TransferService {
     public TransferResponse rejectTransfer(Long transferId, RejectTransferRequest request) {
         log.info("Rejecting transfer id: {}", transferId);
         StockTransfer transfer = findTransfer(transferId);
-
         if (transfer.getStatus() != TransferStatus.PENDING) {
             throw new InvalidOperationException("Only PENDING transfers can be rejected");
         }
-
         User currentUser = getCurrentUser();
         transfer.setStatus(TransferStatus.REJECTED);
         transfer.setApprovedBy(currentUser);
         transfer.setApprovedAt(LocalDateTime.now());
         transfer.setRejectionReason(request.getReason());
-
         StockTransfer saved = transferRepository.save(transfer);
+        notificationEventService.onTransferRejected(saved);
         log.info("Transfer rejected with id: {}", transferId);
         return transferMapper.toResponse(saved);
     }
@@ -122,11 +117,9 @@ public class TransferServiceImpl implements TransferService {
     public TransferResponse completeTransfer(Long transferId) {
         log.info("Completing transfer id: {}", transferId);
         StockTransfer transfer = findTransfer(transferId);
-
         if (transfer.getStatus() != TransferStatus.APPROVED) {
             throw new InvalidOperationException("Only APPROVED transfers can be completed");
         }
-
         Integer availableStock = inventoryService.getStockInBranch(
                 transfer.getSourceBranch().getId(), transfer.getProduct().getId());
         if (availableStock < transfer.getQuantity()) {
@@ -134,11 +127,9 @@ public class TransferServiceImpl implements TransferService {
                     String.format("Insufficient stock to complete transfer. Available: %d, required: %d",
                             availableStock, transfer.getQuantity()));
         }
-
         if (!branchRepository.existsById(transfer.getTargetBranch().getId())) {
             throw new ResourceNotFoundException("Target branch no longer exists");
         }
-
         inventoryService.validateAndReduceStock(
                 transfer.getSourceBranch().getId(),
                 transfer.getProduct().getId(),
@@ -147,11 +138,10 @@ public class TransferServiceImpl implements TransferService {
                 transfer.getTargetBranch().getId(),
                 transfer.getProduct().getId(),
                 transfer.getQuantity());
-
         transfer.setStatus(TransferStatus.COMPLETED);
         transfer.setCompletedAt(LocalDateTime.now());
-
         StockTransfer saved = transferRepository.save(transfer);
+        notificationEventService.onTransferCompleted(saved);
         log.info("Transfer completed with id: {}", transferId);
         return transferMapper.toResponse(saved);
     }
@@ -160,18 +150,15 @@ public class TransferServiceImpl implements TransferService {
     public TransferResponse cancelTransfer(Long transferId) {
         log.info("Cancelling transfer id: {}", transferId);
         StockTransfer transfer = findTransfer(transferId);
-
         if (transfer.getStatus() != TransferStatus.PENDING) {
             throw new InvalidOperationException("Only PENDING transfers can be cancelled");
         }
-
         User currentUser = getCurrentUser();
         boolean isRequester = currentUser.getId().equals(transfer.getRequestedBy().getId());
         boolean isAdmin = currentUser.getRole().equals(UserRole.ADMIN);
         if (!isRequester && !isAdmin) {
             throw new InsufficientPermissionsException("You are not allowed to cancel this transfer");
         }
-
         transfer.setStatus(TransferStatus.CANCELLED);
         StockTransfer saved = transferRepository.save(transfer);
         log.info("Transfer cancelled with id: {}", transferId);
