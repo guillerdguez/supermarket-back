@@ -20,6 +20,7 @@ import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.CashRegisterService;
 import com.supermarket.supermarket.service.business.InventoryService;
+import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.impl.SaleServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -73,6 +74,8 @@ class SaleServiceTest {
     private SecurityUtils securityUtils;
     @Mock
     private CashRegisterService cashRegisterService;
+    @Mock
+    private NotificationEventService notificationEventService;
 
     @InjectMocks
     private SaleServiceImpl saleService;

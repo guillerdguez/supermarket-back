@@ -22,6 +22,7 @@ import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.StockTransferRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.InventoryService;
+import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.impl.TransferServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,7 +59,9 @@ class TransferServiceTest {
     private TransferMapper transferMapper;
     @Mock
     private SecurityUtils securityUtils;
-
+    @Mock
+    private NotificationEventService notificationEventService;
+    
     @InjectMocks
     private TransferServiceImpl transferService;
 
@@ -262,7 +265,7 @@ class TransferServiceTest {
         @Test
         @DisplayName("should complete transfer, reduce source stock and increase target stock")
         void completeTransfer_Success() {
- 
+
             StockTransfer transfer = buildTransfer(TransferStatus.APPROVED);
             TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.COMPLETED).build();
 

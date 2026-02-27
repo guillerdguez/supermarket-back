@@ -15,6 +15,7 @@ import com.supermarket.supermarket.model.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
+import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.impl.CashRegisterServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,8 @@ class CashRegisterServiceTest {
     private CashRegisterMapper cashRegisterMapper;
     @Mock
     private SecurityUtils securityUtils;
-
+    @Mock
+    private NotificationEventService notificationEventService;
     @InjectMocks
     private CashRegisterServiceImpl cashRegisterService;
 
