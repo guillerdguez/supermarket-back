@@ -9,6 +9,17 @@ CREATE TABLE IF NOT EXISTS users (
     active BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    message VARCHAR(500) NOT NULL,
+    data TEXT,
+    read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
@@ -202,7 +213,6 @@ INSERT IGNORE INTO sale (id, date, status, total, branch_id, cash_register_id, c
 (24, '2026-02-24', 'REGISTERED', 17300.75, 5, 20, 4, '2026-02-24 09:30:00', NULL, NULL, NULL),
 (25, '2026-02-24', 'REGISTERED', 29600.00, 5, 20, 3, '2026-02-24 11:00:00', NULL, NULL, NULL);
 
-
 INSERT IGNORE INTO sale_detail (id, quantity, price, sale_id, product_id) VALUES
 (1, 2, 1200.50, 1, 1), (2, 1, 3500.00, 1, 3), (3, 3, 1500.00, 1, 6), (4, 1, 8500.00, 1, 11), (5, 2, 2500.00, 1, 17),
 (6, 1, 12000.00, 2, 25), (7, 4, 800.75, 3, 2), (8, 2, 1800.50, 3, 8), (9, 1, 4500.50, 3, 12), (10, 1, 8500.00, 4, 11),
@@ -257,6 +267,7 @@ INSERT IGNORE INTO stock_transfers (id, source_branch_id, target_branch_id, prod
 (9, 1, 3, 15, 3,  'REJECTED',  3, 2, '2026-02-23 11:00:00', '2026-02-23 11:30:00', NULL, 'Insufficient demand in target branch', 0),
 (10, 5, 2, 20, 4, 'CANCELLED', 4, NULL, '2026-02-24 10:00:00', NULL, NULL, NULL, 0);
 
+ALTER TABLE notifications AUTO_INCREMENT = 1;
 ALTER TABLE users AUTO_INCREMENT = 5;
 ALTER TABLE audit_logs AUTO_INCREMENT = 1;
 ALTER TABLE branch AUTO_INCREMENT = 6;
