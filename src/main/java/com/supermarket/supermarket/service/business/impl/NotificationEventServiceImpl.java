@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.service.business;
+package com.supermarket.supermarket.service.business.impl;
 
 import com.supermarket.supermarket.model.CashRegister;
 import com.supermarket.supermarket.model.NotificationType;
@@ -7,6 +7,8 @@ import com.supermarket.supermarket.model.StockTransfer;
 import com.supermarket.supermarket.model.User;
 import com.supermarket.supermarket.model.UserRole;
 import com.supermarket.supermarket.repository.UserRepository;
+import com.supermarket.supermarket.service.business.NotificationEventService;
+import com.supermarket.supermarket.service.business.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,10 +19,11 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class NotificationEventService {
+public class NotificationEventServiceImpl implements NotificationEventService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
 
+    @Override
     public void onLowStock(String branchName, String productName, int currentStock, int minStock) {
         String message = String.format(
                 "Low stock alert: '%s' in branch '%s'. Current: %d, Minimum: %d",
@@ -29,6 +32,7 @@ public class NotificationEventService {
         notificationService.createNotificationForUsers(managers, NotificationType.LOW_STOCK, message, null);
     }
 
+    @Override
     public void onTransferRequested(StockTransfer transfer) {
         String message = String.format(
                 "Transfer requested: %d units of '%s' from '%s' to '%s'",
@@ -40,6 +44,7 @@ public class NotificationEventService {
         notificationService.createNotificationForUsers(managers, NotificationType.TRANSFER_REQUESTED, message, null);
     }
 
+    @Override
     public void onTransferApproved(StockTransfer transfer) {
         String message = String.format(
                 "Your transfer request for %d units of '%s' to '%s' has been approved",
@@ -50,6 +55,7 @@ public class NotificationEventService {
                 transfer.getRequestedBy(), NotificationType.TRANSFER_APPROVED, message, null);
     }
 
+    @Override
     public void onTransferRejected(StockTransfer transfer) {
         String message = String.format(
                 "Your transfer request for %d units of '%s' to '%s' has been rejected. Reason: %s",
@@ -61,6 +67,7 @@ public class NotificationEventService {
                 transfer.getRequestedBy(), NotificationType.TRANSFER_REJECTED, message, null);
     }
 
+    @Override
     public void onTransferCompleted(StockTransfer transfer) {
         String message = String.format(
                 "Transfer completed: %d units of '%s' moved from '%s' to '%s'",
@@ -72,6 +79,7 @@ public class NotificationEventService {
         notificationService.createNotificationForUsers(managers, NotificationType.TRANSFER_COMPLETED, message, null);
     }
 
+    @Override
     public void onCashRegisterDiscrepancy(CashRegister register, BigDecimal variance) {
         String message = String.format(
                 "Cash register discrepancy detected in branch '%s'. Variance: %.2f",
@@ -82,6 +90,7 @@ public class NotificationEventService {
                 managers, NotificationType.CASH_REGISTER_DISCREPANCY, message, null);
     }
 
+    @Override
     public void onSaleCancelled(Sale sale) {
         String message = String.format(
                 "Sale #%d in branch '%s' has been cancelled. Reason: %s",

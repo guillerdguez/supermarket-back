@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
                 description = "RESTful API for Supermarket Management System with JWT Authentication"
         ),
         servers = @Server(
-                url = "<http://localhost:8080>",
+                url = "http://localhost:8080",
                 description = "Local Server"
         )
 )
