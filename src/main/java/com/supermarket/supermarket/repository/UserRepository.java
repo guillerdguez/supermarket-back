@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.repository;
 
-import com.supermarket.supermarket.model.User;
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.user.User;
+import com.supermarket.supermarket.model.user.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;

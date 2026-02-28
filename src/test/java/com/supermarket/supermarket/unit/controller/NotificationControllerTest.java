@@ -6,7 +6,7 @@ import com.supermarket.supermarket.controller.NotificationController;
 import com.supermarket.supermarket.dto.notification.NotificationResponse;
 import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
-import com.supermarket.supermarket.model.NotificationType;
+import com.supermarket.supermarket.model.notification.NotificationType;
 import com.supermarket.supermarket.service.business.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

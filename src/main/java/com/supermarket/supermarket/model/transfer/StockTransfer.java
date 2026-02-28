@@ -1,5 +1,8 @@
-package com.supermarket.supermarket.model;
+package com.supermarket.supermarket.model.transfer;
 
+import com.supermarket.supermarket.model.branch.Branch;
+import com.supermarket.supermarket.model.product.Product;
+import com.supermarket.supermarket.model.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

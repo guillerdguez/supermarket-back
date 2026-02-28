@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.model;
+package com.supermarket.supermarket.model.notification;
 
 public enum NotificationType {
     LOW_STOCK,

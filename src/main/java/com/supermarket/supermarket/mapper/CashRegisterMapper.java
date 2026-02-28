@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.cashregister.CashRegisterResponse;
-import com.supermarket.supermarket.model.CashRegister;
+import com.supermarket.supermarket.model.cashregister.CashRegister;
 import org.springframework.stereotype.Component;
 
 @Component

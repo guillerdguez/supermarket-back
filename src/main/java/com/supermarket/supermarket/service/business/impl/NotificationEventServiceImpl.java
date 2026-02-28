@@ -1,11 +1,11 @@
 package com.supermarket.supermarket.service.business.impl;
 
-import com.supermarket.supermarket.model.CashRegister;
-import com.supermarket.supermarket.model.NotificationType;
-import com.supermarket.supermarket.model.Sale;
-import com.supermarket.supermarket.model.StockTransfer;
-import com.supermarket.supermarket.model.User;
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.cashregister.CashRegister;
+import com.supermarket.supermarket.model.notification.NotificationType;
+import com.supermarket.supermarket.model.sale.Sale;
+import com.supermarket.supermarket.model.transfer.StockTransfer;
+import com.supermarket.supermarket.model.user.User;
+import com.supermarket.supermarket.model.user.UserRole;
 import com.supermarket.supermarket.repository.UserRepository;
 import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.NotificationService;

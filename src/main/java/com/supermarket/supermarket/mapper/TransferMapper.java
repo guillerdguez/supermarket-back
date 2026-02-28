@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.transfer.TransferResponse;
-import com.supermarket.supermarket.model.StockTransfer;
+import com.supermarket.supermarket.model.transfer.StockTransfer;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

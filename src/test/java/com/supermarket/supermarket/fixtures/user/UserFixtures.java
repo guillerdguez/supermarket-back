@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.fixtures.user;
 
-import com.supermarket.supermarket.model.User;
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.user.User;
+import com.supermarket.supermarket.model.user.UserRole;
 
 public class UserFixtures {
 

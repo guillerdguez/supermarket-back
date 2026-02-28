@@ -2,7 +2,7 @@ package com.supermarket.supermarket.controller;
 
 import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
-import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.model.product.Product;
 import com.supermarket.supermarket.service.business.ProductService;
 import com.supermarket.supermarket.specification.ProductSpecifications;
 import io.swagger.v3.oas.annotations.Operation;

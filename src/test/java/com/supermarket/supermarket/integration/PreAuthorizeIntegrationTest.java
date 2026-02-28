@@ -1,8 +1,8 @@
 package com.supermarket.supermarket.integration;
 
 import com.supermarket.supermarket.helper.TestUserHelper;
-import com.supermarket.supermarket.model.Product;
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.product.Product;
+import com.supermarket.supermarket.model.user.UserRole;
 import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.repository.PaymentRepository;
 import com.supermarket.supermarket.repository.ProductRepository;

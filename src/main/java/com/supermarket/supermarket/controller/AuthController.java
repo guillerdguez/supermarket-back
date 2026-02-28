@@ -3,7 +3,7 @@ package com.supermarket.supermarket.controller;
 import com.supermarket.supermarket.dto.auth.AuthResponse;
 import com.supermarket.supermarket.dto.auth.LoginRequest;
 import com.supermarket.supermarket.dto.auth.RegisterRequest;
-import com.supermarket.supermarket.model.AuditStatus;
+import com.supermarket.supermarket.model.audit.AuditStatus;
 import com.supermarket.supermarket.service.security.AuditService;
 import com.supermarket.supermarket.service.security.AuthService;
 import com.supermarket.supermarket.service.security.JwtService;

@@ -1,8 +1,8 @@
 package com.supermarket.supermarket.service.business;
 
-import com.supermarket.supermarket.model.CashRegister;
-import com.supermarket.supermarket.model.Sale;
-import com.supermarket.supermarket.model.StockTransfer;
+import com.supermarket.supermarket.model.cashregister.CashRegister;
+import com.supermarket.supermarket.model.sale.Sale;
+import com.supermarket.supermarket.model.transfer.StockTransfer;
 
 import java.math.BigDecimal;
 

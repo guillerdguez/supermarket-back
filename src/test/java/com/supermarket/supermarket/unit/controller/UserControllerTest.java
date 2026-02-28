@@ -9,7 +9,7 @@ import com.supermarket.supermarket.dto.user.UserRequest;
 import com.supermarket.supermarket.exception.DuplicateResourceException;
 import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.user.UserRole;
 import com.supermarket.supermarket.service.business.UserManagementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

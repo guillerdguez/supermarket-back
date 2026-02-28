@@ -10,7 +10,7 @@ import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.fixtures.transfer.TransferFixtures;
-import com.supermarket.supermarket.model.TransferStatus;
+import com.supermarket.supermarket.model.transfer.TransferStatus;
 import com.supermarket.supermarket.service.business.TransferService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -1,5 +1,6 @@
-package com.supermarket.supermarket.model;
+package com.supermarket.supermarket.model.sale;
 
+import com.supermarket.supermarket.model.product.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

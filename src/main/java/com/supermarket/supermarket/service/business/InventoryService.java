@@ -2,7 +2,7 @@ package com.supermarket.supermarket.service.business;
 
 import com.supermarket.supermarket.dto.inventory.LowStockAlertResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
-import com.supermarket.supermarket.model.SaleDetail;
+import com.supermarket.supermarket.model.sale.SaleDetail;
 
 import java.util.List;
 

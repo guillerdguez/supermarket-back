@@ -6,7 +6,7 @@ import com.supermarket.supermarket.exception.DuplicateResourceException;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.BranchMapper;
-import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.business.BranchService;

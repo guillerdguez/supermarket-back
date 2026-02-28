@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.model;
+package com.supermarket.supermarket.model.user;
 
 public enum UserRole {
     ADMIN,

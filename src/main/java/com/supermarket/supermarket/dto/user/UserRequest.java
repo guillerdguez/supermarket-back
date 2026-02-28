@@ -1,6 +1,6 @@
 package com.supermarket.supermarket.dto.user;
 
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.user.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -1,8 +1,10 @@
 package com.supermarket.supermarket.mapper;
 
-import com.supermarket.supermarket.dto.product.*;
-import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.dto.product.ProductRequest;
+import com.supermarket.supermarket.dto.product.ProductResponse;
+import com.supermarket.supermarket.model.product.Product;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 
 @Component

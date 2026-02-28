@@ -2,10 +2,10 @@ package com.supermarket.supermarket.fixtures.cashregister;
 
 import com.supermarket.supermarket.fixtures.branch.BranchFixtures;
 import com.supermarket.supermarket.fixtures.user.UserFixtures;
-import com.supermarket.supermarket.model.Branch;
-import com.supermarket.supermarket.model.CashRegister;
-import com.supermarket.supermarket.model.CashRegisterStatus;
-import com.supermarket.supermarket.model.User;
+import com.supermarket.supermarket.model.branch.Branch;
+import com.supermarket.supermarket.model.cashregister.CashRegister;
+import com.supermarket.supermarket.model.cashregister.CashRegisterStatus;
+import com.supermarket.supermarket.model.user.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

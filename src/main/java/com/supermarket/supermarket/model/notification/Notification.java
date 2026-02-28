@@ -1,5 +1,6 @@
-package com.supermarket.supermarket.model;
+package com.supermarket.supermarket.model.notification;
 
+import com.supermarket.supermarket.model.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

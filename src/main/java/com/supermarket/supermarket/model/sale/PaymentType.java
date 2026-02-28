@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.model;
+package com.supermarket.supermarket.model.sale;
 
 public enum PaymentType {
     CASH,

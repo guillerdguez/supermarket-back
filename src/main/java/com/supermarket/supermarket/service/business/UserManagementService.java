@@ -5,7 +5,7 @@ import com.supermarket.supermarket.dto.user.ChangePasswordRequest;
 import com.supermarket.supermarket.dto.user.ProfileUpdateRequest;
 import com.supermarket.supermarket.dto.user.RoleUpdateRequest;
 import com.supermarket.supermarket.dto.user.UserRequest;
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.user.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

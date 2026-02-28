@@ -2,7 +2,7 @@ package com.supermarket.supermarket.dto.notification;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.supermarket.supermarket.model.NotificationType;
+import com.supermarket.supermarket.model.notification.NotificationType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
