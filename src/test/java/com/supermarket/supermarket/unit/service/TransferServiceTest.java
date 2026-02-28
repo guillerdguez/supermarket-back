@@ -12,11 +12,11 @@ import com.supermarket.supermarket.fixtures.product.ProductFixtures;
 import com.supermarket.supermarket.fixtures.transfer.TransferFixtures;
 import com.supermarket.supermarket.fixtures.user.UserFixtures;
 import com.supermarket.supermarket.mapper.TransferMapper;
-import com.supermarket.supermarket.model.Branch;
-import com.supermarket.supermarket.model.Product;
-import com.supermarket.supermarket.model.StockTransfer;
-import com.supermarket.supermarket.model.TransferStatus;
-import com.supermarket.supermarket.model.User;
+import com.supermarket.supermarket.model.branch.Branch;
+import com.supermarket.supermarket.model.product.Product;
+import com.supermarket.supermarket.model.transfer.StockTransfer;
+import com.supermarket.supermarket.model.transfer.TransferStatus;
+import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.StockTransferRepository;
@@ -61,7 +61,7 @@ class TransferServiceTest {
     private SecurityUtils securityUtils;
     @Mock
     private NotificationEventService notificationEventService;
-    
+
     @InjectMocks
     private TransferServiceImpl transferService;
 

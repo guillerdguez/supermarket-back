@@ -2,7 +2,7 @@ package com.supermarket.supermarket.service.business;
 
 import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
-import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.model.product.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;

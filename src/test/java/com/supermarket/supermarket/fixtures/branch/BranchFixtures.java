@@ -2,7 +2,7 @@ package com.supermarket.supermarket.fixtures.branch;
 
 import com.supermarket.supermarket.dto.branch.BranchRequest;
 import com.supermarket.supermarket.dto.branch.BranchResponse;
-import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.branch.Branch;
 
 public class BranchFixtures {
     public static Branch defaultBranch() {

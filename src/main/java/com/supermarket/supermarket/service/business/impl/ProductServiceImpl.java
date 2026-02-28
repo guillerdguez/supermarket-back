@@ -6,7 +6,7 @@ import com.supermarket.supermarket.exception.DuplicateResourceException;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.ProductMapper;
-import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.model.product.Product;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.business.ProductService;

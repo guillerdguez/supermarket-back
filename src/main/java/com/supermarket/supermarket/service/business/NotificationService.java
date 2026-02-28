@@ -1,8 +1,8 @@
 package com.supermarket.supermarket.service.business;
 
 import com.supermarket.supermarket.dto.notification.NotificationResponse;
-import com.supermarket.supermarket.model.NotificationType;
-import com.supermarket.supermarket.model.User;
+import com.supermarket.supermarket.model.notification.NotificationType;
+import com.supermarket.supermarket.model.user.User;
 
 import java.util.List;
 

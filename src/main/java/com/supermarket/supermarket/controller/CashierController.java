@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.controller;
 
 import com.supermarket.supermarket.dto.sale.SaleResponse;
-import com.supermarket.supermarket.model.User;
+import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.SaleService;
 import io.swagger.v3.oas.annotations.Operation;

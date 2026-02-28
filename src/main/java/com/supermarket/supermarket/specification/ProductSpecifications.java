@@ -1,6 +1,6 @@
 package com.supermarket.supermarket.specification;
 
-import com.supermarket.supermarket.model.Product;
+import com.supermarket.supermarket.model.product.Product;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;

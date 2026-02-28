@@ -2,7 +2,7 @@ package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailResponse;
-import com.supermarket.supermarket.model.SaleDetail;
+import com.supermarket.supermarket.model.sale.SaleDetail;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

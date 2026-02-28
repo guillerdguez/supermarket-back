@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.specification;
 
-import com.supermarket.supermarket.model.User;
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.user.User;
+import com.supermarket.supermarket.model.user.UserRole;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;

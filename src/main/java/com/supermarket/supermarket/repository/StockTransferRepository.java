@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.repository;
 
-import com.supermarket.supermarket.model.StockTransfer;
-import com.supermarket.supermarket.model.TransferStatus;
+import com.supermarket.supermarket.model.transfer.StockTransfer;
+import com.supermarket.supermarket.model.transfer.TransferStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,6 +1,6 @@
 package com.supermarket.supermarket.config;
 
-import com.supermarket.supermarket.model.User;
+import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.repository.UserRepository;
 import com.supermarket.supermarket.security.SecurityUser;
 import lombok.RequiredArgsConstructor;

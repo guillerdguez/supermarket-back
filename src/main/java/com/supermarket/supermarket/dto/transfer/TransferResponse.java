@@ -2,7 +2,7 @@ package com.supermarket.supermarket.dto.transfer;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.supermarket.supermarket.model.TransferStatus;
+import com.supermarket.supermarket.model.transfer.TransferStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

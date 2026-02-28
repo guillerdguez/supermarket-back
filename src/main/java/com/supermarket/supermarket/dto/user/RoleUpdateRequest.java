@@ -1,6 +1,6 @@
 package com.supermarket.supermarket.dto.user;
 
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.user.UserRole;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

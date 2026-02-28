@@ -2,7 +2,7 @@ package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.branch.BranchRequest;
 import com.supermarket.supermarket.dto.branch.BranchResponse;
-import com.supermarket.supermarket.model.Branch;
+import com.supermarket.supermarket.model.branch.Branch;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

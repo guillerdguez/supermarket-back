@@ -2,7 +2,7 @@ package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
-import com.supermarket.supermarket.model.Sale;
+import com.supermarket.supermarket.model.sale.Sale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

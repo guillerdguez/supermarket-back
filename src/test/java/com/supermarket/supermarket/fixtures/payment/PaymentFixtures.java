@@ -1,9 +1,9 @@
 package com.supermarket.supermarket.fixtures.payment;
 
 import com.supermarket.supermarket.fixtures.sale.SaleFixtures;
-import com.supermarket.supermarket.model.Payment;
-import com.supermarket.supermarket.model.PaymentType;
-import com.supermarket.supermarket.model.Sale;
+import com.supermarket.supermarket.model.sale.Payment;
+import com.supermarket.supermarket.model.sale.PaymentType;
+import com.supermarket.supermarket.model.sale.Sale;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

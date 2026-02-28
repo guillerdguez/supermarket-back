@@ -1,12 +1,15 @@
-package com.supermarket.supermarket.model;
+package com.supermarket.supermarket.model.sale;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,37 +17,34 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
-@Table(name = "users")
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+@Entity
+@Table(name = "payments")
+public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String username;
-
-    @Column(unique = true, nullable = false)
-    private String email;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sale_id", nullable = false)
+    private Sale sale;
 
     @Column(nullable = false)
-    private String password;
-
-    @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role;
+    @Column(name = "payment_type", nullable = false)
+    private PaymentType paymentType;
 
-    @Column(nullable = false)
-    private Boolean active = true;
+    @Column(name = "payment_date", nullable = false)
+    private LocalDateTime paymentDate;
+
+    private String reference;
 }

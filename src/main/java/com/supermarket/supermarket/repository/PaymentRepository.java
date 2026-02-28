@@ -1,8 +1,9 @@
 package com.supermarket.supermarket.repository;
 
-import com.supermarket.supermarket.model.Payment;
+import com.supermarket.supermarket.model.sale.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
 @Repository

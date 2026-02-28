@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.payment.PaymentResponse;
-import com.supermarket.supermarket.model.Payment;
+import com.supermarket.supermarket.model.sale.Payment;
 import org.springframework.stereotype.Component;
 
 @Component

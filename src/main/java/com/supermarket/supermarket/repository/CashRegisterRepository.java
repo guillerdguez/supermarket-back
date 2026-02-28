@@ -1,8 +1,8 @@
 package com.supermarket.supermarket.repository;
 
 
-import com.supermarket.supermarket.model.CashRegister;
-import com.supermarket.supermarket.model.CashRegisterStatus;
+import com.supermarket.supermarket.model.cashregister.CashRegister;
+import com.supermarket.supermarket.model.cashregister.CashRegisterStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

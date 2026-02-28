@@ -3,7 +3,7 @@ package com.supermarket.supermarket.controller;
 import com.supermarket.supermarket.dto.auth.UserResponse;
 import com.supermarket.supermarket.dto.user.RoleUpdateRequest;
 import com.supermarket.supermarket.dto.user.UserRequest;
-import com.supermarket.supermarket.model.UserRole;
+import com.supermarket.supermarket.model.user.UserRole;
 import com.supermarket.supermarket.service.business.UserManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

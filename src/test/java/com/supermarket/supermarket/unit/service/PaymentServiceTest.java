@@ -6,10 +6,10 @@ import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.fixtures.sale.SaleFixtures;
 import com.supermarket.supermarket.mapper.PaymentMapper;
-import com.supermarket.supermarket.model.Payment;
-import com.supermarket.supermarket.model.PaymentType;
-import com.supermarket.supermarket.model.Sale;
-import com.supermarket.supermarket.model.SaleStatus;
+import com.supermarket.supermarket.model.sale.Payment;
+import com.supermarket.supermarket.model.sale.PaymentType;
+import com.supermarket.supermarket.model.sale.Sale;
+import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.repository.PaymentRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.business.impl.PaymentServiceImpl;
@@ -39,7 +39,7 @@ class PaymentServiceTest {
     private PaymentMapper paymentMapper;
     @InjectMocks
     private PaymentServiceImpl paymentService;
- 
+
     @Test
     void registerPayment_shouldSavePayment() {
         Sale sale = SaleFixtures.saleWithDetails();

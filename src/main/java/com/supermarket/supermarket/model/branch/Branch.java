@@ -1,4 +1,4 @@
-package com.supermarket.supermarket.model;
+package com.supermarket.supermarket.model.branch;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

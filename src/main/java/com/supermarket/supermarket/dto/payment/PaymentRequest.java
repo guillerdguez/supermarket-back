@@ -1,9 +1,14 @@
 package com.supermarket.supermarket.dto.payment;
 
-import com.supermarket.supermarket.model.PaymentType;
+import com.supermarket.supermarket.model.sale.PaymentType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 
 @Getter

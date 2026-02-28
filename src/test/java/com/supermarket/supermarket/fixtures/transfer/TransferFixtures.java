@@ -6,9 +6,9 @@ import com.supermarket.supermarket.dto.transfer.TransferResponse;
 import com.supermarket.supermarket.fixtures.branch.BranchFixtures;
 import com.supermarket.supermarket.fixtures.product.ProductFixtures;
 import com.supermarket.supermarket.fixtures.user.UserFixtures;
-import com.supermarket.supermarket.model.Branch;
-import com.supermarket.supermarket.model.StockTransfer;
-import com.supermarket.supermarket.model.TransferStatus;
+import com.supermarket.supermarket.model.branch.Branch;
+import com.supermarket.supermarket.model.transfer.StockTransfer;
+import com.supermarket.supermarket.model.transfer.TransferStatus;
 
 import java.time.LocalDateTime;
 

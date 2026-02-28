@@ -5,8 +5,9 @@ import com.supermarket.supermarket.dto.payment.PaymentResponse;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.PaymentMapper;
-import com.supermarket.supermarket.model.Payment;
-import com.supermarket.supermarket.model.Sale;
+import com.supermarket.supermarket.model.sale.Payment;
+import com.supermarket.supermarket.model.sale.Sale;
+import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.repository.PaymentRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.business.PaymentService;
@@ -31,7 +32,7 @@ public class PaymentServiceImpl implements PaymentService {
         Sale sale = saleRepository.findById(request.getSaleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found"));
 
-        if (sale.getStatus() == com.supermarket.supermarket.model.SaleStatus.CANCELLED) {
+        if (sale.getStatus() == SaleStatus.CANCELLED) {
             throw new InvalidOperationException("Cannot register payment for a cancelled sale");
         }
 

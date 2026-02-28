@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.service.security;
 
-import com.supermarket.supermarket.model.AuditLog;
-import com.supermarket.supermarket.model.AuditStatus;
+import com.supermarket.supermarket.model.audit.AuditLog;
+import com.supermarket.supermarket.model.audit.AuditStatus;
 import com.supermarket.supermarket.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Slf4j
 public class AuditService {
     private final AuditLogRepository auditLogRepository;
+
     public void logAction(String username, String action, String details, AuditStatus status) {
         try {
             String ipAddress = getClientIpAddress();
@@ -33,6 +35,7 @@ public class AuditService {
             log.error("Failed to create audit log", e);
         }
     }
+
     private String getClientIpAddress() {
         ServletRequestAttributes attributes =
                 (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();

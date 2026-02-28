@@ -1,6 +1,6 @@
 package com.supermarket.supermarket.repository;
 
-import com.supermarket.supermarket.model.Notification;
+import com.supermarket.supermarket.model.notification.Notification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

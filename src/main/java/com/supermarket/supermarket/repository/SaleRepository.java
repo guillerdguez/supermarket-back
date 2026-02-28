@@ -1,6 +1,6 @@
 package com.supermarket.supermarket.repository;
 
-import com.supermarket.supermarket.model.Sale;
+import com.supermarket.supermarket.model.sale.Sale;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;

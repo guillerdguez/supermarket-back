@@ -1,7 +1,7 @@
 package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.notification.NotificationResponse;
-import com.supermarket.supermarket.model.Notification;
+import com.supermarket.supermarket.model.notification.Notification;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -3,7 +3,7 @@ package com.supermarket.supermarket.service.business;
 import com.supermarket.supermarket.dto.cashregister.CashRegisterResponse;
 import com.supermarket.supermarket.dto.cashregister.CloseRegisterRequest;
 import com.supermarket.supermarket.dto.cashregister.OpenRegisterRequest;
-import com.supermarket.supermarket.model.CashRegister;
+import com.supermarket.supermarket.model.cashregister.CashRegister;
 
 public interface CashRegisterService {
     CashRegisterResponse openRegister(OpenRegisterRequest request);
