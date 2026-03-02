@@ -1,7 +1,9 @@
 package com.supermarket.supermarket.fixtures.auth;
 
 import com.supermarket.supermarket.dto.auth.RegisterRequest;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class AuthFixtures {
     public static RegisterRequest userRegisterRequest() {
         return RegisterRequest.builder()

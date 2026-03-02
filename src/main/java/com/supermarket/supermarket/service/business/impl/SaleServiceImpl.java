@@ -194,4 +194,6 @@ public class SaleServiceImpl implements SaleService {
         }
         return saleMapper.toResponse(sale);
     }
+
+    
 }

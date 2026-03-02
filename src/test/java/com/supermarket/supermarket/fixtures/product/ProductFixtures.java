@@ -3,9 +3,11 @@ package com.supermarket.supermarket.fixtures.product;
 import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
 import com.supermarket.supermarket.model.product.Product;
+import lombok.experimental.UtilityClass;
 
 import java.math.BigDecimal;
 
+@UtilityClass
 public class ProductFixtures {
     public static Product defaultProduct() {
         return productWithId(1L);

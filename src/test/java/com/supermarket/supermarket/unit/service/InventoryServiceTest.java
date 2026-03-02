@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -128,7 +129,7 @@ class InventoryServiceTest {
                     .willReturn(Optional.of(inventory));
             inventoryService.validateAndReduceStock(1L, 1L, 10);
             assertThat(inventory.getStock()).isEqualTo(40);
-            verify(branchInventoryRepository).save(inventory);
+            then(branchInventoryRepository).should().save(inventory);
         }
 
         @Test
@@ -225,7 +226,7 @@ class InventoryServiceTest {
         @DisplayName("validateAndReduceStockBatch - should throw when some products not found in branch")
         void validateAndReduceStockBatch_MissingProducts() {
             given(branchInventoryRepository.findByBranchIdAndProductIdIn(1L, Set.of(1L, 2L)))
-                    .willReturn(List.of(inventory)); // only product 1L
+                    .willReturn(List.of(inventory));
             assertThatThrownBy(() -> inventoryService.validateAndReduceStockBatch(1L, detailRequests))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("do not exist in branch");
@@ -270,7 +271,7 @@ class InventoryServiceTest {
         @DisplayName("restoreStockBatch - should do nothing when details list is empty")
         void restoreStockBatch_EmptyDetails() {
             inventoryService.restoreStockBatch(1L, List.of());
-            verify(branchInventoryRepository, never()).saveAll(any());
+            then(branchInventoryRepository).should(never()).saveAll(any());
         }
     }
 

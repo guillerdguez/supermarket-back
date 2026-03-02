@@ -3,7 +3,9 @@ package com.supermarket.supermarket.fixtures.branch;
 import com.supermarket.supermarket.dto.branch.BranchRequest;
 import com.supermarket.supermarket.dto.branch.BranchResponse;
 import com.supermarket.supermarket.model.branch.Branch;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class BranchFixtures {
     public static Branch defaultBranch() {
         return Branch.builder()

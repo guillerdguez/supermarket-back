@@ -23,7 +23,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -60,7 +59,7 @@ class TransferControllerTest {
     @Test
     @DisplayName("POST /transfers - should return 201 and Location header")
     void requestTransfer_ShouldReturn201() throws Exception {
-        TransferResponse response = buildResponse(TransferStatus.PENDING);
+        TransferResponse response = TransferFixtures.transferResponse(TransferStatus.PENDING);
         given(transferService.requestTransfer(any())).willReturn(response);
 
         mockMvc.perform(post("/transfers")
@@ -91,7 +90,7 @@ class TransferControllerTest {
     @Test
     @DisplayName("GET /transfers - should return list of transfers")
     void getAllTransfers_ShouldReturnList() throws Exception {
-        given(transferService.getAllTransfers()).willReturn(List.of(buildResponse(TransferStatus.PENDING)));
+        given(transferService.getAllTransfers()).willReturn(List.of(TransferFixtures.transferResponse(TransferStatus.PENDING)));
 
         mockMvc.perform(get("/transfers"))
                 .andExpect(status().isOk())
@@ -101,7 +100,7 @@ class TransferControllerTest {
     @Test
     @DisplayName("GET /transfers/{id} - should return transfer")
     void getTransferById_ShouldReturnTransfer() throws Exception {
-        given(transferService.getTransferById(1L)).willReturn(buildResponse(TransferStatus.PENDING));
+        given(transferService.getTransferById(1L)).willReturn(TransferFixtures.transferResponse(TransferStatus.PENDING));
 
         mockMvc.perform(get("/transfers/1"))
                 .andExpect(status().isOk())
@@ -121,7 +120,7 @@ class TransferControllerTest {
     @Test
     @DisplayName("POST /transfers/{id}/approve - should return 200 with APPROVED status")
     void approveTransfer_ShouldReturn200() throws Exception {
-        given(transferService.approveTransfer(1L)).willReturn(buildResponse(TransferStatus.APPROVED));
+        given(transferService.approveTransfer(1L)).willReturn(TransferFixtures.transferResponse(TransferStatus.APPROVED));
         mockMvc.perform(post("/transfers/1/approve"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("APPROVED"));
@@ -140,7 +139,7 @@ class TransferControllerTest {
     @DisplayName("POST /transfers/{id}/reject - should return 200 with REJECTED status")
     void rejectTransfer_ShouldReturn200() throws Exception {
         RejectTransferRequest request = TransferFixtures.validRejectRequest();
-        given(transferService.rejectTransfer(eq(1L), any())).willReturn(buildResponse(TransferStatus.REJECTED));
+        given(transferService.rejectTransfer(eq(1L), any())).willReturn(TransferFixtures.transferResponse(TransferStatus.REJECTED));
 
         mockMvc.perform(post("/transfers/1/reject")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -163,7 +162,7 @@ class TransferControllerTest {
     @Test
     @DisplayName("POST /transfers/{id}/complete - should return 200 with COMPLETED status")
     void completeTransfer_ShouldReturn200() throws Exception {
-        given(transferService.completeTransfer(1L)).willReturn(buildResponse(TransferStatus.COMPLETED));
+        given(transferService.completeTransfer(1L)).willReturn(TransferFixtures.transferResponse(TransferStatus.COMPLETED));
 
         mockMvc.perform(post("/transfers/1/complete"))
                 .andExpect(status().isOk())
@@ -173,7 +172,7 @@ class TransferControllerTest {
     @Test
     @DisplayName("POST /transfers/{id}/cancel - should return 200 with CANCELLED status")
     void cancelTransfer_ShouldReturn200() throws Exception {
-        given(transferService.cancelTransfer(1L)).willReturn(buildResponse(TransferStatus.CANCELLED));
+        given(transferService.cancelTransfer(1L)).willReturn(TransferFixtures.transferResponse(TransferStatus.CANCELLED));
 
         mockMvc.perform(post("/transfers/1/cancel"))
                 .andExpect(status().isOk())
@@ -184,7 +183,7 @@ class TransferControllerTest {
     @DisplayName("GET /transfers/status/{status} - should return filtered list")
     void getTransfersByStatus_ShouldReturnList() throws Exception {
         given(transferService.getTransfersByStatus("PENDING"))
-                .willReturn(List.of(buildResponse(TransferStatus.PENDING)));
+                .willReturn(List.of(TransferFixtures.transferResponse(TransferStatus.PENDING)));
 
         mockMvc.perform(get("/transfers/status/PENDING"))
                 .andExpect(status().isOk())
@@ -195,7 +194,7 @@ class TransferControllerTest {
     @DisplayName("GET /transfers/source/{branchId} - should return transfers from source branch")
     void getTransfersBySourceBranch_ShouldReturnList() throws Exception {
         given(transferService.getTransfersBySourceBranch(1L))
-                .willReturn(List.of(buildResponse(TransferStatus.PENDING)));
+                .willReturn(List.of(TransferFixtures.transferResponse(TransferStatus.PENDING)));
 
         mockMvc.perform(get("/transfers/source/1"))
                 .andExpect(status().isOk())
@@ -206,27 +205,10 @@ class TransferControllerTest {
     @DisplayName("GET /transfers/target/{branchId} - should return transfers to target branch")
     void getTransfersByTargetBranch_ShouldReturnList() throws Exception {
         given(transferService.getTransfersByTargetBranch(2L))
-                .willReturn(List.of(buildResponse(TransferStatus.APPROVED)));
+                .willReturn(List.of(TransferFixtures.transferResponse(TransferStatus.APPROVED)));
 
         mockMvc.perform(get("/transfers/target/2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
-    }
-
-    private TransferResponse buildResponse(TransferStatus status) {
-        return TransferResponse.builder()
-                .id(1L)
-                .sourceBranchId(1L)
-                .sourceBranchName("Central Branch")
-                .targetBranchId(2L)
-                .targetBranchName("North Branch")
-                .productId(1L)
-                .productName("Premium Rice")
-                .quantity(10)
-                .status(status)
-                .requestedById(1L)
-                .requestedByUsername("cashier-test")
-                .requestedAt(LocalDateTime.now())
-                .build();
     }
 }

@@ -115,6 +115,9 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
         Long getTransactionCount();
     }
 
+    @Query("SELECT COALESCE(SUM(s.total), 0) FROM Sale s WHERE s.cashRegister.id = :cashRegisterId AND s.status = 'REGISTERED'")
+    BigDecimal sumTotalByCashRegisterId(@Param("cashRegisterId") Long cashRegisterId);
+
     interface SalesByBranchProjection {
         Long getBranchId();
 

@@ -9,9 +9,11 @@ import com.supermarket.supermarket.fixtures.user.UserFixtures;
 import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.transfer.StockTransfer;
 import com.supermarket.supermarket.model.transfer.TransferStatus;
+import lombok.experimental.UtilityClass;
 
 import java.time.LocalDateTime;
 
+@UtilityClass
 public class TransferFixtures {
 
     public static StockTransfer pendingTransfer() {
@@ -59,7 +61,8 @@ public class TransferFixtures {
                 .build();
     }
 
-    public static TransferResponse transferResponse() {
+
+    public static TransferResponse transferResponse(TransferStatus status) {
         return TransferResponse.builder()
                 .id(1L)
                 .sourceBranchId(1L)
@@ -69,10 +72,15 @@ public class TransferFixtures {
                 .productId(1L)
                 .productName("Premium Rice")
                 .quantity(10)
-                .status(TransferStatus.PENDING)
+                .status(status)
                 .requestedById(1L)
                 .requestedByUsername("cashier-test")
                 .requestedAt(LocalDateTime.now())
                 .build();
+    }
+
+
+    public static TransferResponse transferResponse() {
+        return transferResponse(TransferStatus.PENDING);
     }
 }

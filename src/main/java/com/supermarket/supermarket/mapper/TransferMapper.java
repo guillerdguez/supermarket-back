@@ -5,7 +5,6 @@ import com.supermarket.supermarket.model.transfer.StockTransfer;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class TransferMapper {
@@ -38,6 +37,6 @@ public class TransferMapper {
         if (transfers == null) return null;
         return transfers.stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
