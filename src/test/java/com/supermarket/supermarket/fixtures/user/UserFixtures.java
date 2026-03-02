@@ -2,7 +2,9 @@ package com.supermarket.supermarket.fixtures.user;
 
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.model.user.UserRole;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class UserFixtures {
 
     public static User defaultCashier() {

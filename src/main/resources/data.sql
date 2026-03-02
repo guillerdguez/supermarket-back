@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS product (
     name VARCHAR(100) UNIQUE NOT NULL,
     category VARCHAR(50),
     price DECIMAL(19, 2),
-    version INT
+    version BIGINT
 );
 
 CREATE TABLE IF NOT EXISTS cash_registers (

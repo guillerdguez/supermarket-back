@@ -6,6 +6,7 @@ import com.supermarket.supermarket.dto.cashregister.OpenRegisterRequest;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.fixtures.branch.BranchFixtures;
+import com.supermarket.supermarket.fixtures.cashregister.CashRegisterFixtures;
 import com.supermarket.supermarket.fixtures.user.UserFixtures;
 import com.supermarket.supermarket.mapper.CashRegisterMapper;
 import com.supermarket.supermarket.model.branch.Branch;
@@ -14,6 +15,7 @@ import com.supermarket.supermarket.model.cashregister.CashRegisterStatus;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
+import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.impl.CashRegisterServiceImpl;
@@ -25,12 +27,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -43,11 +46,14 @@ class CashRegisterServiceTest {
     @Mock
     private BranchRepository branchRepository;
     @Mock
+    private SaleRepository saleRepository;
+    @Mock
     private CashRegisterMapper cashRegisterMapper;
     @Mock
     private SecurityUtils securityUtils;
     @Mock
     private NotificationEventService notificationEventService;
+
     @InjectMocks
     private CashRegisterServiceImpl cashRegisterService;
 
@@ -63,16 +69,9 @@ class CashRegisterServiceTest {
     @Test
     void openRegister_shouldCreateNewOpenRegister() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
-
         OpenRegisterRequest request = new OpenRegisterRequest(branch.getId(), new BigDecimal("100.00"));
-        CashRegister savedRegister = CashRegister.builder()
-                .id(100L)
-                .branch(branch)
-                .openingBalance(request.getOpeningBalance())
-                .openingTime(LocalDateTime.now())
-                .status(CashRegisterStatus.OPEN)
-                .openedBy(mockUser)
-                .build();
+
+        CashRegister savedRegister = CashRegisterFixtures.openRegister(100L, branch, mockUser);
         CashRegisterResponse response = CashRegisterResponse.builder().id(100L).build();
 
         given(branchRepository.findById(branch.getId())).willReturn(Optional.of(branch));
@@ -99,8 +98,8 @@ class CashRegisterServiceTest {
     @Test
     void openRegister_whenRegisterAlreadyOpen_shouldThrowException() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
-
         OpenRegisterRequest request = new OpenRegisterRequest(branch.getId(), new BigDecimal("100.00"));
+
         given(branchRepository.findById(branch.getId())).willReturn(Optional.of(branch));
         given(cashRegisterRepository.findByBranchIdAndStatus(branch.getId(), CashRegisterStatus.OPEN))
                 .willReturn(Optional.of(mock(CashRegister.class)));
@@ -112,18 +111,14 @@ class CashRegisterServiceTest {
     @Test
     void closeRegister_shouldCloseRegister() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
-
         Long registerId = 100L;
         CloseRegisterRequest request = new CloseRegisterRequest(new BigDecimal("150.00"));
-        CashRegister register = CashRegister.builder()
-                .id(registerId)
-                .branch(branch)
-                .status(CashRegisterStatus.OPEN)
-                .openedBy(mockUser)
-                .build();
+
+        CashRegister register = CashRegisterFixtures.openRegister(registerId, branch, mockUser);
         CashRegisterResponse response = CashRegisterResponse.builder().id(registerId).build();
 
         given(cashRegisterRepository.findById(registerId)).willReturn(Optional.of(register));
+        given(saleRepository.sumTotalByCashRegisterId(registerId)).willReturn(new BigDecimal("50.00"));
         given(cashRegisterRepository.save(register)).willReturn(register);
         given(cashRegisterMapper.toResponse(register)).willReturn(response);
 
@@ -134,6 +129,7 @@ class CashRegisterServiceTest {
         assertThat(register.getClosingBalance()).isEqualByComparingTo("150.00");
         assertThat(register.getClosedBy()).isEqualTo(mockUser);
         then(cashRegisterRepository).should().save(register);
+        then(notificationEventService).shouldHaveNoInteractions();
     }
 
     @Test
@@ -147,13 +143,32 @@ class CashRegisterServiceTest {
     @Test
     void closeRegister_whenAlreadyClosed_shouldThrowException() {
         Long registerId = 100L;
-        CashRegister register = CashRegister.builder()
-                .id(registerId)
-                .status(CashRegisterStatus.CLOSED)
-                .build();
+        CashRegister register = CashRegisterFixtures.closedRegister();
         given(cashRegisterRepository.findById(registerId)).willReturn(Optional.of(register));
 
         assertThatThrownBy(() -> cashRegisterService.closeRegister(registerId, new CloseRegisterRequest(BigDecimal.ZERO)))
                 .isInstanceOf(InvalidOperationException.class);
+    }
+
+    @Test
+    void closeRegister_whenDiscrepancy_shouldTriggerNotification() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        Long registerId = 100L;
+        CloseRegisterRequest request = new CloseRegisterRequest(new BigDecimal("160.00"));
+
+        CashRegister register = CashRegisterFixtures.openRegister(registerId, branch, mockUser);
+        CashRegisterResponse response = CashRegisterResponse.builder().id(registerId).build();
+
+        given(cashRegisterRepository.findById(registerId)).willReturn(Optional.of(register));
+        given(saleRepository.sumTotalByCashRegisterId(registerId)).willReturn(new BigDecimal("50.00"));
+        given(cashRegisterRepository.save(register)).willReturn(register);
+        given(cashRegisterMapper.toResponse(register)).willReturn(response);
+
+        cashRegisterService.closeRegister(registerId, request);
+
+        then(notificationEventService).should().onCashRegisterDiscrepancy(
+                eq(register),
+                argThat(variance -> variance.compareTo(new BigDecimal("10.00")) == 0)
+        );
     }
 }

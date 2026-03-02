@@ -42,5 +42,5 @@ public class Product {
     private List<BranchInventory> branchInventories = new ArrayList<>();
 
     @Version
-    private Integer version;
+    private Long version;
 }

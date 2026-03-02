@@ -4,6 +4,7 @@ import com.supermarket.supermarket.dto.payment.PaymentRequest;
 import com.supermarket.supermarket.dto.payment.PaymentResponse;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
+import com.supermarket.supermarket.fixtures.payment.PaymentFixtures;
 import com.supermarket.supermarket.fixtures.sale.SaleFixtures;
 import com.supermarket.supermarket.mapper.PaymentMapper;
 import com.supermarket.supermarket.model.sale.Payment;
@@ -47,7 +48,7 @@ class PaymentServiceTest {
         sale.setTotal(new BigDecimal("100.00"));
 
         PaymentRequest request = new PaymentRequest(sale.getId(), new BigDecimal("50.00"), PaymentType.CASH, null);
-        Payment payment = Payment.builder().id(10L).build();
+        Payment payment = PaymentFixtures.cashPayment(10L, sale);
         PaymentResponse response = PaymentResponse.builder().id(10L).build();
 
         given(saleRepository.findById(sale.getId())).willReturn(Optional.of(sale));
@@ -84,8 +85,11 @@ class PaymentServiceTest {
         Sale sale = SaleFixtures.saleWithDetails();
         sale.setStatus(SaleStatus.REGISTERED);
         sale.setTotal(new BigDecimal("50.00"));
+
         given(saleRepository.findById(sale.getId())).willReturn(Optional.of(sale));
-        given(paymentRepository.findBySaleId(sale.getId())).willReturn(List.of(Payment.builder().amount(new BigDecimal("30.00")).build()));
+        Payment existingPayment = PaymentFixtures.cashPayment(1L, sale);
+        existingPayment.setAmount(new BigDecimal("30.00"));
+        given(paymentRepository.findBySaleId(sale.getId())).willReturn(List.of(existingPayment));
 
         assertThatThrownBy(() -> paymentService.registerPayment(new PaymentRequest(sale.getId(), new BigDecimal("30.00"), PaymentType.CASH, null)))
                 .isInstanceOf(InvalidOperationException.class);

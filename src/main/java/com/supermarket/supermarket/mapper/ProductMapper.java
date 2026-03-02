@@ -36,6 +36,7 @@ public class ProductMapper {
     }
 
     public List<ProductResponse> toResponseList(List<Product> entities) {
+        if (entities == null) return null;
         return entities.stream().map(this::toResponse).toList();
     }
 }

@@ -17,10 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@RequiredArgsConstructor
-@Transactional
-@Slf4j
 @Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class BranchServiceImpl implements BranchService {
 
     private final BranchRepository branchRepository;

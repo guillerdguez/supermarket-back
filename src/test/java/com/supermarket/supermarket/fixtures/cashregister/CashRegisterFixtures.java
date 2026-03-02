@@ -6,10 +6,12 @@ import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.cashregister.CashRegister;
 import com.supermarket.supermarket.model.cashregister.CashRegisterStatus;
 import com.supermarket.supermarket.model.user.User;
+import lombok.experimental.UtilityClass;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@UtilityClass
 public class CashRegisterFixtures {
 
     public static CashRegister openRegister() {

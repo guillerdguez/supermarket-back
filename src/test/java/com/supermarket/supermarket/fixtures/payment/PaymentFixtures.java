@@ -4,10 +4,12 @@ import com.supermarket.supermarket.fixtures.sale.SaleFixtures;
 import com.supermarket.supermarket.model.sale.Payment;
 import com.supermarket.supermarket.model.sale.PaymentType;
 import com.supermarket.supermarket.model.sale.Sale;
+import lombok.experimental.UtilityClass;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@UtilityClass
 public class PaymentFixtures {
 
     public static Payment cashPayment() {

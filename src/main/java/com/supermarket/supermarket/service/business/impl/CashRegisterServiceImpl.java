@@ -12,6 +12,7 @@ import com.supermarket.supermarket.model.cashregister.CashRegisterStatus;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
+import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.CashRegisterService;
 import com.supermarket.supermarket.service.business.NotificationEventService;
@@ -33,6 +34,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final CashRegisterMapper cashRegisterMapper;
     private final SecurityUtils securityUtils;
     private final NotificationEventService notificationEventService;
+    private final SaleRepository saleRepository;
 
     @Override
     public CashRegisterResponse openRegister(OpenRegisterRequest request) {
@@ -91,7 +93,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     private void notifyIfDiscrepancy(CashRegister register) {
         if (register.getClosingBalance() == null || register.getOpeningBalance() == null) return;
-        BigDecimal variance = register.getClosingBalance().subtract(register.getOpeningBalance());
+        BigDecimal totalSales = saleRepository.sumTotalByCashRegisterId(register.getId());
+        BigDecimal expected = register.getOpeningBalance().add(totalSales);
+        BigDecimal variance = register.getClosingBalance().subtract(expected);
         if (variance.abs().compareTo(BigDecimal.ZERO) > 0) {
             try {
                 notificationEventService.onCashRegisterDiscrepancy(register, variance);
