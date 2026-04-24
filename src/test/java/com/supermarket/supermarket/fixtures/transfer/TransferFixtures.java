@@ -16,11 +16,18 @@ import java.time.LocalDateTime;
 @UtilityClass
 public class TransferFixtures {
 
+    public static final Long WAREHOUSE_ID = 6L;
+
     public static StockTransfer pendingTransfer() {
         return StockTransfer.builder()
                 .id(1L)
-                .sourceBranch(BranchFixtures.defaultBranch())
-                .targetBranch(Branch.builder().id(2L).name("North Branch").address("456 North Ave").build())
+                .sourceBranch(BranchFixtures.warehouseBranch())
+                .targetBranch(Branch.builder()
+                        .id(2L)
+                        .name("North Branch")
+                        .address("456 North Ave")
+                        .isWarehouse(false)
+                        .build())
                 .product(ProductFixtures.defaultProduct())
                 .quantity(10)
                 .status(TransferStatus.PENDING)
@@ -39,7 +46,7 @@ public class TransferFixtures {
 
     public static TransferRequest validTransferRequest() {
         return TransferRequest.builder()
-                .sourceBranchId(1L)
+                .sourceBranchId(WAREHOUSE_ID)
                 .targetBranchId(2L)
                 .productId(1L)
                 .quantity(10)
@@ -61,12 +68,11 @@ public class TransferFixtures {
                 .build();
     }
 
-
     public static TransferResponse transferResponse(TransferStatus status) {
         return TransferResponse.builder()
                 .id(1L)
-                .sourceBranchId(1L)
-                .sourceBranchName("Central Branch")
+                .sourceBranchId(WAREHOUSE_ID)
+                .sourceBranchName("Central Warehouse")
                 .targetBranchId(2L)
                 .targetBranchName("North Branch")
                 .productId(1L)
@@ -78,7 +84,6 @@ public class TransferFixtures {
                 .requestedAt(LocalDateTime.now())
                 .build();
     }
-
 
     public static TransferResponse transferResponse() {
         return transferResponse(TransferStatus.PENDING);
