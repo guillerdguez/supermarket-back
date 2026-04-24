@@ -15,8 +15,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     type VARCHAR(50) NOT NULL,
     message VARCHAR(500) NOT NULL,
     data TEXT,
-    read BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at DATETIME NOT NULL,
+`read` BOOLEAN NOT NULL DEFAULT FALSE,    created_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
