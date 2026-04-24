@@ -18,6 +18,7 @@ public class BranchMapper {
                 .id(branch.getId())
                 .name(branch.getName())
                 .address(branch.getAddress())
+                .isWarehouse(branch.getIsWarehouse())
                 .build();
     }
 
@@ -28,6 +29,8 @@ public class BranchMapper {
         return Branch.builder()
                 .name(request.getName())
                 .address(request.getAddress())
+                .isWarehouse(request.getIsWarehouse() != null
+                        ? request.getIsWarehouse() : false)
                 .build();
     }
 
@@ -41,6 +44,9 @@ public class BranchMapper {
 
         if (request.getAddress() != null) {
             target.setAddress(request.getAddress());
+        }
+        if (request.getIsWarehouse() != null) {
+            target.setIsWarehouse(request.getIsWarehouse());
         }
 
     }

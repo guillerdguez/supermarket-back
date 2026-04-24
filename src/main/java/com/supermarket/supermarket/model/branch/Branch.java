@@ -26,4 +26,7 @@ public class Branch {
     private String name;
     @Column(unique = true, nullable = false)
     private String address;
+    @Column(name = "is_warehouse", nullable = false)
+    @Builder.Default
+    private Boolean isWarehouse = false;
 }

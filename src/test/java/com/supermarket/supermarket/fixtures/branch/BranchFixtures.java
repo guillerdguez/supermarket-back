@@ -7,11 +7,22 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class BranchFixtures {
+    private static final Long WAREHOUSE_ID = 6L;
+
     public static Branch defaultBranch() {
         return Branch.builder()
                 .id(1L)
                 .name("Central Branch")
                 .address("123 Main St")
+                .build();
+    }
+
+    public static Branch warehouseBranch() {
+        return Branch.builder()
+                .id(WAREHOUSE_ID)
+                .name("Central Warehouse")
+                .address("1 Industrial Park")
+                .isWarehouse(true)
                 .build();
     }
 
