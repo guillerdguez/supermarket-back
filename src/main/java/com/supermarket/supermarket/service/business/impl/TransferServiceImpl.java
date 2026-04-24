@@ -52,6 +52,10 @@ public class TransferServiceImpl implements TransferService {
         }
         Branch source = branchRepository.findById(request.getSourceBranchId())
                 .orElseThrow(() -> new ResourceNotFoundException("Source branch not found"));
+        if (!source.getIsWarehouse()) {
+            throw new InvalidOperationException(
+                    "Stock requests must originate from the central warehouse");
+        }
         Branch target = branchRepository.findById(request.getTargetBranchId())
                 .orElseThrow(() -> new ResourceNotFoundException("Target branch not found"));
         Product product = productRepository.findById(request.getProductId())
