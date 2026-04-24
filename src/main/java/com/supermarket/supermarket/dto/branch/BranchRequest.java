@@ -22,4 +22,7 @@ public class BranchRequest {
     @NotBlank(message = "Address is required")
     @Size(min = 5, max = 200, message = "Address must be between 5 and 200 characters")
     private String address;
+    
+    @Builder.Default
+    private Boolean isWarehouse = false;
 }
