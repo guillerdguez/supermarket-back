@@ -37,6 +37,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.supermarket.supermarket.fixtures.transfer.TransferFixtures.WAREHOUSE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,8 +78,13 @@ class TransferServiceTest {
         cashier = UserFixtures.defaultCashier();
         manager = UserFixtures.defaultManager();
         admin = UserFixtures.defaultAdmin();
-        sourceBranch = BranchFixtures.defaultBranch();
-        targetBranch = Branch.builder().id(2L).name("North Branch").address("456 North Ave").build();
+        sourceBranch = BranchFixtures.warehouseBranch();
+        targetBranch = Branch.builder()
+                .id(2L)
+                .name("North Branch")
+                .address("456 North Ave")
+                .isWarehouse(false)
+                .build();
         product = ProductFixtures.defaultProduct();
     }
 
@@ -89,14 +95,18 @@ class TransferServiceTest {
         @DisplayName("should create PENDING transfer when stock is sufficient")
         void requestTransfer_Success() {
             given(securityUtils.getCurrentUser()).willReturn(cashier);
-
             TransferRequest request = TransferFixtures.validTransferRequest();
-            TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.PENDING).build();
+            TransferResponse expected = TransferResponse.builder()
+                    .id(1L).status(TransferStatus.PENDING).build();
 
-            given(branchRepository.findById(1L)).willReturn(Optional.of(sourceBranch));
-            given(branchRepository.findById(2L)).willReturn(Optional.of(targetBranch));
-            given(productRepository.findById(1L)).willReturn(Optional.of(product));
-            given(inventoryService.getStockInBranch(1L, 1L)).willReturn(20);
+            given(branchRepository.findById(WAREHOUSE_ID))
+                    .willReturn(Optional.of(sourceBranch));
+            given(branchRepository.findById(2L))
+                    .willReturn(Optional.of(targetBranch));
+            given(productRepository.findById(1L))
+                    .willReturn(Optional.of(product));
+            given(inventoryService.getStockInBranch(WAREHOUSE_ID, 1L))
+                    .willReturn(20);
             given(transferRepository.save(any(StockTransfer.class))).willAnswer(inv -> {
                 StockTransfer t = inv.getArgument(0);
                 t.setId(1L);
@@ -128,12 +138,12 @@ class TransferServiceTest {
         @DisplayName("should throw ResourceNotFoundException when source branch does not exist")
         void requestTransfer_SourceBranchNotFound_Throws() {
             TransferRequest request = TransferFixtures.validTransferRequest();
-            given(branchRepository.findById(1L)).willReturn(Optional.empty());
+            given(branchRepository.findById(WAREHOUSE_ID))
+                    .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> transferService.requestTransfer(request))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Source branch");
-
             then(transferRepository).should(never()).save(any());
         }
 
@@ -141,7 +151,7 @@ class TransferServiceTest {
         @DisplayName("should throw ResourceNotFoundException when target branch does not exist")
         void requestTransfer_TargetBranchNotFound_Throws() {
             TransferRequest request = TransferFixtures.validTransferRequest();
-            given(branchRepository.findById(1L)).willReturn(Optional.of(sourceBranch));
+            given(branchRepository.findById(WAREHOUSE_ID)).willReturn(Optional.of(sourceBranch));
             given(branchRepository.findById(2L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> transferService.requestTransfer(request))
@@ -153,7 +163,7 @@ class TransferServiceTest {
         @DisplayName("should throw ResourceNotFoundException when product does not exist")
         void requestTransfer_ProductNotFound_Throws() {
             TransferRequest request = TransferFixtures.validTransferRequest();
-            given(branchRepository.findById(1L)).willReturn(Optional.of(sourceBranch));
+            given(branchRepository.findById(WAREHOUSE_ID)).willReturn(Optional.of(sourceBranch));
             given(branchRepository.findById(2L)).willReturn(Optional.of(targetBranch));
             given(productRepository.findById(1L)).willReturn(Optional.empty());
 
@@ -166,15 +176,30 @@ class TransferServiceTest {
         @DisplayName("should throw InsufficientStockException when source has not enough stock")
         void requestTransfer_InsufficientStock_Throws() {
             TransferRequest request = TransferFixtures.validTransferRequest();
-            given(branchRepository.findById(1L)).willReturn(Optional.of(sourceBranch));
+            given(branchRepository.findById(WAREHOUSE_ID)).willReturn(Optional.of(sourceBranch));
             given(branchRepository.findById(2L)).willReturn(Optional.of(targetBranch));
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
-            given(inventoryService.getStockInBranch(1L, 1L)).willReturn(5);
+            given(inventoryService.getStockInBranch(WAREHOUSE_ID, 1L)).willReturn(5);
 
             assertThatThrownBy(() -> transferService.requestTransfer(request))
                     .isInstanceOf(InsufficientStockException.class)
                     .hasMessageContaining("Available: 5, requested: 10");
 
+            then(transferRepository).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("should throw InvalidOperationException when source is not the warehouse")
+        void requestTransfer_SourceNotWarehouse_Throws() {
+            TransferRequest request = TransferFixtures.validTransferRequest();
+            Branch nonWarehouse = BranchFixtures.defaultBranch();
+
+            given(branchRepository.findById(WAREHOUSE_ID))
+                    .willReturn(Optional.of(nonWarehouse));
+
+            assertThatThrownBy(() -> transferService.requestTransfer(request))
+                    .isInstanceOf(InvalidOperationException.class)
+                    .hasMessageContaining("central warehouse");
             then(transferRepository).should(never()).save(any());
         }
     }
@@ -270,7 +295,7 @@ class TransferServiceTest {
             TransferResponse expected = TransferResponse.builder().id(1L).status(TransferStatus.COMPLETED).build();
 
             given(transferRepository.findById(1L)).willReturn(Optional.of(transfer));
-            given(inventoryService.getStockInBranch(1L, 1L)).willReturn(20);
+            given(inventoryService.getStockInBranch(WAREHOUSE_ID, 1L)).willReturn(20);
             given(branchRepository.existsById(2L)).willReturn(true);
             given(transferRepository.save(transfer)).willReturn(transfer);
             given(transferMapper.toResponse(transfer)).willReturn(expected);
@@ -280,7 +305,7 @@ class TransferServiceTest {
             assertThat(result.getStatus()).isEqualTo(TransferStatus.COMPLETED);
             assertThat(transfer.getStatus()).isEqualTo(TransferStatus.COMPLETED);
             assertThat(transfer.getCompletedAt()).isNotNull();
-            then(inventoryService).should().validateAndReduceStock(1L, 1L, 10);
+            then(inventoryService).should().validateAndReduceStock(WAREHOUSE_ID, 1L, 10);
             then(inventoryService).should().increaseStock(2L, 1L, 10);
         }
 
@@ -302,7 +327,7 @@ class TransferServiceTest {
         void completeTransfer_StockDroppedSinceApproval_Throws() {
             StockTransfer transfer = buildTransfer(TransferStatus.APPROVED);
             given(transferRepository.findById(1L)).willReturn(Optional.of(transfer));
-            given(inventoryService.getStockInBranch(1L, 1L)).willReturn(5);
+            given(inventoryService.getStockInBranch(WAREHOUSE_ID, 1L)).willReturn(5);
 
             assertThatThrownBy(() -> transferService.completeTransfer(1L))
                     .isInstanceOf(InsufficientStockException.class)
@@ -317,7 +342,7 @@ class TransferServiceTest {
         void completeTransfer_TargetBranchMissing_Throws() {
             StockTransfer transfer = buildTransfer(TransferStatus.APPROVED);
             given(transferRepository.findById(1L)).willReturn(Optional.of(transfer));
-            given(inventoryService.getStockInBranch(1L, 1L)).willReturn(20);
+            given(inventoryService.getStockInBranch(WAREHOUSE_ID, 1L)).willReturn(20);
             given(branchRepository.existsById(2L)).willReturn(false);
 
             assertThatThrownBy(() -> transferService.completeTransfer(1L))
