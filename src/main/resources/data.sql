@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     type VARCHAR(50) NOT NULL,
     message VARCHAR(500) NOT NULL,
     data TEXT,
-`read` BOOLEAN NOT NULL DEFAULT FALSE,    created_at DATETIME NOT NULL,
+`read` BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -32,7 +33,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE TABLE IF NOT EXISTS branch (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
-    address VARCHAR(200) UNIQUE NOT NULL
+    address VARCHAR(200) UNIQUE NOT NULL,
+    is_warehouse BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS product (
@@ -136,12 +138,13 @@ INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, 
 (3, 'cashier1', 'cashier@supermarket.com', '$2a$10$Zz9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhYa', 'John', 'Cashier', 'CASHIER', true),
 (4, 'testuser', 'user@supermarket.com', '$2a$10$Aa9Q8LrOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhZb', 'Test', 'User', 'CASHIER', true);
 
-INSERT IGNORE INTO branch (id, name, address) VALUES
-(1, 'Central Branch', '123 Main Avenue, Central City'),
-(2, 'North Branch', '456 North Street, North Zone'),
-(3, 'South Branch', '789 South Avenue, South Zone'),
-(4, 'East Branch', '101 East Street, East Zone'),
-(5, 'West Branch', '202 West Avenue, West Zone');
+INSERT IGNORE INTO branch (id, name, address, is_warehouse) VALUES
+(1, 'Central Branch',    '123 Main Avenue, Central City',     false),
+(2, 'North Branch',      '456 North Street, North Zone',      false),
+(3, 'South Branch',      '789 South Avenue, South Zone',      false),
+(4, 'East Branch',       '101 East Street, East Zone',        false),
+(5, 'West Branch',       '202 West Avenue, West Zone',        false),
+(6, 'Central Warehouse', '1 Industrial Park, Logistics Zone', true);
 
 INSERT IGNORE INTO product (id, name, category, price, version) VALUES
 (1, 'Whole Milk 1L', 'Dairy', 1200.50, 0), (2, 'Natural Yogurt', 'Dairy', 800.75, 0),
@@ -161,7 +164,10 @@ INSERT IGNORE INTO product (id, name, category, price, version) VALUES
 (29, 'All-purpose Cleaner', 'Cleaning', 3200.00, 0), (30, 'Disinfectant 500ml', 'Cleaning', 1800.00, 0);
 
 INSERT IGNORE INTO branch_inventory (branch_id, product_id, stock, min_stock, last_restock_date, version)
-SELECT b.id, p.id, 50, 10, NOW(), 0 FROM product p CROSS JOIN branch b;
+SELECT b.id, p.id, 50, 10, NOW(), 0 FROM product p CROSS JOIN branch b WHERE b.id <> 6;
+
+INSERT IGNORE INTO branch_inventory (branch_id, product_id, stock, min_stock, last_restock_date, version)
+SELECT 6, p.id, 500, 50, NOW(), 0 FROM product p;
 
 INSERT IGNORE INTO cash_registers (id, branch_id, opening_balance, closing_balance, opening_time, closing_time, status, opened_by_id, closed_by_id) VALUES
 (1, 1, 10000.00, 38600.00, '2026-02-21 08:00:00', '2026-02-21 20:00:00', 'CLOSED', 3, 2),
@@ -269,7 +275,7 @@ INSERT IGNORE INTO stock_transfers (id, source_branch_id, target_branch_id, prod
 ALTER TABLE notifications AUTO_INCREMENT = 1;
 ALTER TABLE users AUTO_INCREMENT = 5;
 ALTER TABLE audit_logs AUTO_INCREMENT = 1;
-ALTER TABLE branch AUTO_INCREMENT = 6;
+ALTER TABLE branch AUTO_INCREMENT = 7;
 ALTER TABLE product AUTO_INCREMENT = 31;
 ALTER TABLE cash_registers AUTO_INCREMENT = 21;
 ALTER TABLE branch_inventory AUTO_INCREMENT = 151;
