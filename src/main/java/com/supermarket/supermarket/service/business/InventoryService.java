@@ -1,5 +1,6 @@
 package com.supermarket.supermarket.service.business;
 
+import com.supermarket.supermarket.dto.inventory.BranchInventoryResponse;
 import com.supermarket.supermarket.dto.inventory.LowStockAlertResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.model.sale.SaleDetail;
@@ -23,4 +24,6 @@ public interface InventoryService {
     void restoreStockBatch(Long branchId, List<SaleDetail> details);
 
     void increaseStock(Long branchId, Long productId, Integer quantity);
+
+    List<BranchInventoryResponse> getBranchInventory(Long branchId);
 }
