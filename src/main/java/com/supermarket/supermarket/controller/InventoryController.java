@@ -1,5 +1,6 @@
 package com.supermarket.supermarket.controller;
 
+import com.supermarket.supermarket.dto.inventory.BranchInventoryResponse;
 import com.supermarket.supermarket.dto.inventory.LowStockAlertResponse;
 import com.supermarket.supermarket.service.business.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,5 +44,14 @@ public class InventoryController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CASHIER')")
     public ResponseEntity<Integer> getStockInBranch(@PathVariable Long branchId, @PathVariable Long productId) {
         return ResponseEntity.ok(inventoryService.getStockInBranch(branchId, productId));
+    }
+
+    @GetMapping("/branches/{branchId}/inventory")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CASHIER')")
+    @Operation(summary = "Get complete inventory for a specific branch")
+    public ResponseEntity<List<BranchInventoryResponse>> getBranchInventory(
+            @PathVariable Long branchId) {
+
+        return ResponseEntity.ok(inventoryService.getBranchInventory(branchId));
     }
 }
