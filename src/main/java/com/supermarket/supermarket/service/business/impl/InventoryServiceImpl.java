@@ -1,12 +1,15 @@
 package com.supermarket.supermarket.service.business.impl;
 
+import com.supermarket.supermarket.dto.inventory.BranchInventoryResponse;
 import com.supermarket.supermarket.dto.inventory.LowStockAlertResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientStockException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
+import com.supermarket.supermarket.mapper.BranchInventoryMapper;
 import com.supermarket.supermarket.model.branch.BranchInventory;
 import com.supermarket.supermarket.model.sale.SaleDetail;
 import com.supermarket.supermarket.repository.BranchInventoryRepository;
+import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.service.business.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,8 @@ import java.util.stream.Collectors;
 public class InventoryServiceImpl implements InventoryService {
 
     private final BranchInventoryRepository branchInventoryRepository;
+    private final BranchRepository branchRepository;
+    private final BranchInventoryMapper branchInventoryMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -80,6 +85,18 @@ public class InventoryServiceImpl implements InventoryService {
                 productId, branchId, quantity, inventory.getStock());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<BranchInventoryResponse> getBranchInventory(Long branchId) {
+        // Validamos que la sucursal exista
+        if (!branchRepository.existsById(branchId)) {
+            throw new ResourceNotFoundException("Branch not found with id: " + branchId);
+        }
+
+        List<BranchInventory> inventory = branchInventoryRepository.findByBranchId(branchId);
+
+        return branchInventoryMapper.toResponseList(inventory);
+    }
     @Transactional
     public void validateAndReduceStockBatch(Long branchId, List<SaleDetailRequest> details) {
         log.info("Reducing batch stock for branch {} with {} items", branchId, details.size());
