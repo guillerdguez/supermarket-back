@@ -15,7 +15,6 @@ import com.supermarket.supermarket.model.sale.Sale;
 import com.supermarket.supermarket.model.sale.SaleDetail;
 import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.model.user.User;
-import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
@@ -49,7 +48,6 @@ public class SaleServiceImpl implements SaleService {
     private final SaleRepository saleRepo;
     private final BranchRepository branchRepository;
     private final ProductRepository productRepository;
-    private final BranchInventoryRepository branchInventoryRepository;
     private final SaleMapper saleMapper;
     private final InventoryService inventoryService;
     private final SecurityUtils securityUtils;
@@ -62,8 +60,14 @@ public class SaleServiceImpl implements SaleService {
         List<SaleDetail> details = buildSaleDetails(request, sale);
         sale.getDetails().addAll(details);
         sale.setTotal(calculateTotal(details));
+
         Sale saved = saleRepo.save(sale);
-        checkLowStockAfterSale(saved);
+
+        log.info("Sale created with id: {}, branch: {}, total: {}",
+                saved.getId(),
+                saved.getBranch().getId(),
+                saved.getTotal());
+
         return saleMapper.toResponse(saved);
     }
 
@@ -117,32 +121,20 @@ public class SaleServiceImpl implements SaleService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private void checkLowStockAfterSale(Sale sale) {
-        try {
-            for (SaleDetail detail : sale.getDetails()) {
-                int remaining = inventoryService.getStockInBranch(
-                        sale.getBranch().getId(), detail.getProduct().getId());
-                if (remaining <= 10) {
-                    notificationEventService.onLowStock(
-                            sale.getBranch().getName(),
-                            detail.getProduct().getName(),
-                            remaining,
-                            10);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Failed to check low stock after sale {}: {}", sale.getId(), e.getMessage());
-        }
-    }
 
     @Override
     public void delete(Long id) {
         Sale sale = saleRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found"));
+
+        log.info("Attempting to delete sale with ID: {}", id);
+
         if (sale.getStatus() == SaleStatus.REGISTERED && !CollectionUtils.isEmpty(sale.getDetails())) {
             inventoryService.restoreStockBatch(sale.getBranch().getId(), sale.getDetails());
         }
         saleRepo.delete(sale);
+
+        log.info("Sale deleted successfully - ID: {}", id);
     }
 
     @Override
@@ -164,18 +156,27 @@ public class SaleServiceImpl implements SaleService {
         User currentUser = securityUtils.getCurrentUser();
         Sale sale = saleRepo.findWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found with id: " + id));
+
         if (sale.getStatus() == SaleStatus.CANCELLED) {
             throw new InvalidSaleStateException("Sale is already cancelled");
         }
+
+        log.info("Cancelling sale id: {}", id);
+
         if (!CollectionUtils.isEmpty(sale.getDetails())) {
             inventoryService.restoreStockBatch(sale.getBranch().getId(), sale.getDetails());
         }
+
         sale.setStatus(SaleStatus.CANCELLED);
         sale.setCancelledBy(currentUser);
         sale.setCancellationReason(request.getReason());
         sale.setCancelledAt(LocalDateTime.now());
+
         Sale saved = saleRepo.save(sale);
         notificationEventService.onSaleCancelled(saved);
+
+        log.info("Sale cancelled with id: {}", id);
+
         return saleMapper.toResponse(saved);
     }
 
@@ -197,5 +198,5 @@ public class SaleServiceImpl implements SaleService {
         return saleMapper.toResponse(sale);
     }
 
-    
+
 }
