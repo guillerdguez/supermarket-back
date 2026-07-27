@@ -2,17 +2,29 @@ package com.supermarket.supermarket.unit.controller;
 
 import com.supermarket.supermarket.controller.InventoryController;
 import com.supermarket.supermarket.dto.inventory.BranchInventoryResponse;
+import com.supermarket.supermarket.dto.inventory.StockAdjustmentRequest;
+import com.supermarket.supermarket.dto.inventory.StockUpdateRequest;
+import com.supermarket.supermarket.dto.inventory.TotalStockResponse;
 import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.service.business.InventoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -124,5 +136,32 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.message").value("An unexpected error occurred. Please contact support."));
 
         then(inventoryService).should().getBranchInventory(branchId);
+    }
+
+    @PutMapping("/branches/{branchId}/products/{productId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Set stock and minimum stock for a product in a branch")
+    public ResponseEntity<BranchInventoryResponse> updateStock(
+            @PathVariable Long branchId,
+            @PathVariable Long productId,
+            @Valid @RequestBody StockUpdateRequest request) {
+        return ResponseEntity.ok(inventoryService.updateStock(branchId, productId, request));
+    }
+
+    @PatchMapping("/branches/{branchId}/products/{productId}/adjust")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Adjust stock by a positive or negative delta")
+    public ResponseEntity<BranchInventoryResponse> adjustStock(
+            @PathVariable Long branchId,
+            @PathVariable Long productId,
+            @Valid @RequestBody StockAdjustmentRequest request) {
+        return ResponseEntity.ok(inventoryService.adjustStock(branchId, productId, request));
+    }
+
+    @GetMapping("/products/{productId}/total-stock")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Get total stock of a product across all branches")
+    public ResponseEntity<TotalStockResponse> getTotalStock(@PathVariable Long productId) {
+        return ResponseEntity.ok(inventoryService.getTotalStockByProduct(productId));
     }
 }

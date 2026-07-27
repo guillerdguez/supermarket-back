@@ -17,5 +17,7 @@ public class BranchInventoryRequest {
     @NotNull
     @Min(0)
     private Integer stock;
+    @NotNull
+    @Min(0)
     private Integer minStock;
 }

@@ -10,6 +10,7 @@ import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.service.business.BranchService;
+import com.supermarket.supermarket.service.business.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class BranchServiceImpl implements BranchService {
     private final BranchRepository branchRepository;
     private final BranchMapper branchMapper;
     private final SaleRepository saleRepo;
+    private final InventoryService inventoryService;
 
     @Transactional(readOnly = true)
     @Override
@@ -44,13 +46,13 @@ public class BranchServiceImpl implements BranchService {
     @Override
     public BranchResponse create(BranchRequest request) {
         log.info("Creating new branch: {}", request.getName());
-
         if (branchRepository.existsByName(request.getName())) {
             throw new DuplicateResourceException("Branch already exists with name: " + request.getName());
         }
-
         Branch branch = branchMapper.toEntity(request);
-        return branchMapper.toResponse(branchRepository.save(branch));
+        Branch saved = branchRepository.save(branch);
+        inventoryService.initializeInventoryForNewBranch(saved);
+        return branchMapper.toResponse(saved);
     }
 
     @Override

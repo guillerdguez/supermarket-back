@@ -2,20 +2,28 @@ package com.supermarket.supermarket.service.business.impl;
 
 import com.supermarket.supermarket.dto.inventory.BranchInventoryResponse;
 import com.supermarket.supermarket.dto.inventory.LowStockAlertResponse;
+import com.supermarket.supermarket.dto.inventory.StockAdjustmentRequest;
+import com.supermarket.supermarket.dto.inventory.StockUpdateRequest;
+import com.supermarket.supermarket.dto.inventory.TotalStockResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientStockException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.BranchInventoryMapper;
+import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.branch.BranchInventory;
+import com.supermarket.supermarket.model.product.Product;
 import com.supermarket.supermarket.model.sale.SaleDetail;
 import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.repository.BranchRepository;
+import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.service.business.InventoryService;
+import com.supermarket.supermarket.service.business.NotificationEventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,15 +34,27 @@ import java.util.stream.Collectors;
 @Slf4j
 public class InventoryServiceImpl implements InventoryService {
 
+    private static final int DEFAULT_MIN_STOCK = 5;
+
     private final BranchInventoryRepository branchInventoryRepository;
     private final BranchRepository branchRepository;
+    private final ProductRepository productRepository;
     private final BranchInventoryMapper branchInventoryMapper;
+    private final NotificationEventService notificationEventService;
 
     @Override
     @Transactional(readOnly = true)
     public Integer getStockInBranch(Long branchId, Long productId) {
         return branchInventoryRepository.findByBranchIdAndProductId(branchId, productId)
                 .map(BranchInventory::getStock)
+                .orElse(0);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Integer getMinStockInBranch(Long branchId, Long productId) {
+        return branchInventoryRepository.findByBranchIdAndProductId(branchId, productId)
+                .map(BranchInventory::getMinStock)
                 .orElse(0);
     }
 
@@ -55,14 +75,45 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<BranchInventoryResponse> getBranchInventory(Long branchId) {
+        if (!branchRepository.existsById(branchId)) {
+            throw new ResourceNotFoundException("Branch not found with id: " + branchId);
+        }
+        List<BranchInventory> inventory = branchInventoryRepository.findByBranchId(branchId);
+        return branchInventoryMapper.toResponseList(inventory);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TotalStockResponse getTotalStockByProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        long total = branchInventoryRepository.findByProductId(productId).stream()
+                .mapToLong(BranchInventory::getStock)
+                .sum();
+
+        return TotalStockResponse.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .totalStock(total)
+                .build();
+    }
+
+    @Override
     @Transactional
     public void validateAndReduceStock(Long branchId, Long productId, Integer quantity) {
         BranchInventory inventory = findInventory(branchId, productId);
         verifySufficientStock(inventory, quantity);
+
         inventory.setStock(inventory.getStock() - quantity);
-        branchInventoryRepository.save(inventory);
+        BranchInventory saved = branchInventoryRepository.save(inventory);
+
         log.info("Reduced stock for product {} in branch {} by {}. New stock: {}",
-                productId, branchId, quantity, inventory.getStock());
+                productId, branchId, quantity, saved.getStock());
+
+        checkAndNotifyLowStock(saved);
     }
 
     @Override
@@ -70,33 +121,74 @@ public class InventoryServiceImpl implements InventoryService {
     public void restoreStock(Long branchId, Long productId, Integer quantity) {
         BranchInventory inventory = findInventory(branchId, productId);
         inventory.setStock(inventory.getStock() + quantity);
-        branchInventoryRepository.save(inventory);
+        inventory.setLastRestockDate(LocalDateTime.now());
+        BranchInventory saved = branchInventoryRepository.save(inventory);
+
         log.info("Restored stock for product {} in branch {} by {}. New stock: {}",
-                productId, branchId, quantity, inventory.getStock());
+                productId, branchId, quantity, saved.getStock());
     }
 
     @Override
     @Transactional
     public void increaseStock(Long branchId, Long productId, Integer quantity) {
-        BranchInventory inventory = findInventory(branchId, productId);
-        inventory.setStock(inventory.getStock() + quantity);
-        branchInventoryRepository.save(inventory);
-        log.info("Increased stock for product {} in branch {} by {}. New stock: {}",
-                productId, branchId, quantity, inventory.getStock());
+        adjustStock(branchId, productId, StockAdjustmentRequest.builder()
+                .delta(quantity)
+                .reason("Increase stock")
+                .build());
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<BranchInventoryResponse> getBranchInventory(Long branchId) {
-        // Validamos que la sucursal exista
-        if (!branchRepository.existsById(branchId)) {
-            throw new ResourceNotFoundException("Branch not found with id: " + branchId);
+    @Transactional
+    public BranchInventoryResponse updateStock(Long branchId, Long productId, StockUpdateRequest request) {
+        BranchInventory inventory = findInventory(branchId, productId);
+
+        int previousStock = inventory.getStock();
+        boolean isRestock = request.getStock() > previousStock;
+
+        inventory.setStock(request.getStock());
+        inventory.setMinStock(request.getMinStock());
+
+        if (isRestock) {
+            inventory.setLastRestockDate(LocalDateTime.now());
         }
 
-        List<BranchInventory> inventory = branchInventoryRepository.findByBranchId(branchId);
+        BranchInventory saved = branchInventoryRepository.save(inventory);
 
-        return branchInventoryMapper.toResponseList(inventory);
+        log.info("Updated stock for product {} in branch {}. Stock: {} → {}. Restock: {}",
+                productId, branchId, previousStock, saved.getStock(), isRestock);
+
+        checkAndNotifyLowStock(saved);
+
+        return branchInventoryMapper.toResponse(saved);
     }
+
+    @Override
+    @Transactional
+    public BranchInventoryResponse adjustStock(Long branchId, Long productId, StockAdjustmentRequest request) {
+        BranchInventory inventory = findInventory(branchId, productId);
+
+        int newStock = inventory.getStock() + request.getDelta();
+        if (newStock < 0) {
+            throw new InsufficientStockException(
+                    String.format("Adjustment would result in negative stock. Current: %d, delta: %d",
+                            inventory.getStock(), request.getDelta()));
+        }
+
+        inventory.setStock(newStock);
+        if (request.getDelta() > 0) {
+            inventory.setLastRestockDate(LocalDateTime.now());
+        }
+
+        BranchInventory saved = branchInventoryRepository.save(inventory);
+
+        log.info("Stock adjusted for product {} in branch {} by {} (reason: {}). New stock: {}",
+                productId, branchId, request.getDelta(), request.getReason(), newStock);
+
+        checkAndNotifyLowStock(saved);
+        return branchInventoryMapper.toResponse(saved);
+    }
+
+    @Override
     @Transactional
     public void validateAndReduceStockBatch(Long branchId, List<SaleDetailRequest> details) {
         log.info("Reducing batch stock for branch {} with {} items", branchId, details.size());
@@ -106,22 +198,12 @@ public class InventoryServiceImpl implements InventoryService {
         verifySufficientStockBatch(inventories, requiredQuantities);
 
         applyStockReduction(inventories, requiredQuantities);
-        branchInventoryRepository.saveAll(inventories);
+        List<BranchInventory> saved = branchInventoryRepository.saveAll(inventories);
+
+        saved.forEach(this::checkAndNotifyLowStock);
     }
 
-    private Map<Long, Integer> buildQuantityMap(List<SaleDetailRequest> details) {
-        validateDetailRequests(details);
-        return details.stream().collect(Collectors.groupingBy(
-                SaleDetailRequest::getProductId,
-                Collectors.summingInt(SaleDetailRequest::getQuantity)
-        ));
-    }
-
-    private void applyStockReduction(List<BranchInventory> inventories, Map<Long, Integer> required) {
-        inventories.forEach(inv -> inv.setStock(inv.getStock() - required.get(inv.getProduct().getId())));
-    }
-
-
+    @Override
     @Transactional
     public void restoreStockBatch(Long branchId, List<SaleDetail> details) {
         if (details == null || details.isEmpty()) {
@@ -138,16 +220,56 @@ public class InventoryServiceImpl implements InventoryService {
                 ));
 
         List<BranchInventory> inventories = loadInventories(branchId, quantitiesToRestore.keySet());
-
         validateAllProductsExist(inventories, quantitiesToRestore.keySet());
 
         inventories.forEach(inv -> {
             int restore = quantitiesToRestore.get(inv.getProduct().getId());
             inv.setStock(inv.getStock() + restore);
+            inv.setLastRestockDate(LocalDateTime.now());
         });
 
         branchInventoryRepository.saveAll(inventories);
         log.info("Stock restored for {} products in branch {}", inventories.size(), branchId);
+    }
+
+    @Override
+    @Transactional
+    public void initializeInventoryForNewProduct(Product product) {
+        List<Branch> branches = branchRepository.findAll();
+
+        List<BranchInventory> newInventories = branches.stream()
+                .map(branch -> BranchInventory.builder()
+                        .branch(branch)
+                        .product(product)
+                        .stock(0)
+                        .minStock(DEFAULT_MIN_STOCK)
+                        .lastRestockDate(LocalDateTime.now())
+                        .build())
+                .toList();
+
+        branchInventoryRepository.saveAll(newInventories);
+        log.info("Initialized inventory for new product '{}' across {} branches",
+                product.getName(), branches.size());
+    }
+
+    @Override
+    @Transactional
+    public void initializeInventoryForNewBranch(Branch branch) {
+        List<Product> products = productRepository.findAll();
+
+        List<BranchInventory> newInventories = products.stream()
+                .map(product -> BranchInventory.builder()
+                        .branch(branch)
+                        .product(product)
+                        .stock(0)
+                        .minStock(DEFAULT_MIN_STOCK)
+                        .lastRestockDate(LocalDateTime.now())
+                        .build())
+                .toList();
+
+        branchInventoryRepository.saveAll(newInventories);
+        log.info("Initialized inventory for new branch '{}' across {} products",
+                branch.getName(), products.size());
     }
 
     private BranchInventory findInventory(Long branchId, Long productId) {
@@ -165,6 +287,36 @@ public class InventoryServiceImpl implements InventoryService {
                             inventory.getStock(), required)
             );
         }
+    }
+
+    private void checkAndNotifyLowStock(BranchInventory inventory) {
+        if (inventory.getStock() <= inventory.getMinStock()) {
+            try {
+                notificationEventService.onLowStock(
+                        inventory.getBranch().getName(),
+                        inventory.getProduct().getName(),
+                        inventory.getStock(),
+                        inventory.getMinStock());
+            } catch (Exception e) {
+                log.warn("Failed to send low stock notification for product {} in branch {}: {}",
+                        inventory.getProduct().getId(),
+                        inventory.getBranch().getId(),
+                        e.getMessage());
+            }
+        }
+    }
+
+    private Map<Long, Integer> buildQuantityMap(List<SaleDetailRequest> details) {
+        validateDetailRequests(details);
+        return details.stream().collect(Collectors.groupingBy(
+                SaleDetailRequest::getProductId,
+                Collectors.summingInt(SaleDetailRequest::getQuantity)
+        ));
+    }
+
+    private void applyStockReduction(List<BranchInventory> inventories, Map<Long, Integer> required) {
+        inventories.forEach(inv ->
+                inv.setStock(inv.getStock() - required.get(inv.getProduct().getId())));
     }
 
     private void validateDetailRequests(List<SaleDetailRequest> details) {
@@ -186,15 +338,19 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     private List<BranchInventory> loadInventories(Long branchId, Set<Long> productIds) {
-        List<BranchInventory> inventories = branchInventoryRepository.findByBranchIdAndProductIdIn(branchId, productIds);
+        List<BranchInventory> inventories =
+                branchInventoryRepository.findByBranchIdAndProductIdIn(branchId, productIds);
+
         if (inventories.size() != productIds.size()) {
             Set<Long> foundIds = inventories.stream()
                     .map(inv -> inv.getProduct().getId())
                     .collect(Collectors.toSet());
+
             List<Long> missing = productIds.stream()
                     .filter(id -> !foundIds.contains(id))
                     .sorted()
                     .toList();
+
             throw new ResourceNotFoundException(
                     String.format("The following products do not exist in branch %d: %s", branchId, missing)
             );
@@ -220,10 +376,12 @@ public class InventoryServiceImpl implements InventoryService {
             Set<Long> foundIds = inventories.stream()
                     .map(inv -> inv.getProduct().getId())
                     .collect(Collectors.toSet());
+
             List<Long> missing = requestedIds.stream()
                     .filter(id -> !foundIds.contains(id))
                     .sorted()
                     .toList();
+
             throw new ResourceNotFoundException(
                     String.format("Products not found in branch: %s", missing)
             );

@@ -9,6 +9,7 @@ import com.supermarket.supermarket.mapper.ProductMapper;
 import com.supermarket.supermarket.model.product.Product;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepo;
     private final ProductMapper productMapper;
     private final SaleRepository saleRepo;
+    private final InventoryService inventoryService;
 
     @Transactional(readOnly = true)
     @Override
@@ -58,7 +60,9 @@ public class ProductServiceImpl implements ProductService {
             throw new DuplicateResourceException("Product already exists with name: " + request.getName());
         }
         Product product = productMapper.toEntity(request);
-        return productMapper.toResponse(productRepo.save(product));
+        Product saved = productRepo.save(product);
+        inventoryService.initializeInventoryForNewProduct(saved);
+        return productMapper.toResponse(saved);
     }
 
     @Override
