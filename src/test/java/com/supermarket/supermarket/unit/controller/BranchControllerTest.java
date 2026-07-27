@@ -7,6 +7,7 @@ import com.supermarket.supermarket.dto.branch.BranchResponse;
 import com.supermarket.supermarket.exception.GlobalExceptionHandler;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.service.business.BranchService;
+import com.supermarket.supermarket.service.business.InventoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,20 +20,29 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
-import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.*;
+import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.branchResponse;
+import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.invalidBranchRequest;
+import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.validBranchRequest;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class BranchControllerTest {
     private MockMvc mockMvc;
     @Mock
     private BranchService branchService;
+    @Mock
+    private InventoryService inventoryService;
     private ObjectMapper objectMapper;
     private BranchController branchController;
 
@@ -40,7 +50,7 @@ class BranchControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        branchController = new BranchController(branchService);
+        branchController = new BranchController(branchService, inventoryService);  // ← ambas
         mockMvc = MockMvcBuilders.standaloneSetup(branchController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

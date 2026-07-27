@@ -4,11 +4,15 @@ import com.supermarket.supermarket.dto.inventory.LowStockAlertResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientStockException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
+import com.supermarket.supermarket.mapper.BranchInventoryMapper;
 import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.branch.BranchInventory;
 import com.supermarket.supermarket.model.product.Product;
 import com.supermarket.supermarket.model.sale.SaleDetail;
 import com.supermarket.supermarket.repository.BranchInventoryRepository;
+import com.supermarket.supermarket.repository.BranchRepository;
+import com.supermarket.supermarket.repository.ProductRepository;
+import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.impl.InventoryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +43,15 @@ import static org.mockito.Mockito.verify;
 class InventoryServiceTest {
     @Mock
     private BranchInventoryRepository branchInventoryRepository;
+    @Mock
+    private BranchRepository branchRepository;
+    @Mock
+    private ProductRepository productRepository;
+    @Mock
+    private BranchInventoryMapper branchInventoryMapper;
+    @Mock
+    private NotificationEventService notificationEventService;
+
     @InjectMocks
     private InventoryServiceImpl inventoryService;
     private Branch branch;
@@ -127,7 +140,11 @@ class InventoryServiceTest {
         void validateAndReduceStock_Success() {
             given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
                     .willReturn(Optional.of(inventory));
+            given(branchInventoryRepository.save(any(BranchInventory.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
+
             inventoryService.validateAndReduceStock(1L, 1L, 10);
+
             assertThat(inventory.getStock()).isEqualTo(40);
             then(branchInventoryRepository).should().save(inventory);
         }
@@ -157,7 +174,11 @@ class InventoryServiceTest {
         void restoreStock_Success() {
             given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
                     .willReturn(Optional.of(inventory));
+            given(branchInventoryRepository.save(any(BranchInventory.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
+
             inventoryService.restoreStock(1L, 1L, 15);
+
             assertThat(inventory.getStock()).isEqualTo(65);
             verify(branchInventoryRepository).save(inventory);
         }

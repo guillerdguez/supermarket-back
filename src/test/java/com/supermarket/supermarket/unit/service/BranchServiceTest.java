@@ -9,6 +9,7 @@ import com.supermarket.supermarket.mapper.BranchMapper;
 import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.impl.BranchServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,8 @@ class BranchServiceTest {
     private BranchMapper branchMapper;
     @Mock
     private SaleRepository saleRepository;
+    @Mock
+    private InventoryService inventoryService;
     @InjectMocks
     private BranchServiceImpl branchService;
 
@@ -81,13 +84,17 @@ class BranchServiceTest {
         BranchRequest request = validBranchRequest();
         Branch entity = defaultBranch();
         BranchResponse response = branchResponse();
+
         given(branchRepository.existsByName(request.getName())).willReturn(false);
         given(branchMapper.toEntity(request)).willReturn(entity);
         given(branchRepository.save(entity)).willReturn(entity);
         given(branchMapper.toResponse(entity)).willReturn(response);
+
         BranchResponse result = branchService.create(request);
+
         assertThat(result).isNotNull();
         then(branchRepository).should().save(entity);
+        then(inventoryService).should().initializeInventoryForNewBranch(entity);  // ← NUEVO
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.supermarket.supermarket.mapper.ProductMapper;
 import com.supermarket.supermarket.model.product.Product;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.impl.ProductServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,8 @@ class ProductServiceTest {
     private ProductMapper productMapper;
     @Mock
     private SaleRepository saleRepository;
+    @Mock
+    private InventoryService inventoryService;
     @InjectMocks
     private ProductServiceImpl productService;
 
@@ -99,13 +102,17 @@ class ProductServiceTest {
         ProductRequest request = validProductRequest();
         Product entity = defaultProduct();
         ProductResponse response = productResponse();
+
         given(productRepository.existsByName(request.getName())).willReturn(false);
         given(productMapper.toEntity(request)).willReturn(entity);
         given(productRepository.save(entity)).willReturn(entity);
         given(productMapper.toResponse(entity)).willReturn(response);
+
         ProductResponse result = productService.create(request);
+
         assertThat(result).isNotNull();
         then(productRepository).should().save(entity);
+        then(inventoryService).should().initializeInventoryForNewProduct(entity);  // ← NUEVO
     }
 
     @Test
