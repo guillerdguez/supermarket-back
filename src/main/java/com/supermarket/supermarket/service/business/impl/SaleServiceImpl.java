@@ -15,6 +15,7 @@ import com.supermarket.supermarket.model.sale.Sale;
 import com.supermarket.supermarket.model.sale.SaleDetail;
 import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.model.user.User;
+import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
@@ -48,6 +49,7 @@ public class SaleServiceImpl implements SaleService {
     private final SaleRepository saleRepo;
     private final BranchRepository branchRepository;
     private final ProductRepository productRepository;
+    private final BranchInventoryRepository branchInventoryRepository;
     private final SaleMapper saleMapper;
     private final InventoryService inventoryService;
     private final SecurityUtils securityUtils;

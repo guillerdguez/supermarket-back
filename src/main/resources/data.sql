@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     type VARCHAR(50) NOT NULL,
     message VARCHAR(500) NOT NULL,
     data TEXT,
-`read` BOOLEAN NOT NULL DEFAULT FALSE,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -261,16 +261,39 @@ INSERT IGNORE INTO payments (id, sale_id, amount, payment_type, payment_date, re
 (24, 25, 29600.00, 'CARD',     '2026-02-24 11:05:00', 'REF-009');
 
 INSERT IGNORE INTO stock_transfers (id, source_branch_id, target_branch_id, product_id, quantity, status, requested_by_id, approved_by_id, requested_at, approved_at, completed_at, rejection_reason, version) VALUES
-(1, 1, 2, 11, 10, 'COMPLETED', 3, 2, '2026-02-21 07:00:00', '2026-02-21 07:30:00', '2026-02-21 08:00:00', NULL, 0),
-(2, 2, 3, 1,  20, 'COMPLETED', 4, 1, '2026-02-21 07:00:00', '2026-02-21 07:30:00', '2026-02-21 08:00:00', NULL, 0),
-(3, 3, 4, 5,  15, 'COMPLETED', 4, 2, '2026-02-22 07:00:00', '2026-02-22 07:30:00', '2026-02-22 08:00:00', NULL, 0),
-(4, 1, 5, 3,  8,  'COMPLETED', 3, 1, '2026-02-22 07:00:00', '2026-02-22 07:30:00', '2026-02-22 08:00:00', NULL, 0),
-(5, 4, 2, 17, 12, 'APPROVED',  3, 2, '2026-02-23 09:00:00', '2026-02-23 09:30:00', NULL, NULL, 0),
-(6, 5, 1, 26, 6,  'APPROVED',  4, 1, '2026-02-23 10:00:00', '2026-02-23 10:30:00', NULL, NULL, 0),
-(7, 2, 4, 12, 5,  'PENDING',   3, NULL, '2026-02-24 08:00:00', NULL, NULL, NULL, 0),
-(8, 3, 5, 7,  10, 'PENDING',   4, NULL, '2026-02-24 09:00:00', NULL, NULL, NULL, 0),
-(9, 1, 3, 15, 3,  'REJECTED',  3, 2, '2026-02-23 11:00:00', '2026-02-23 11:30:00', NULL, 'Insufficient demand in target branch', 0),
-(10, 5, 2, 20, 4, 'CANCELLED', 4, NULL, '2026-02-24 10:00:00', NULL, NULL, NULL, 0);
+(1, 6, 2, 11, 10, 'COMPLETED', 3, 2, '2026-02-21 07:00:00', '2026-02-21 07:30:00', '2026-02-21 08:00:00', NULL, 0),
+(2, 6, 3, 1,  20, 'COMPLETED', 4, 1, '2026-02-21 07:00:00', '2026-02-21 07:30:00', '2026-02-21 08:00:00', NULL, 0),
+(3, 6, 4, 5,  15, 'COMPLETED', 4, 2, '2026-02-22 07:00:00', '2026-02-22 07:30:00', '2026-02-22 08:00:00', NULL, 0),
+(4, 6, 5, 3,  8,  'COMPLETED', 3, 1, '2026-02-22 07:00:00', '2026-02-22 07:30:00', '2026-02-22 08:00:00', NULL, 0),
+(5, 6, 2, 17, 12, 'APPROVED',  3, 2, '2026-02-23 09:00:00', '2026-02-23 09:30:00', NULL, NULL, 0),
+(6, 6, 1, 26, 6,  'APPROVED',  4, 1, '2026-02-23 10:00:00', '2026-02-23 10:30:00', NULL, NULL, 0),
+(7, 6, 4, 12, 5,  'PENDING',   3, NULL, '2026-02-24 08:00:00', NULL, NULL, NULL, 0),
+(8, 6, 5, 7,  10, 'PENDING',   4, NULL, '2026-02-24 09:00:00', NULL, NULL, NULL, 0),
+(9, 6, 3, 15, 3,  'REJECTED',  3, 2, '2026-02-23 11:00:00', '2026-02-23 11:30:00', NULL, 'Insufficient demand in target branch', 0),
+(10, 6, 2, 20, 4, 'CANCELLED', 4, NULL, '2026-02-24 10:00:00', NULL, NULL, NULL, 0);
+
+UPDATE branch_inventory SET stock = 0,  min_stock = 5 WHERE branch_id = 1 AND product_id IN (1, 5, 9, 13, 17, 21, 25, 29);
+UPDATE branch_inventory SET stock = 2,  min_stock = 5 WHERE branch_id = 1 AND product_id IN (2, 6, 10, 14, 18, 22, 26, 30);
+UPDATE branch_inventory SET stock = 4,  min_stock = 5 WHERE branch_id = 1 AND product_id IN (3, 7, 11, 15, 19, 23, 27);
+UPDATE branch_inventory SET stock = 8,  min_stock = 5 WHERE branch_id = 1 AND product_id IN (4, 8, 12, 16, 20, 24, 28);
+
+UPDATE branch_inventory SET stock = 0,  min_stock = 5 WHERE branch_id = 2 AND product_id IN (2, 6, 10, 14, 18, 22, 26, 30);
+UPDATE branch_inventory SET stock = 1,  min_stock = 5 WHERE branch_id = 2 AND product_id IN (3, 7, 11, 15, 19, 23, 27);
+UPDATE branch_inventory SET stock = 3,  min_stock = 5 WHERE branch_id = 2 AND product_id IN (4, 8, 12, 16, 20, 24, 28);
+UPDATE branch_inventory SET stock = 5,  min_stock = 5 WHERE branch_id = 2 AND product_id IN (5, 9, 13, 17, 21, 25, 29);
+
+UPDATE branch_inventory SET stock = 0,  min_stock = 5 WHERE branch_id = 3 AND product_id IN (3, 7, 11, 15, 19, 23, 27);
+UPDATE branch_inventory SET stock = 2,  min_stock = 5 WHERE branch_id = 3 AND product_id IN (1, 5, 9, 13, 17, 21, 25, 29);
+UPDATE branch_inventory SET stock = 4,  min_stock = 5 WHERE branch_id = 3 AND product_id IN (2, 6, 10, 14, 18, 22, 26, 30);
+UPDATE branch_inventory SET stock = 6,  min_stock = 5 WHERE branch_id = 3 AND product_id IN (4, 8, 12, 16, 20, 24, 28);
+
+UPDATE branch_inventory SET stock = 0,  min_stock = 5 WHERE branch_id = 4 AND product_id IN (4, 8, 12, 16, 20, 24, 28);
+UPDATE branch_inventory SET stock = 1,  min_stock = 5 WHERE branch_id = 4 AND product_id IN (1, 5, 9, 13, 17, 21, 25, 29);
+UPDATE branch_inventory SET stock = 3,  min_stock = 5 WHERE branch_id = 4 AND product_id IN (2, 6, 10, 14, 18, 22, 26, 30);
+UPDATE branch_inventory SET stock = 7,  min_stock = 5 WHERE branch_id = 4 AND product_id IN (3, 7, 11, 15, 19, 23, 27);
+
+UPDATE branch_inventory SET stock = 0,  min_stock = 5 WHERE branch_id = 5 AND product_id IN (2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30);
+UPDATE branch_inventory SET stock = 2,  min_stock = 5 WHERE branch_id = 5 AND product_id IN (1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29);
 
 ALTER TABLE notifications AUTO_INCREMENT = 1;
 ALTER TABLE users AUTO_INCREMENT = 5;

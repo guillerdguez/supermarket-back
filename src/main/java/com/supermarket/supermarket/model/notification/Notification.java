@@ -47,10 +47,9 @@ public class Notification {
     @Column(columnDefinition = "TEXT")
     private String data;
 
-    @Column(nullable = false)
+    @Column(name = "`read`", nullable = false)
     @Builder.Default
     private Boolean read = false;
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
