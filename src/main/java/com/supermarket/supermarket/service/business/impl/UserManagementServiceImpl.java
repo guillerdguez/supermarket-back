@@ -8,8 +8,10 @@ import com.supermarket.supermarket.dto.user.UserRequest;
 import com.supermarket.supermarket.exception.DuplicateResourceException;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
+import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.model.user.UserRole;
+import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.UserRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.UserManagementService;
@@ -33,6 +35,7 @@ import java.util.List;
 public class UserManagementServiceImpl implements UserManagementService {
 
     private final UserRepository userRepository;
+    private final BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
     private final SecurityUtils securityUtils;
@@ -73,6 +76,7 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .lastName(request.getLastName())
                 .role(request.getRole())
                 .active(true)
+                .branch(findBranchOrNull(request.getBranchId()))
                 .build();
         User saved = userRepository.save(user);
         log.info("User created successfully: {}", saved.getEmail());
@@ -94,6 +98,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setRole(request.getRole());
+        user.setBranch(findBranchOrNull(request.getBranchId()));
         return toResponse(userRepository.save(user));
     }
 
@@ -154,6 +159,14 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
     }
 
+    private Branch findBranchOrNull(Long branchId) {
+        if (branchId == null) {
+            return null;
+        }
+        return branchRepository.findById(branchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Branch not found with ID: " + branchId));
+    }
+
     private User getCurrentUser() {
         return securityUtils.getCurrentUser();
     }
@@ -166,6 +179,8 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getRole().name())
+                .branchId(user.getBranch() != null ? user.getBranch().getId() : null)
+                .branchName(user.getBranch() != null ? user.getBranch().getName() : null)
                 .build();
     }
 }

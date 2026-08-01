@@ -96,6 +96,37 @@ class CashRegisterServiceTest {
     }
 
     @Test
+    void openRegister_whenBranchIdOmitted_shouldUseBranchAssignedToUser() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        Long assignedBranchId = mockUser.getBranch().getId();
+        OpenRegisterRequest request = new OpenRegisterRequest(null, new BigDecimal("100.00"));
+
+        CashRegister savedRegister = CashRegisterFixtures.openRegister(100L, mockUser.getBranch(), mockUser);
+        CashRegisterResponse response = CashRegisterResponse.builder().id(100L).build();
+
+        given(cashRegisterRepository.findByBranchIdAndStatus(assignedBranchId, CashRegisterStatus.OPEN))
+                .willReturn(Optional.empty());
+        given(cashRegisterRepository.save(any(CashRegister.class))).willReturn(savedRegister);
+        given(cashRegisterMapper.toResponse(savedRegister)).willReturn(response);
+
+        CashRegisterResponse result = cashRegisterService.openRegister(request);
+
+        assertThat(result.getId()).isEqualTo(100L);
+        then(cashRegisterRepository).should().save(argThat(reg -> reg.getBranch().getId().equals(assignedBranchId)));
+        then(branchRepository).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void openRegister_whenBranchIdOmittedAndUserHasNoBranch_shouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(UserFixtures.cashierWithoutBranch());
+        OpenRegisterRequest request = new OpenRegisterRequest(null, new BigDecimal("100.00"));
+
+        assertThatThrownBy(() -> cashRegisterService.openRegister(request))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("no branch assigned");
+    }
+
+    @Test
     void openRegister_whenRegisterAlreadyOpen_shouldThrowException() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
         OpenRegisterRequest request = new OpenRegisterRequest(branch.getId(), new BigDecimal("100.00"));

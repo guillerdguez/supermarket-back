@@ -40,4 +40,6 @@ public class UserRequest {
 
     @NotNull(message = "Role is required")
     private UserRole role;
+
+    private Long branchId;
 }

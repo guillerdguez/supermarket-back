@@ -39,8 +39,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Override
     public CashRegisterResponse openRegister(OpenRegisterRequest request) {
         User currentUser = getCurrentUser();
-        Branch branch = branchRepository.findById(request.getBranchId())
-                .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
+        Branch branch = resolveBranch(request, currentUser);
         cashRegisterRepository.findByBranchIdAndStatus(branch.getId(), CashRegisterStatus.OPEN)
                 .ifPresent(reg -> {
                     throw new InvalidOperationException("There is already an open register for this branch");
@@ -89,6 +88,22 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     private User getCurrentUser() {
         return securityUtils.getCurrentUser();
+    }
+
+    /**
+     * Uses the branch sent in the request when present, so ADMIN and MANAGER keep
+     * choosing freely. Otherwise falls back to the branch assigned to the user,
+     * which is how a cashier opens their own register.
+     */
+    private Branch resolveBranch(OpenRegisterRequest request, User currentUser) {
+        if (request.getBranchId() != null) {
+            return branchRepository.findById(request.getBranchId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
+        }
+        if (currentUser.getBranch() == null) {
+            throw new InvalidOperationException("This user has no branch assigned");
+        }
+        return currentUser.getBranch();
     }
 
     private void notifyIfDiscrepancy(CashRegister register) {

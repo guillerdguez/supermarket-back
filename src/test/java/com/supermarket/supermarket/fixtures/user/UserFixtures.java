@@ -1,5 +1,6 @@
 package com.supermarket.supermarket.fixtures.user;
 
+import com.supermarket.supermarket.fixtures.branch.BranchFixtures;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.model.user.UserRole;
 import lombok.experimental.UtilityClass;
@@ -16,7 +17,14 @@ public class UserFixtures {
                 .lastName("Cashier")
                 .role(UserRole.CASHIER)
                 .active(true)
+                .branch(BranchFixtures.defaultBranch())
                 .build();
+    }
+
+    public static User cashierWithoutBranch() {
+        User cashier = defaultCashier();
+        cashier.setBranch(null);
+        return cashier;
     }
 
     public static User defaultManager() {

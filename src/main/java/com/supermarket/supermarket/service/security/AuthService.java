@@ -117,6 +117,8 @@ public class AuthService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getRole().name())
+                .branchId(user.getBranch() != null ? user.getBranch().getId() : null)
+                .branchName(user.getBranch() != null ? user.getBranch().getName() : null)
                 .build();
     }
 }

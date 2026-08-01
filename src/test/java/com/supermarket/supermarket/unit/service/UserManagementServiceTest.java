@@ -8,9 +8,12 @@ import com.supermarket.supermarket.dto.user.UserRequest;
 import com.supermarket.supermarket.exception.DuplicateResourceException;
 import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
+import com.supermarket.supermarket.fixtures.branch.BranchFixtures;
 import com.supermarket.supermarket.fixtures.user.UserFixtures;
+import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.model.user.UserRole;
+import com.supermarket.supermarket.repository.BranchRepository;
 import com.supermarket.supermarket.repository.UserRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
 import com.supermarket.supermarket.service.business.impl.UserManagementServiceImpl;
@@ -39,6 +42,8 @@ class UserManagementServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private BranchRepository branchRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
@@ -97,6 +102,47 @@ class UserManagementServiceTest {
 
         assertThat(result).isNotNull();
         then(userRepository).should().save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("CREATE - should assign the requested branch")
+    void create_WithBranch_ShouldAssignBranch() {
+        Branch branch = BranchFixtures.defaultBranch();
+        UserRequest request = UserRequest.builder()
+                .username("cashier2").email("cashier2@test.com").password("Password1!")
+                .firstName("New").lastName("Cashier").role(UserRole.CASHIER)
+                .branchId(branch.getId()).build();
+
+        given(passwordValidator.validatePassword(request.getPassword())).willReturn(List.of());
+        given(userRepository.existsByEmail(request.getEmail())).willReturn(false);
+        given(userRepository.existsByUsername(request.getUsername())).willReturn(false);
+        given(passwordEncoder.encode(request.getPassword())).willReturn("encoded");
+        given(branchRepository.findById(branch.getId())).willReturn(Optional.of(branch));
+        given(userRepository.save(any(User.class))).willAnswer(inv -> inv.getArgument(0));
+
+        UserResponse result = userManagementService.create(request);
+
+        assertThat(result.getBranchId()).isEqualTo(branch.getId());
+        assertThat(result.getBranchName()).isEqualTo(branch.getName());
+    }
+
+    @Test
+    @DisplayName("CREATE - should throw when branch does not exist")
+    void create_WhenBranchNotFound_ShouldThrow() {
+        UserRequest request = UserRequest.builder()
+                .username("cashier2").email("cashier2@test.com").password("Password1!")
+                .firstName("New").lastName("Cashier").role(UserRole.CASHIER)
+                .branchId(999L).build();
+
+        given(passwordValidator.validatePassword(request.getPassword())).willReturn(List.of());
+        given(userRepository.existsByEmail(request.getEmail())).willReturn(false);
+        given(userRepository.existsByUsername(request.getUsername())).willReturn(false);
+        given(passwordEncoder.encode(request.getPassword())).willReturn("encoded");
+        given(branchRepository.findById(999L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userManagementService.create(request))
+                .isInstanceOf(ResourceNotFoundException.class);
+        then(userRepository).should(never()).save(any(User.class));
     }
 
     @Test
