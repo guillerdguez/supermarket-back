@@ -24,4 +24,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     int deleteOlderThan(@Param("cutoff") LocalDateTime cutoff);
 
     Optional<Notification> findByIdAndUserId(Long id, Long userId);
+
+    @Modifying
+    @Query("UPDATE Notification n SET n.read = true WHERE n.user.id = :userId AND n.read = false")
+    int markAllAsReadByUserId(@Param("userId") Long userId);
 }

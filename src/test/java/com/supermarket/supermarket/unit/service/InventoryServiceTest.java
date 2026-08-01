@@ -1,8 +1,13 @@
 package com.supermarket.supermarket.unit.service;
 
+import com.supermarket.supermarket.dto.inventory.BranchInventoryResponse;
 import com.supermarket.supermarket.dto.inventory.LowStockAlertResponse;
+import com.supermarket.supermarket.dto.inventory.StockAdjustmentRequest;
+import com.supermarket.supermarket.dto.inventory.StockUpdateRequest;
+import com.supermarket.supermarket.dto.inventory.TotalStockResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientStockException;
+import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.BranchInventoryMapper;
 import com.supermarket.supermarket.model.branch.Branch;
@@ -293,6 +298,285 @@ class InventoryServiceTest {
         void restoreStockBatch_EmptyDetails() {
             inventoryService.restoreStockBatch(1L, List.of());
             then(branchInventoryRepository).should(never()).saveAll(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Stock queries (extended)")
+    class StockQueriesExtended {
+        @Test
+        @DisplayName("getMinStockInBranch - should return minStock when inventory exists")
+        void getMinStockInBranch_WhenExists_ShouldReturnMinStock() {
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
+                    .willReturn(Optional.of(inventory));
+
+            Integer minStock = inventoryService.getMinStockInBranch(1L, 1L);
+
+            assertThat(minStock).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("getMinStockInBranch - should return 0 when inventory not found")
+        void getMinStockInBranch_WhenNotFound_ShouldReturnZero() {
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 99L))
+                    .willReturn(Optional.empty());
+
+            Integer minStock = inventoryService.getMinStockInBranch(1L, 99L);
+
+            assertThat(minStock).isZero();
+        }
+
+        @Test
+        @DisplayName("getTotalStockByProduct - should return sum of stock across branches")
+        void getTotalStockByProduct_ShouldReturnSum() {
+            BranchInventory inv2 = BranchInventory.builder()
+                    .branch(branch)
+                    .product(product)
+                    .stock(30)
+                    .minStock(5)
+                    .build();
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+            given(branchInventoryRepository.findByProductId(1L))
+                    .willReturn(List.of(inventory, inv2));
+
+            TotalStockResponse result = inventoryService.getTotalStockByProduct(1L);
+
+            assertThat(result.getProductId()).isEqualTo(1L);
+            assertThat(result.getProductName()).isEqualTo("Premium Rice");
+            assertThat(result.getTotalStock()).isEqualTo(80L);
+        }
+
+        @Test
+        @DisplayName("getTotalStockByProduct - should throw when product not found")
+        void getTotalStockByProduct_WhenProductNotFound_ShouldThrow() {
+            given(productRepository.findById(99L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> inventoryService.getTotalStockByProduct(99L))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Product not found with id: 99");
+        }
+    }
+
+    @Nested
+    @DisplayName("Stock mutations")
+    class StockMutations {
+        @Test
+        @DisplayName("updateStock - should set stock and minStock, and update lastRestockDate when stock increases")
+        void updateStock_WhenStockIncreases_ShouldUpdateAndSetLastRestockDate() {
+            StockUpdateRequest request = StockUpdateRequest.builder()
+                    .stock(70)
+                    .minStock(10)
+                    .build();
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
+                    .willReturn(Optional.of(inventory));
+            given(branchInventoryRepository.save(any(BranchInventory.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+            given(branchInventoryMapper.toResponse(any(BranchInventory.class)))
+                    .willAnswer(inv -> {
+                        BranchInventory saved = inv.getArgument(0);
+                        return BranchInventoryResponse.builder()
+                                .id(saved.getId())
+                                .branchId(1L)
+                                .productId(1L)
+                                .stock(saved.getStock())
+                                .minStock(saved.getMinStock())
+                                .lastRestockDate(saved.getLastRestockDate())
+                                .build();
+                    });
+
+            LocalDateTime before = LocalDateTime.now().minusSeconds(1);
+            BranchInventoryResponse result = inventoryService.updateStock(1L, 1L, request);
+
+            assertThat(result.getStock()).isEqualTo(70);
+            assertThat(result.getMinStock()).isEqualTo(10);
+            assertThat(result.getLastRestockDate()).isAfter(before);
+            then(branchInventoryRepository).should().save(inventory);
+        }
+
+        @Test
+        @DisplayName("updateStock - should not update lastRestockDate when stock decreases")
+        void updateStock_WhenStockDecreases_ShouldNotUpdateLastRestockDate() {
+            LocalDateTime originalRestock = inventory.getLastRestockDate();
+            StockUpdateRequest request = StockUpdateRequest.builder()
+                    .stock(30)
+                    .minStock(5)
+                    .build();
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
+                    .willReturn(Optional.of(inventory));
+            given(branchInventoryRepository.save(any(BranchInventory.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+            given(branchInventoryMapper.toResponse(any(BranchInventory.class)))
+                    .willAnswer(inv -> {
+                        BranchInventory saved = inv.getArgument(0);
+                        return BranchInventoryResponse.builder()
+                                .id(saved.getId())
+                                .stock(saved.getStock())
+                                .minStock(saved.getMinStock())
+                                .lastRestockDate(saved.getLastRestockDate())
+                                .build();
+                    });
+
+            BranchInventoryResponse result = inventoryService.updateStock(1L, 1L, request);
+
+            assertThat(result.getStock()).isEqualTo(30);
+            assertThat(result.getLastRestockDate()).isEqualTo(originalRestock);
+        }
+
+        @Test
+        @DisplayName("updateStock - should throw when inventory not found")
+        void updateStock_WhenNotFound_ShouldThrow() {
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 99L))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> inventoryService.updateStock(1L, 99L,
+                    StockUpdateRequest.builder().stock(10).minStock(5).build()))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Product 99 not found in branch 1");
+        }
+
+        @Test
+        @DisplayName("adjustStock - should increase stock and set lastRestockDate when delta positive")
+        void adjustStock_PositiveDelta_ShouldIncreaseAndSetLastRestockDate() {
+            StockAdjustmentRequest request = StockAdjustmentRequest.builder()
+                    .delta(15)
+                    .reason("Manual restock")
+                    .build();
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
+                    .willReturn(Optional.of(inventory));
+            given(branchInventoryRepository.save(any(BranchInventory.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+            given(branchInventoryMapper.toResponse(any(BranchInventory.class)))
+                    .willAnswer(inv -> {
+                        BranchInventory saved = inv.getArgument(0);
+                        return BranchInventoryResponse.builder()
+                                .id(saved.getId())
+                                .stock(saved.getStock())
+                                .lastRestockDate(saved.getLastRestockDate())
+                                .build();
+                    });
+
+            LocalDateTime before = LocalDateTime.now().minusSeconds(1);
+            BranchInventoryResponse result = inventoryService.adjustStock(1L, 1L, request);
+
+            assertThat(result.getStock()).isEqualTo(65);
+            assertThat(result.getLastRestockDate()).isAfter(before);
+        }
+
+        @Test
+        @DisplayName("adjustStock - should decrease stock without updating lastRestockDate when delta negative")
+        void adjustStock_NegativeDelta_ShouldDecreaseWithoutUpdatingLastRestockDate() {
+            LocalDateTime originalRestock = inventory.getLastRestockDate();
+            StockAdjustmentRequest request = StockAdjustmentRequest.builder()
+                    .delta(-10)
+                    .reason("Adjustment")
+                    .build();
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
+                    .willReturn(Optional.of(inventory));
+            given(branchInventoryRepository.save(any(BranchInventory.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+            given(branchInventoryMapper.toResponse(any(BranchInventory.class)))
+                    .willAnswer(inv -> {
+                        BranchInventory saved = inv.getArgument(0);
+                        return BranchInventoryResponse.builder()
+                                .stock(saved.getStock())
+                                .lastRestockDate(saved.getLastRestockDate())
+                                .build();
+                    });
+
+            BranchInventoryResponse result = inventoryService.adjustStock(1L, 1L, request);
+
+            assertThat(result.getStock()).isEqualTo(40);
+            assertThat(result.getLastRestockDate()).isEqualTo(originalRestock);
+        }
+
+        @Test
+        @DisplayName("adjustStock - should throw InsufficientStockException when result would be negative")
+        void adjustStock_WouldGoNegative_ShouldThrow() {
+            StockAdjustmentRequest request = StockAdjustmentRequest.builder()
+                    .delta(-100)
+                    .reason("Over-adjust")
+                    .build();
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
+                    .willReturn(Optional.of(inventory));
+
+            assertThatThrownBy(() -> inventoryService.adjustStock(1L, 1L, request))
+                    .isInstanceOf(InsufficientStockException.class)
+                    .hasMessageContaining("Adjustment would result in negative stock");
+        }
+
+        @Test
+        @DisplayName("increaseStock - should increase stock via adjustStock")
+        void increaseStock_Success() {
+            given(branchInventoryRepository.findByBranchIdAndProductId(1L, 1L))
+                    .willReturn(Optional.of(inventory));
+            given(branchInventoryRepository.save(any(BranchInventory.class)))
+                    .willAnswer(inv -> inv.getArgument(0));
+            given(branchInventoryMapper.toResponse(any(BranchInventory.class)))
+                    .willAnswer(inv -> BranchInventoryResponse.builder()
+                            .stock(((BranchInventory) inv.getArgument(0)).getStock())
+                            .build());
+
+            inventoryService.increaseStock(1L, 1L, 20);
+
+            assertThat(inventory.getStock()).isEqualTo(70);
+            then(branchInventoryRepository).should().save(inventory);
+        }
+
+        @Test
+        @DisplayName("increaseStock - should throw InvalidOperationException when quantity is null or <= 0")
+        void increaseStock_InvalidQuantity_ShouldThrow() {
+            assertThatThrownBy(() -> inventoryService.increaseStock(1L, 1L, null))
+                    .isInstanceOf(InvalidOperationException.class)
+                    .hasMessageContaining("Quantity must be positive");
+
+            assertThatThrownBy(() -> inventoryService.increaseStock(1L, 1L, 0))
+                    .isInstanceOf(InvalidOperationException.class)
+                    .hasMessageContaining("Quantity must be positive");
+
+            assertThatThrownBy(() -> inventoryService.increaseStock(1L, 1L, -5))
+                    .isInstanceOf(InvalidOperationException.class)
+                    .hasMessageContaining("Quantity must be positive");
+        }
+    }
+
+    @Nested
+    @DisplayName("Auto-provisioning")
+    class AutoProvisioning {
+        @Test
+        @DisplayName("initializeInventoryForNewProduct - should create inventory entries for all branches with stock 0 and minStock 5")
+        void initializeInventoryForNewProduct_ShouldCreateEntries() {
+            Branch branch2 = Branch.builder().id(2L).name("North Branch").build();
+            given(branchRepository.findAll()).willReturn(List.of(branch, branch2));
+            given(branchInventoryRepository.saveAll(any())).willAnswer(inv -> inv.getArgument(0));
+
+            inventoryService.initializeInventoryForNewProduct(product);
+
+            then(branchInventoryRepository).should().saveAll(any());
+            // Verificamos que se crearon 2 entradas con los valores por defecto
+            verify(branchInventoryRepository).saveAll(org.mockito.ArgumentMatchers.argThat(list -> {
+                List<BranchInventory> inventories = (List<BranchInventory>) list;
+                return inventories.size() == 2
+                        && inventories.stream().allMatch(i -> i.getStock() == 0 && i.getMinStock() == 5)
+                        && inventories.stream().allMatch(i -> i.getProduct().equals(product));
+            }));
+        }
+
+        @Test
+        @DisplayName("initializeInventoryForNewBranch - should create inventory entries for all products with stock 0 and minStock 5")
+        void initializeInventoryForNewBranch_ShouldCreateEntries() {
+            Product product2 = Product.builder().id(2L).name("Product 2").category("Test").build();
+            given(productRepository.findAll()).willReturn(List.of(product, product2));
+            given(branchInventoryRepository.saveAll(any())).willAnswer(inv -> inv.getArgument(0));
+
+            inventoryService.initializeInventoryForNewBranch(branch);
+
+            then(branchInventoryRepository).should().saveAll(any());
+            verify(branchInventoryRepository).saveAll(org.mockito.ArgumentMatchers.argThat(list -> {
+                List<BranchInventory> inventories = (List<BranchInventory>) list;
+                return inventories.size() == 2
+                        && inventories.stream().allMatch(i -> i.getStock() == 0 && i.getMinStock() == 5)
+                        && inventories.stream().allMatch(i -> i.getBranch().equals(branch));
+            }));
         }
     }
 

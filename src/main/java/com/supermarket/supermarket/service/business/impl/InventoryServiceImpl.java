@@ -7,6 +7,7 @@ import com.supermarket.supermarket.dto.inventory.StockUpdateRequest;
 import com.supermarket.supermarket.dto.inventory.TotalStockResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientStockException;
+import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.BranchInventoryMapper;
 import com.supermarket.supermarket.model.branch.Branch;
@@ -131,6 +132,9 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public void increaseStock(Long branchId, Long productId, Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new InvalidOperationException("Quantity must be positive");
+        }
         adjustStock(branchId, productId, StockAdjustmentRequest.builder()
                 .delta(quantity)
                 .reason("Increase stock")

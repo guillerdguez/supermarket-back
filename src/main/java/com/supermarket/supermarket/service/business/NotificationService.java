@@ -20,4 +20,6 @@ public interface NotificationService {
     void deleteNotification(Long notificationId);
 
     long countUnread();
+
+    int markAllAsRead();
 }

@@ -122,4 +122,14 @@ class NotificationControllerTest {
         mockMvc.perform(delete("/notifications/99"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("PUT /notifications/mark-all-read - should return updated count")
+    void markAllAsRead_ShouldReturn200() throws Exception {
+        given(notificationService.markAllAsRead()).willReturn(3);
+
+        mockMvc.perform(put("/notifications/mark-all-read"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.updatedCount").value(3));
+    }
 }

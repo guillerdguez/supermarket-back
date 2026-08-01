@@ -55,4 +55,11 @@ public class NotificationController {
         notificationService.deleteNotification(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/mark-all-read")
+    @Operation(summary = "Mark all notifications as read for the current user")
+    public ResponseEntity<Map<String, Integer>> markAllAsRead() {
+        int updated = notificationService.markAllAsRead();
+        return ResponseEntity.ok(Map.of("updatedCount", updated));
+    }
 }

@@ -105,4 +105,12 @@ public class NotificationServiceImpl implements NotificationService {
         int deleted = notificationRepository.deleteOlderThan(cutoff);
         log.info("Scheduled cleanup: deleted {} notifications older than 30 days", deleted);
     }
+
+    @Override
+    public int markAllAsRead() {
+        User currentUser = securityUtils.getCurrentUser();
+        int updated = notificationRepository.markAllAsReadByUserId(currentUser.getId());
+        log.info("Marked {} notifications as read for user {}", updated, currentUser.getEmail());
+        return updated;
+    }
 }

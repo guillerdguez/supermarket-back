@@ -181,4 +181,16 @@ class NotificationServiceTest {
         notificationService.deleteOldNotifications();
         then(notificationRepository).should().deleteOlderThan(any(LocalDateTime.class));
     }
+
+    @Test
+    @DisplayName("markAllAsRead - should return count of updated notifications")
+    void markAllAsRead_ShouldReturnCount() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        given(notificationRepository.markAllAsReadByUserId(mockUser.getId())).willReturn(4);
+
+        int result = notificationService.markAllAsRead();
+
+        assertThat(result).isEqualTo(4);
+        then(notificationRepository).should().markAllAsReadByUserId(mockUser.getId());
+    }
 }
