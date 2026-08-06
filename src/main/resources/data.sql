@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS payments (
 INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, role, active, branch_id) VALUES
 (1, 'admin', 'admin@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'System', 'Administrator', 'ADMIN', true, NULL),
 (2, 'manager1', 'manager@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'Store', 'Manager', 'MANAGER', true, NULL),
-(3, 'cashier1', 'cashier@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'John', 'Cashier', 'CASHIER', true, NULL),
+(3, 'cashier1', 'cashier@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'John', 'Cashier', 'CASHIER', true, 1),
 (4, 'testuser', 'user@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'Test', 'User', 'CASHIER', true, NULL),
 (5, 'lfernandez', 'lfernandez@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'Lucia', 'Fernandez Morales', 'CASHIER', true, 1),
 (6, 'jgomez', 'jgomez@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'Javier', 'Gomez Ruiz', 'CASHIER', true, 1),
@@ -166,6 +166,10 @@ INSERT IGNORE INTO branch (id, name, address, is_warehouse) VALUES
 (4, 'Sucursal Patraix', 'Calle Padre Porta, 8, 46017 Valencia', false),
 (5, 'Sucursal Malvarrosa', 'Paseo Maritimo, 30, 46011 Valencia', false),
 (6, 'Almacen Central', 'Poligono Industrial Vara de Quart, Nave 14, 46014 Valencia', true);
+
+-- Fix pre-existing deploys where the demo cashier (id 3) was seeded without a branch;
+-- INSERT IGNORE above won't touch rows that already exist, so patch them explicitly.
+UPDATE users SET branch_id = 1 WHERE id = 3 AND branch_id IS NULL;
 
 INSERT IGNORE INTO product (id, name, category, price, version) VALUES
 (1, 'Leche Entera 1L', 'Lacteos', 1.15, 0), (2, 'Leche Semidesnatada 1L', 'Lacteos', 1.10, 0), (3, 'Yogur Natural Pack 4', 'Lacteos', 1.95, 0), (4, 'Yogur de Fresa Pack 4', 'Lacteos', 2.10, 0),
