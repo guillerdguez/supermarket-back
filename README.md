@@ -2,6 +2,23 @@
 
 **Enterprise-Grade REST API** diseñada para la gestión integral de inventarios distribuidos, control de caja y ventas seguras.
 
+**Frontend:** [supermarket-front](https://github.com/guillerdguez/supermarket-front) (Angular 20).
+
+<!-- 🔗 Demo en vivo: pendiente — ver "Despliegue" más abajo -->
+
+## 📸 Capturas
+
+El frontend conectado a esta API — ver [supermarket-front](https://github.com/guillerdguez/supermarket-front#-capturas) para las capturas de pantalla.
+
+## 🔑 Credenciales de prueba
+
+Con `data.sql` corriendo (por defecto, ver más abajo), estos usuarios ya existen:
+
+| Rol | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@supermarket.com` | `password` |
+| Cajero | `cashier@supermarket.com` | `password` |
+
 ## 💡 Sobre el Proyecto
 
 Este proyecto es el núcleo backend de un sistema ERP para retail. Ha sido diseñado siguiendo principios de **Clean Architecture y SOLID**, priorizando la integridad financiera, la trazabilidad de operaciones y la seguridad.
@@ -71,6 +88,37 @@ Inicia el servidor Spring Boot (esto cargará datos de prueba automáticamente):
 ```bash
 ./mvnw spring-boot:run
 ```
+
+No hace falta exportar ninguna variable de entorno para levantarlo así: `MYSQL_*`, `REDIS_*` y `JWT_EXPIRATION` tienen valores por defecto que coinciden con `docker-compose.yml`. `JWT_SECRET` sí tiene un default, pero solo pensado para desarrollo — nunca lo uses en producción.
+
+## 🐳 Docker
+
+También se puede construir y correr la imagen directamente:
+
+```bash
+docker build -t supermarket-back .
+docker run -p 8080:8080 \
+  -e MYSQL_HOST=host.docker.internal -e MYSQL_PORT=3307 \
+  -e REDIS_HOST=host.docker.internal -e REDIS_PORT=6379 \
+  -e JWT_SECRET=<un-secreto-propio> \
+  supermarket-back
+```
+
+## ☁️ Despliegue en producción
+
+Pensado para desplegarse en **Railway** (backend + MySQL + Redis administrados en un mismo proyecto) con el frontend en Vercel/Netlify. Variables de entorno relevantes:
+
+| Variable | Descripción | Default (dev) |
+| --- | --- | --- |
+| `PORT` | Puerto del servidor | `8080` |
+| `SPRING_PROFILES_ACTIVE` | Perfil activo | `dev` |
+| `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_DATABASE` / `MYSQL_USERNAME` / `MYSQL_PASSWORD` | Conexión a MySQL | `localhost` / `3307` / `supermarketdb` / `root` / `123456` |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Conexión a Redis | `localhost` / `6379` / (vacío) |
+| `JWT_SECRET` | Secreto para firmar los JWT | ⚠️ sin default seguro — **obligatorio en producción** |
+| `JWT_EXPIRATION` | Expiración del token (ms) | `86400000` (24h) |
+| `CORS_ALLOWED_ORIGINS` | Orígenes permitidos, separados por coma | `http://localhost:4200,http://localhost:3000` |
+
+`data.sql` siembra la base automáticamente en el primer arranque (`spring.sql.init.mode=always`), así que una base nueva en producción queda lista con los usuarios de prueba sin pasos manuales.
 
 ## 🔄 Lógica de Negocio: El Ciclo de Venta
 
