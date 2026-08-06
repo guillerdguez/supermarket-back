@@ -4,6 +4,8 @@ import com.supermarket.supermarket.dto.payment.PaymentResponse;
 import com.supermarket.supermarket.model.sale.Payment;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class PaymentMapper {
     public PaymentResponse toResponse(Payment payment) {
@@ -16,5 +18,12 @@ public class PaymentMapper {
                 .paymentDate(payment.getPaymentDate())
                 .reference(payment.getReference())
                 .build();
+    }
+
+    public List<PaymentResponse> toResponseList(List<Payment> payments) {
+        if (payments == null) return null;
+        return payments.stream()
+                .map(this::toResponse)
+                .toList();
     }
 }

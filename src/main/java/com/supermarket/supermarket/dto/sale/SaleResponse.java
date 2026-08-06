@@ -2,6 +2,7 @@ package com.supermarket.supermarket.dto.sale;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.supermarket.supermarket.dto.payment.PaymentResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailResponse;
 import com.supermarket.supermarket.model.cashregister.CashRegisterStatus;
 import com.supermarket.supermarket.model.sale.SaleStatus;
@@ -43,4 +44,5 @@ public class SaleResponse {
     private List<SaleDetailResponse> details;
     private Long cashRegisterId;
     private CashRegisterStatus cashRegisterStatus;
+    private List<PaymentResponse> payments;
 }

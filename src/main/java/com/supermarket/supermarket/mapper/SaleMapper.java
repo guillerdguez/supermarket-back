@@ -3,6 +3,7 @@ package com.supermarket.supermarket.mapper;
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.model.sale.Sale;
+import com.supermarket.supermarket.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SaleMapper {
     private final SaleDetailMapper saleDetailMapper;
+    private final PaymentMapper paymentMapper;
+    private final PaymentRepository paymentRepository;
 
     public SaleResponse toResponse(Sale sale) {
         if (sale == null) return null;
@@ -35,6 +38,7 @@ public class SaleMapper {
                 .details(saleDetailMapper.toResponseList(sale.getDetails()))
                 .cashRegisterId(sale.getCashRegister() != null ? sale.getCashRegister().getId() : null)
                 .cashRegisterStatus(sale.getCashRegister() != null ? sale.getCashRegister().getStatus() : null)
+                .payments(paymentMapper.toResponseList(paymentRepository.findBySaleId(sale.getId())))
                 .build();
     }
 
