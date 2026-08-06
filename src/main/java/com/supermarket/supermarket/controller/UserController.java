@@ -83,4 +83,10 @@ public class UserController {
         userManagementService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/activate")
+    @Operation(summary = "Activate a deactivated or self-registered user - Requires ADMIN role")
+    public ResponseEntity<UserResponse> activate(@PathVariable Long id) {
+        return ResponseEntity.ok(userManagementService.activate(id));
+    }
 }

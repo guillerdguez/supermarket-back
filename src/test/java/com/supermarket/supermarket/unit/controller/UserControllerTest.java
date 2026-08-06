@@ -183,4 +183,21 @@ class UserControllerTest {
         mockMvc.perform(delete("/users/999"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("PUT /users/{id}/activate - should return activated user")
+    void activate_ShouldReturnActivatedUser() throws Exception {
+        given(userManagementService.activate(1L)).willReturn(buildUserResponse());
+        mockMvc.perform(put("/users/1/activate"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("cashier@test.com"));
+    }
+
+    @Test
+    @DisplayName("PUT /users/{id}/activate - should return 404 when not found")
+    void activate_WhenNotFound_ShouldReturn404() throws Exception {
+        given(userManagementService.activate(999L)).willThrow(new ResourceNotFoundException("User not found"));
+        mockMvc.perform(put("/users/999/activate"))
+                .andExpect(status().isNotFound());
+    }
 }

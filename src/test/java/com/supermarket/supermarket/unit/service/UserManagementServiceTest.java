@@ -86,7 +86,7 @@ class UserManagementServiceTest {
     void create_WhenUnique_ShouldSave() {
         UserRequest request = UserRequest.builder()
                 .username("newuser").email("new@test.com").password("Password1!")
-                .firstName("New").lastName("User").role(UserRole.CASHIER).build();
+                .firstName("New").lastName("User").role(UserRole.ADMIN).build();
 
         given(passwordValidator.validatePassword(request.getPassword())).willReturn(List.of());
         given(userRepository.existsByEmail(request.getEmail())).willReturn(false);
@@ -102,6 +102,23 @@ class UserManagementServiceTest {
 
         assertThat(result).isNotNull();
         then(userRepository).should().save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("CREATE - should throw when role is CASHIER and branch is missing")
+    void create_WhenCashierWithoutBranch_ShouldThrow() {
+        UserRequest request = UserRequest.builder()
+                .username("newuser").email("new@test.com").password("Password1!")
+                .firstName("New").lastName("User").role(UserRole.CASHIER).build();
+
+        given(passwordValidator.validatePassword(request.getPassword())).willReturn(List.of());
+        given(userRepository.existsByEmail(request.getEmail())).willReturn(false);
+        given(userRepository.existsByUsername(request.getUsername())).willReturn(false);
+
+        assertThatThrownBy(() -> userManagementService.create(request))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("Branch is required");
+        then(userRepository).should(never()).save(any());
     }
 
     @Test
@@ -217,6 +234,35 @@ class UserManagementServiceTest {
     }
 
     @Test
+    @DisplayName("UPDATE ROLE - should throw when promoting to CASHIER without a branch")
+    void updateRole_WhenPromotingToCashierWithoutBranch_ShouldThrow() {
+        User user = UserFixtures.defaultManager();
+
+        given(userRepository.findById(2L)).willReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userManagementService.updateRole(2L, new RoleUpdateRequest(UserRole.CASHIER)))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("no branch assigned");
+        then(userRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("UPDATE - should throw when role is CASHIER and branch is missing")
+    void update_WhenCashierWithoutBranch_ShouldThrow() {
+        User user = UserFixtures.defaultCashier();
+        UserRequest request = UserRequest.builder()
+                .username(user.getUsername()).email(user.getEmail()).password("Password1!")
+                .firstName(user.getFirstName()).lastName(user.getLastName()).role(UserRole.CASHIER).build();
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userManagementService.update(1L, request))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("Branch is required");
+        then(userRepository).should(never()).save(any());
+    }
+
+    @Test
     @DisplayName("DELETE - should deactivate user")
     void delete_ShouldDeactivateUser() {
         User user = UserFixtures.defaultCashier();
@@ -236,6 +282,44 @@ class UserManagementServiceTest {
         given(userRepository.findById(999L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> userManagementService.delete(999L))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("ACTIVATE - should activate a user with a branch")
+    void activate_ShouldActivateUser() {
+        User user = UserFixtures.defaultCashier();
+        user.setActive(false);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(userRepository.save(user)).willReturn(user);
+
+        userManagementService.activate(1L);
+
+        assertThat(user.getActive()).isTrue();
+        then(userRepository).should().save(user);
+    }
+
+    @Test
+    @DisplayName("ACTIVATE - should throw when CASHIER has no branch assigned")
+    void activate_WhenCashierWithoutBranch_ShouldThrow() {
+        User user = UserFixtures.cashierWithoutBranch();
+        user.setActive(false);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userManagementService.activate(1L))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("no branch assigned");
+        then(userRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ACTIVATE - should throw when user not found")
+    void activate_WhenNotFound_ShouldThrow() {
+        given(userRepository.findById(999L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userManagementService.activate(999L))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

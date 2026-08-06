@@ -68,6 +68,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateResourceException("Username already taken: " + request.getUsername());
         }
+        requireBranchForCashier(request.getRole(), request.getBranchId());
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -93,6 +94,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         if (!user.getUsername().equals(request.getUsername()) && userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateResourceException("Username already taken: " + request.getUsername());
         }
+        requireBranchForCashier(request.getRole(), request.getBranchId());
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
@@ -106,6 +108,9 @@ public class UserManagementServiceImpl implements UserManagementService {
     public UserResponse updateRole(Long id, RoleUpdateRequest request) {
         log.info("Updating role for user ID: {} to {}", id, request.getRole());
         User user = findUser(id);
+        if (request.getRole() == UserRole.CASHIER && user.getBranch() == null) {
+            throw new InvalidOperationException("Cannot set role to CASHIER: user has no branch assigned");
+        }
         user.setRole(request.getRole());
         return toResponse(userRepository.save(user));
     }
@@ -117,6 +122,19 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setActive(false);
         userRepository.save(user);
         log.info("User deactivated successfully - ID: {}", id);
+    }
+
+    @Override
+    public UserResponse activate(Long id) {
+        log.info("Activating user with ID: {}", id);
+        User user = findUser(id);
+        if (user.getRole() == UserRole.CASHIER && user.getBranch() == null) {
+            throw new InvalidOperationException("Cannot activate: CASHIER user has no branch assigned");
+        }
+        user.setActive(true);
+        User saved = userRepository.save(user);
+        log.info("User activated successfully - ID: {}", id);
+        return toResponse(saved);
     }
 
     @Override
@@ -157,6 +175,12 @@ public class UserManagementServiceImpl implements UserManagementService {
     private User findUser(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
+    }
+
+    private void requireBranchForCashier(UserRole role, Long branchId) {
+        if (role == UserRole.CASHIER && branchId == null) {
+            throw new InvalidOperationException("Branch is required for CASHIER users");
+        }
     }
 
     private Branch findBranchOrNull(Long branchId) {

@@ -22,6 +22,8 @@ public interface UserManagementService {
 
     void delete(Long id);
 
+    UserResponse activate(Long id);
+
     UserResponse getProfile();
 
     UserResponse updateProfile(ProfileUpdateRequest request);
