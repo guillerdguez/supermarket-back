@@ -98,6 +98,16 @@ class TransferControllerTest {
     }
 
     @Test
+    @DisplayName("GET /transfers/mine - should return transfers requested by the current user")
+    void getMyTransfers_ShouldReturnList() throws Exception {
+        given(transferService.getMyTransfers()).willReturn(List.of(TransferFixtures.transferResponse(TransferStatus.PENDING)));
+
+        mockMvc.perform(get("/transfers/mine"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
     @DisplayName("GET /transfers/{id} - should return transfer")
     void getTransferById_ShouldReturnTransfer() throws Exception {
         given(transferService.getTransferById(1L)).willReturn(TransferFixtures.transferResponse(TransferStatus.PENDING));

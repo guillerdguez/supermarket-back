@@ -202,6 +202,105 @@ class TransferServiceTest {
                     .hasMessageContaining("central warehouse");
             then(transferRepository).should(never()).save(any());
         }
+
+        @Test
+        @DisplayName("should default source to the warehouse branch when omitted")
+        void requestTransfer_SourceOmitted_DefaultsToWarehouse() {
+            given(securityUtils.getCurrentUser()).willReturn(cashier);
+            TransferRequest request = TransferRequest.builder()
+                    .targetBranchId(2L).productId(1L).quantity(10).build();
+            TransferResponse expected = TransferResponse.builder()
+                    .id(1L).status(TransferStatus.PENDING).build();
+
+            given(branchRepository.findByIsWarehouseTrue()).willReturn(Optional.of(sourceBranch));
+            given(branchRepository.findById(2L)).willReturn(Optional.of(targetBranch));
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+            given(inventoryService.getStockInBranch(WAREHOUSE_ID, 1L)).willReturn(20);
+            given(transferRepository.save(any(StockTransfer.class))).willAnswer(inv -> {
+                StockTransfer t = inv.getArgument(0);
+                t.setId(1L);
+                return t;
+            });
+            given(transferMapper.toResponse(any())).willReturn(expected);
+
+            TransferResponse result = transferService.requestTransfer(request);
+
+            assertThat(result.getId()).isEqualTo(1L);
+            then(branchRepository).should().findByIsWarehouseTrue();
+        }
+
+        @Test
+        @DisplayName("should throw InvalidOperationException when source omitted and no warehouse is configured")
+        void requestTransfer_SourceOmitted_NoWarehouseConfigured_Throws() {
+            given(securityUtils.getCurrentUser()).willReturn(cashier);
+            TransferRequest request = TransferRequest.builder()
+                    .targetBranchId(2L).productId(1L).quantity(10).build();
+
+            given(branchRepository.findByIsWarehouseTrue()).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> transferService.requestTransfer(request))
+                    .isInstanceOf(InvalidOperationException.class)
+                    .hasMessageContaining("warehouse");
+            then(transferRepository).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("should default target to the current user's branch when omitted")
+        void requestTransfer_TargetOmitted_DefaultsToUserBranch() {
+            given(securityUtils.getCurrentUser()).willReturn(cashier);
+            TransferRequest request = TransferRequest.builder()
+                    .sourceBranchId(WAREHOUSE_ID).productId(1L).quantity(10).build();
+            TransferResponse expected = TransferResponse.builder()
+                    .id(1L).status(TransferStatus.PENDING).build();
+
+            given(branchRepository.findById(WAREHOUSE_ID)).willReturn(Optional.of(sourceBranch));
+            given(productRepository.findById(1L)).willReturn(Optional.of(product));
+            given(inventoryService.getStockInBranch(WAREHOUSE_ID, 1L)).willReturn(20);
+            given(transferRepository.save(any(StockTransfer.class))).willAnswer(inv -> {
+                StockTransfer t = inv.getArgument(0);
+                t.setId(1L);
+                return t;
+            });
+            given(transferMapper.toResponse(any())).willReturn(expected);
+
+            TransferResponse result = transferService.requestTransfer(request);
+
+            assertThat(result.getId()).isEqualTo(1L);
+            then(branchRepository).should(never()).findById(2L);
+        }
+
+        @Test
+        @DisplayName("should throw InvalidOperationException when target omitted and user has no branch")
+        void requestTransfer_TargetOmitted_UserHasNoBranch_Throws() {
+            given(securityUtils.getCurrentUser()).willReturn(UserFixtures.cashierWithoutBranch());
+            TransferRequest request = TransferRequest.builder()
+                    .sourceBranchId(WAREHOUSE_ID).productId(1L).quantity(10).build();
+
+            given(branchRepository.findById(WAREHOUSE_ID)).willReturn(Optional.of(sourceBranch));
+
+            assertThatThrownBy(() -> transferService.requestTransfer(request))
+                    .isInstanceOf(InvalidOperationException.class)
+                    .hasMessageContaining("no branch assigned");
+            then(transferRepository).should(never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("getMyTransfers")
+    class GetMyTransfers {
+        @Test
+        @DisplayName("should return transfers requested by the current user")
+        void getMyTransfers_ReturnsOwnTransfers() {
+            given(securityUtils.getCurrentUser()).willReturn(cashier);
+            StockTransfer transfer = buildTransfer(TransferStatus.PENDING);
+            given(transferRepository.findByRequestedById(cashier.getId())).willReturn(List.of(transfer));
+            given(transferMapper.toResponseList(List.of(transfer))).willReturn(
+                    List.of(TransferResponse.builder().id(1L).status(TransferStatus.PENDING).build()));
+
+            List<TransferResponse> result = transferService.getMyTransfers();
+
+            assertThat(result).hasSize(1);
+        }
     }
 
     @Nested

@@ -47,17 +47,16 @@ public class TransferServiceImpl implements TransferService {
         log.info("Requesting transfer: source={}, target={}, product={}, quantity={}",
                 request.getSourceBranchId(), request.getTargetBranchId(),
                 request.getProductId(), request.getQuantity());
-        if (request.getSourceBranchId().equals(request.getTargetBranchId())) {
+        if (request.getSourceBranchId() != null
+                && request.getSourceBranchId().equals(request.getTargetBranchId())) {
             throw new InvalidOperationException("Source and target branches must be different");
         }
-        Branch source = branchRepository.findById(request.getSourceBranchId())
-                .orElseThrow(() -> new ResourceNotFoundException("Source branch not found"));
-        if (!source.getIsWarehouse()) {
-            throw new InvalidOperationException(
-                    "Stock requests must originate from the central warehouse");
+        User currentUser = getCurrentUser();
+        Branch source = resolveSourceBranch(request.getSourceBranchId());
+        Branch target = resolveTargetBranch(request.getTargetBranchId(), currentUser);
+        if (source.getId().equals(target.getId())) {
+            throw new InvalidOperationException("Source and target branches must be different");
         }
-        Branch target = branchRepository.findById(request.getTargetBranchId())
-                .orElseThrow(() -> new ResourceNotFoundException("Target branch not found"));
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         Integer availableStock = inventoryService.getStockInBranch(source.getId(), product.getId());
@@ -66,7 +65,6 @@ public class TransferServiceImpl implements TransferService {
                     String.format("Insufficient stock in source branch. Available: %d, requested: %d",
                             availableStock, request.getQuantity()));
         }
-        User currentUser = getCurrentUser();
         StockTransfer transfer = StockTransfer.builder()
                 .sourceBranch(source)
                 .targetBranch(target)
@@ -177,6 +175,12 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<TransferResponse> getMyTransfers() {
+        return transferMapper.toResponseList(transferRepository.findByRequestedById(getCurrentUser().getId()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public TransferResponse getTransferById(Long id) {
         return transferMapper.toResponse(findTransfer(id));
     }
@@ -208,6 +212,31 @@ public class TransferServiceImpl implements TransferService {
             throw new ResourceNotFoundException("Branch not found with id: " + branchId);
         }
         return transferMapper.toResponseList(transferRepository.findByTargetBranchId(branchId));
+    }
+
+    private Branch resolveSourceBranch(Long sourceBranchId) {
+        if (sourceBranchId != null) {
+            Branch source = branchRepository.findById(sourceBranchId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Source branch not found"));
+            if (!source.getIsWarehouse()) {
+                throw new InvalidOperationException(
+                        "Stock requests must originate from the central warehouse");
+            }
+            return source;
+        }
+        return branchRepository.findByIsWarehouseTrue()
+                .orElseThrow(() -> new InvalidOperationException("No central warehouse branch is configured"));
+    }
+
+    private Branch resolveTargetBranch(Long targetBranchId, User currentUser) {
+        if (targetBranchId != null) {
+            return branchRepository.findById(targetBranchId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Target branch not found"));
+        }
+        if (currentUser.getBranch() == null) {
+            throw new InvalidOperationException("This user has no branch assigned");
+        }
+        return currentUser.getBranch();
     }
 
     private StockTransfer findTransfer(Long id) {

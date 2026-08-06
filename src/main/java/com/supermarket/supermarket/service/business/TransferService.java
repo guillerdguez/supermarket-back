@@ -19,6 +19,8 @@ public interface TransferService {
 
     List<TransferResponse> getAllTransfers();
 
+    List<TransferResponse> getMyTransfers();
+
     TransferResponse getTransferById(Long id);
 
     List<TransferResponse> getTransfersByStatus(String status);

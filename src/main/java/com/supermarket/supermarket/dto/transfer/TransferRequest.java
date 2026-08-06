@@ -14,10 +14,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransferRequest {
-    @NotNull(message = "Source branch ID is required")
+    /** Omitted by cashiers requesting stock for their own branch - defaults to the central warehouse. */
     private Long sourceBranchId;
 
-    @NotNull(message = "Target branch ID is required")
+    /** Omitted by cashiers requesting stock for their own branch - defaults to their assigned branch. */
     private Long targetBranchId;
 
     @NotNull(message = "Product ID is required")

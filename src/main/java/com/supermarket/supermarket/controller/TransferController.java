@@ -50,6 +50,13 @@ public class TransferController {
         return ResponseEntity.ok(transferService.getAllTransfers());
     }
 
+    @GetMapping("/mine")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CASHIER')")
+    @Operation(summary = "Get transfers requested by the current user")
+    public ResponseEntity<List<TransferResponse>> getMyTransfers() {
+        return ResponseEntity.ok(transferService.getMyTransfers());
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CASHIER')")
     @Operation(summary = "Get a transfer by ID")
