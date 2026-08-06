@@ -14,6 +14,7 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private String role;
+    private Boolean active;
     private Long branchId;
     private String branchName;
 }
