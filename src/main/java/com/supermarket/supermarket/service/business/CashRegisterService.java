@@ -5,7 +5,11 @@ import com.supermarket.supermarket.dto.cashregister.CloseRegisterRequest;
 import com.supermarket.supermarket.dto.cashregister.OpenRegisterRequest;
 import com.supermarket.supermarket.model.cashregister.CashRegister;
 
+import java.util.List;
+
 public interface CashRegisterService {
+    List<CashRegisterResponse> getAll();
+
     CashRegisterResponse openRegister(OpenRegisterRequest request);
 
     CashRegisterResponse closeRegister(Long registerId, CloseRegisterRequest request);

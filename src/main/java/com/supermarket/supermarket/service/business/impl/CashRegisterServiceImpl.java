@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Transactional
@@ -90,11 +91,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         return securityUtils.getCurrentUser();
     }
 
-    /**
-     * Uses the branch sent in the request when present, so ADMIN and MANAGER keep
-     * choosing freely. Otherwise falls back to the branch assigned to the user,
-     * which is how a cashier opens their own register.
-     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CashRegisterResponse> getAll() {
+        log.info("Fetching all cash registers");
+        return cashRegisterMapper.toResponseList(cashRegisterRepository.findAll());
+    }
+
     private Branch resolveBranch(OpenRegisterRequest request, User currentUser) {
         if (request.getBranchId() != null) {
             return branchRepository.findById(request.getBranchId())

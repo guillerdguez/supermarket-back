@@ -4,6 +4,8 @@ import com.supermarket.supermarket.dto.cashregister.CashRegisterResponse;
 import com.supermarket.supermarket.model.cashregister.CashRegister;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class CashRegisterMapper {
     public CashRegisterResponse toResponse(CashRegister register) {
@@ -22,5 +24,14 @@ public class CashRegisterMapper {
                 .closedById(register.getClosedBy() != null ? register.getClosedBy().getId() : null)
                 .closedByUsername(register.getClosedBy() != null ? register.getClosedBy().getUsername() : null)
                 .build();
+    }
+
+    public List<CashRegisterResponse> toResponseList(List<CashRegister> registers) {
+        if (registers == null) {
+            return null;
+        }
+        return registers.stream()
+                .map(this::toResponse)
+                .toList();
     }
 }
