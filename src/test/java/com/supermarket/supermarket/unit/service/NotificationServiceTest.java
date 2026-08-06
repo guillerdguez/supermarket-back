@@ -6,6 +6,7 @@ import com.supermarket.supermarket.fixtures.user.UserFixtures;
 import com.supermarket.supermarket.mapper.NotificationMapper;
 import com.supermarket.supermarket.model.notification.Notification;
 import com.supermarket.supermarket.model.notification.NotificationType;
+import com.supermarket.supermarket.model.notification.ReferenceType;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.repository.NotificationRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
@@ -52,7 +53,7 @@ class NotificationServiceTest {
     @DisplayName("createNotification - should save notification for given user")
     void createNotification_ShouldSaveNotification() {
         User recipient = UserFixtures.defaultManager();
-        notificationService.createNotification(recipient, NotificationType.LOW_STOCK, "Low stock alert", null);
+        notificationService.createNotification(recipient, NotificationType.LOW_STOCK, "Low stock alert", null, null, null);
         then(notificationRepository).should().save(argThat(n ->
                 n.getUser().equals(recipient) &&
                         n.getType() == NotificationType.LOW_STOCK &&
@@ -65,7 +66,7 @@ class NotificationServiceTest {
     @DisplayName("createNotificationForUsers - should save one notification per user")
     void createNotificationForUsers_ShouldSaveAll() {
         List<User> users = List.of(UserFixtures.defaultAdmin(), UserFixtures.defaultManager());
-        notificationService.createNotificationForUsers(users, NotificationType.SALE_CANCELLED, "Sale cancelled", null);
+        notificationService.createNotificationForUsers(users, NotificationType.SALE_CANCELLED, "Sale cancelled", null, ReferenceType.SALE, 1L);
         then(notificationRepository).should().saveAll(argThat(list -> {
             List<?> items = (List<?>) list;
             return items.size() == 2;
@@ -75,7 +76,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("createNotificationForUsers - should do nothing when list is empty")
     void createNotificationForUsers_EmptyList_ShouldDoNothing() {
-        notificationService.createNotificationForUsers(List.of(), NotificationType.LOW_STOCK, "msg", null);
+        notificationService.createNotificationForUsers(List.of(), NotificationType.LOW_STOCK, "msg", null, null, null);
         then(notificationRepository).shouldHaveNoInteractions();
     }
 

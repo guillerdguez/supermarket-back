@@ -47,6 +47,13 @@ public class Notification {
     @Column(columnDefinition = "TEXT")
     private String data;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reference_type", length = 20)
+    private ReferenceType referenceType;
+
+    @Column(name = "reference_id")
+    private Long referenceId;
+
     @Column(name = "`read`", nullable = false)
     @Builder.Default
     private Boolean read = false;

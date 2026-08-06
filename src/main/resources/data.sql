@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     type VARCHAR(50) NOT NULL,
     message VARCHAR(500) NOT NULL,
     data TEXT,
+    reference_type VARCHAR(20),
+    reference_id BIGINT,
     `read` BOOLEAN NOT NULL DEFAULT FALSE,
     created_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)

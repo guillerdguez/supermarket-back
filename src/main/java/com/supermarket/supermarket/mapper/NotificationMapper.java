@@ -17,6 +17,8 @@ public class NotificationMapper {
                 .type(notification.getType())
                 .message(notification.getMessage())
                 .data(notification.getData())
+                .referenceType(notification.getReferenceType())
+                .referenceId(notification.getReferenceId())
                 .read(notification.getRead())
                 .createdAt(notification.getCreatedAt())
                 .build();

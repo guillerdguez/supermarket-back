@@ -6,6 +6,7 @@ import com.supermarket.supermarket.fixtures.transfer.TransferFixtures;
 import com.supermarket.supermarket.fixtures.user.UserFixtures;
 import com.supermarket.supermarket.model.cashregister.CashRegister;
 import com.supermarket.supermarket.model.notification.NotificationType;
+import com.supermarket.supermarket.model.notification.ReferenceType;
 import com.supermarket.supermarket.model.sale.Sale;
 import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.model.transfer.StockTransfer;
@@ -55,7 +56,7 @@ class NotificationEventServiceTest {
                 eq(managers),
                 eq(NotificationType.LOW_STOCK),
                 argThat(msg -> msg.contains("Rice") && msg.contains("Central Branch") && msg.contains("3")),
-                isNull());
+                isNull(), isNull(), isNull());
     }
 
     @Test
@@ -72,7 +73,7 @@ class NotificationEventServiceTest {
                 eq(managers),
                 eq(NotificationType.TRANSFER_REQUESTED),
                 argThat(msg -> msg.contains("Premium Rice")),
-                isNull());
+                isNull(), eq(ReferenceType.TRANSFER), eq(transfer.getId()));
     }
 
     @Test
@@ -86,8 +87,8 @@ class NotificationEventServiceTest {
                 eq(transfer.getRequestedBy()),
                 eq(NotificationType.TRANSFER_APPROVED),
                 argThat(msg -> msg.contains("approved")),
-                isNull());
-        then(notificationService).should(never()).createNotificationForUsers(any(), any(), any(), any());
+                isNull(), eq(ReferenceType.TRANSFER), eq(transfer.getId()));
+        then(notificationService).should(never()).createNotificationForUsers(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -103,7 +104,7 @@ class NotificationEventServiceTest {
                 eq(transfer.getRequestedBy()),
                 eq(NotificationType.TRANSFER_REJECTED),
                 argThat(msg -> msg.contains("rejected") && msg.contains("Not enough demand")),
-                isNull());
+                isNull(), eq(ReferenceType.TRANSFER), eq(transfer.getId()));
     }
 
     @Test
@@ -121,7 +122,7 @@ class NotificationEventServiceTest {
                 eq(managers),
                 eq(NotificationType.TRANSFER_COMPLETED),
                 argThat(msg -> msg.contains("completed")),
-                isNull());
+                isNull(), eq(ReferenceType.TRANSFER), eq(transfer.getId()));
     }
 
     @Test
@@ -139,7 +140,7 @@ class NotificationEventServiceTest {
                 eq(managers),
                 eq(NotificationType.CASH_REGISTER_DISCREPANCY),
                 argThat(msg -> msg.contains("discrepancy")),
-                isNull());
+                isNull(), isNull(), isNull());
     }
 
     @Test
@@ -158,6 +159,6 @@ class NotificationEventServiceTest {
                 eq(managers),
                 eq(NotificationType.SALE_CANCELLED),
                 argThat(msg -> msg.contains("cancelled") && msg.contains("Customer changed mind")),
-                isNull());
+                isNull(), eq(ReferenceType.SALE), eq(sale.getId()));
     }
 }

@@ -2,6 +2,7 @@ package com.supermarket.supermarket.service.business.impl;
 
 import com.supermarket.supermarket.model.cashregister.CashRegister;
 import com.supermarket.supermarket.model.notification.NotificationType;
+import com.supermarket.supermarket.model.notification.ReferenceType;
 import com.supermarket.supermarket.model.sale.Sale;
 import com.supermarket.supermarket.model.transfer.StockTransfer;
 import com.supermarket.supermarket.model.user.User;
@@ -29,7 +30,7 @@ public class NotificationEventServiceImpl implements NotificationEventService {
                 "Low stock alert: '%s' in branch '%s'. Current: %d, Minimum: %d",
                 productName, branchName, currentStock, minStock);
         List<User> managers = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.MANAGER));
-        notificationService.createNotificationForUsers(managers, NotificationType.LOW_STOCK, message, null);
+        notificationService.createNotificationForUsers(managers, NotificationType.LOW_STOCK, message, null, null, null);
     }
 
     @Override
@@ -41,7 +42,8 @@ public class NotificationEventServiceImpl implements NotificationEventService {
                 transfer.getSourceBranch().getName(),
                 transfer.getTargetBranch().getName());
         List<User> managers = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.MANAGER));
-        notificationService.createNotificationForUsers(managers, NotificationType.TRANSFER_REQUESTED, message, null);
+        notificationService.createNotificationForUsers(
+                managers, NotificationType.TRANSFER_REQUESTED, message, null, ReferenceType.TRANSFER, transfer.getId());
     }
 
     @Override
@@ -52,7 +54,8 @@ public class NotificationEventServiceImpl implements NotificationEventService {
                 transfer.getProduct().getName(),
                 transfer.getTargetBranch().getName());
         notificationService.createNotification(
-                transfer.getRequestedBy(), NotificationType.TRANSFER_APPROVED, message, null);
+                transfer.getRequestedBy(), NotificationType.TRANSFER_APPROVED, message, null,
+                ReferenceType.TRANSFER, transfer.getId());
     }
 
     @Override
@@ -64,7 +67,8 @@ public class NotificationEventServiceImpl implements NotificationEventService {
                 transfer.getTargetBranch().getName(),
                 transfer.getRejectionReason());
         notificationService.createNotification(
-                transfer.getRequestedBy(), NotificationType.TRANSFER_REJECTED, message, null);
+                transfer.getRequestedBy(), NotificationType.TRANSFER_REJECTED, message, null,
+                ReferenceType.TRANSFER, transfer.getId());
     }
 
     @Override
@@ -76,7 +80,8 @@ public class NotificationEventServiceImpl implements NotificationEventService {
                 transfer.getSourceBranch().getName(),
                 transfer.getTargetBranch().getName());
         List<User> managers = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.MANAGER));
-        notificationService.createNotificationForUsers(managers, NotificationType.TRANSFER_COMPLETED, message, null);
+        notificationService.createNotificationForUsers(
+                managers, NotificationType.TRANSFER_COMPLETED, message, null, ReferenceType.TRANSFER, transfer.getId());
     }
 
     @Override
@@ -87,7 +92,7 @@ public class NotificationEventServiceImpl implements NotificationEventService {
                 variance);
         List<User> managers = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.MANAGER));
         notificationService.createNotificationForUsers(
-                managers, NotificationType.CASH_REGISTER_DISCREPANCY, message, null);
+                managers, NotificationType.CASH_REGISTER_DISCREPANCY, message, null, null, null);
     }
 
     @Override
@@ -98,6 +103,7 @@ public class NotificationEventServiceImpl implements NotificationEventService {
                 sale.getBranch().getName(),
                 sale.getCancellationReason());
         List<User> managers = userRepository.findByRoleIn(List.of(UserRole.ADMIN, UserRole.MANAGER));
-        notificationService.createNotificationForUsers(managers, NotificationType.SALE_CANCELLED, message, null);
+        notificationService.createNotificationForUsers(
+                managers, NotificationType.SALE_CANCELLED, message, null, ReferenceType.SALE, sale.getId());
     }
 }

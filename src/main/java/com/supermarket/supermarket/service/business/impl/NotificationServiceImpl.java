@@ -5,6 +5,7 @@ import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.NotificationMapper;
 import com.supermarket.supermarket.model.notification.Notification;
 import com.supermarket.supermarket.model.notification.NotificationType;
+import com.supermarket.supermarket.model.notification.ReferenceType;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.repository.NotificationRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
@@ -29,12 +30,16 @@ public class NotificationServiceImpl implements NotificationService {
     private final SecurityUtils securityUtils;
 
     @Override
-    public void createNotification(User recipient, NotificationType type, String message, String data) {
+    public void createNotification(
+            User recipient, NotificationType type, String message, String data,
+            ReferenceType referenceType, Long referenceId) {
         Notification notification = Notification.builder()
                 .user(recipient)
                 .type(type)
                 .message(message)
                 .data(data)
+                .referenceType(referenceType)
+                .referenceId(referenceId)
                 .read(false)
                 .build();
         notificationRepository.save(notification);
@@ -42,7 +47,9 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void createNotificationForUsers(List<User> recipients, NotificationType type, String message, String data) {
+    public void createNotificationForUsers(
+            List<User> recipients, NotificationType type, String message, String data,
+            ReferenceType referenceType, Long referenceId) {
         if (recipients == null || recipients.isEmpty()) return;
         List<Notification> notifications = recipients.stream()
                 .map(user -> Notification.builder()
@@ -50,6 +57,8 @@ public class NotificationServiceImpl implements NotificationService {
                         .type(type)
                         .message(message)
                         .data(data)
+                        .referenceType(referenceType)
+                        .referenceId(referenceId)
                         .read(false)
                         .build())
                 .collect(Collectors.toList());
