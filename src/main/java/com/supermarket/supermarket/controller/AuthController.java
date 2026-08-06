@@ -2,7 +2,6 @@ package com.supermarket.supermarket.controller;
 
 import com.supermarket.supermarket.dto.auth.AuthResponse;
 import com.supermarket.supermarket.dto.auth.LoginRequest;
-import com.supermarket.supermarket.dto.auth.RegisterRequest;
 import com.supermarket.supermarket.model.audit.AuditStatus;
 import com.supermarket.supermarket.service.security.AuditService;
 import com.supermarket.supermarket.service.security.AuthService;
@@ -13,7 +12,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,13 +32,6 @@ public class AuthController {
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtService jwtService;
     private final AuditService auditService;
-
-    @PostMapping("/register")
-    @Operation(summary = "Register a new user")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
 
     @PostMapping("/login")
     @Operation(summary = "Login with email and password")

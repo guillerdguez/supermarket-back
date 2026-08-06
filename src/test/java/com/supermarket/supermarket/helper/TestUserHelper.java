@@ -2,11 +2,13 @@ package com.supermarket.supermarket.helper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.supermarket.supermarket.dto.auth.AuthResponse;
-import com.supermarket.supermarket.dto.auth.RegisterRequest;
+import com.supermarket.supermarket.dto.user.UserRequest;
+import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.model.user.UserRole;
 import com.supermarket.supermarket.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -26,15 +28,22 @@ public class TestUserHelper {
     @Autowired
     private UserRepository userRepository;
 
-    public String registerAndGetToken(RegisterRequest request, UserRole role) throws Exception {
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found after registration"));
-        user.setRole(role);
+    // There's no public self-registration endpoint (users are always created by an ADMIN,
+    // already active), so tests create the user directly through the repository instead of
+    // going through HTTP, then log in for a real token.
+    public String registerAndGetToken(UserRequest request, UserRole role) throws Exception {
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .role(role)
+                .active(true)
+                .build();
         userRepository.save(user);
 
         String loginJson = String.format("""

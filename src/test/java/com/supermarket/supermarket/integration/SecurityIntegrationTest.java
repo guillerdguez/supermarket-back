@@ -1,8 +1,10 @@
 package com.supermarket.supermarket.integration;
 
 import com.supermarket.supermarket.config.TestRedisConfig;
+import com.supermarket.supermarket.dto.user.UserRequest;
 import com.supermarket.supermarket.helper.TestUserHelper;
 import com.supermarket.supermarket.model.user.UserRole;
+import com.supermarket.supermarket.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import static com.supermarket.supermarket.fixtures.auth.AuthFixtures.cashierRegisterRequest;
 import static com.supermarket.supermarket.fixtures.auth.AuthFixtures.userRegisterRequest;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,6 +38,8 @@ class SecurityIntegrationTest {
     private MockMvc mockMvc;
     @Autowired
     private TestUserHelper testUserHelper;
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     @DisplayName("Access to protected endpoint without token should return 401")
@@ -53,5 +58,22 @@ class SecurityIntegrationTest {
         mockMvc.perform(get("/branches")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Token from a user deactivated by an admin should be rejected immediately")
+    void shouldRejectTokenAfterUserDeactivated() throws Exception {
+        UserRequest request = cashierRegisterRequest();
+        String token = testUserHelper.registerAndGetToken(request, UserRole.CASHIER);
+
+        mockMvc.perform(get("/branches").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden()); // authenticated, just lacks permission - baseline
+
+        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        user.setActive(false);
+        userRepository.save(user);
+
+        mockMvc.perform(get("/branches").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized()); // same token, now rejected
     }
 }
