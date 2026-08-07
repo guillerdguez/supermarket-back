@@ -17,6 +17,7 @@ public class ProductFixtures {
         return Product.builder()
                 .id(id)
                 .name("Premium Rice")
+                .barcode("8410000000001")
                 .category("Food")
                 .price(new BigDecimal("2.50"))
                 .build();
@@ -25,6 +26,7 @@ public class ProductFixtures {
     public static ProductRequest validProductRequest() {
         return ProductRequest.builder()
                 .name("New Product")
+                .barcode("8410000000099")
                 .category("Cleaning")
                 .price(new BigDecimal("10.00"))
                 .build();
@@ -42,6 +44,7 @@ public class ProductFixtures {
         return ProductResponse.builder()
                 .id(1L)
                 .name("Premium Rice")
+                .barcode("8410000000001")
                 .category("Food")
                 .price(new BigDecimal("2.50"))
                 .build();

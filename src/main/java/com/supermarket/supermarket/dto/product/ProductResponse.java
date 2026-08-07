@@ -20,6 +20,7 @@ public class ProductResponse {
     
     private Long id;
     private String name;
+    private String barcode;
     private String category;
     private BigDecimal price;
 }

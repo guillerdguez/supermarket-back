@@ -14,6 +14,7 @@ public class ProductMapper {
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
+                .barcode(product.getBarcode())
                 .category(product.getCategory())
                 .price(product.getPrice())
                 .build();
@@ -23,6 +24,7 @@ public class ProductMapper {
         if (request == null) return null;
         return Product.builder()
                 .name(request.getName())
+                .barcode(request.getBarcode())
                 .category(request.getCategory())
                 .price(request.getPrice())
                 .build();
@@ -31,6 +33,7 @@ public class ProductMapper {
     public void updateEntity(ProductRequest request, Product target) {
         if (request == null || target == null) return;
         if (request.getName() != null) target.setName(request.getName());
+        if (request.getBarcode() != null) target.setBarcode(request.getBarcode());
         if (request.getCategory() != null) target.setCategory(request.getCategory());
         if (request.getPrice() != null) target.setPrice(request.getPrice());
     }

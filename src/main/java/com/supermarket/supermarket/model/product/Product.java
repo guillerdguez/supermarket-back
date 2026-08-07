@@ -33,6 +33,9 @@ public class Product {
     @Column(unique = true, nullable = false)
     private String name;
 
+    @Column(unique = true)
+    private String barcode;
+
     private String category;
 
     private BigDecimal price;

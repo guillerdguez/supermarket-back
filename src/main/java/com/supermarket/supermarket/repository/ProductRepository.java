@@ -10,5 +10,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     boolean existsByName(String name);
 
+    boolean existsByBarcode(String barcode);
+
 
 }

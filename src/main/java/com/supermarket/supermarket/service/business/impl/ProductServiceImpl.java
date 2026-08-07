@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -59,6 +60,9 @@ public class ProductServiceImpl implements ProductService {
         if (productRepo.existsByName(request.getName())) {
             throw new DuplicateResourceException("Product already exists with name: " + request.getName());
         }
+        if (StringUtils.hasText(request.getBarcode()) && productRepo.existsByBarcode(request.getBarcode())) {
+            throw new DuplicateResourceException("Product already exists with barcode: " + request.getBarcode());
+        }
         Product product = productMapper.toEntity(request);
         Product saved = productRepo.save(product);
         inventoryService.initializeInventoryForNewProduct(saved);
@@ -72,6 +76,11 @@ public class ProductServiceImpl implements ProductService {
         if (request.getName() != null && !request.getName().equals(product.getName())) {
             if (productRepo.existsByName(request.getName())) {
                 throw new DuplicateResourceException("Product name already in use: " + request.getName());
+            }
+        }
+        if (StringUtils.hasText(request.getBarcode()) && !request.getBarcode().equals(product.getBarcode())) {
+            if (productRepo.existsByBarcode(request.getBarcode())) {
+                throw new DuplicateResourceException("Product barcode already in use: " + request.getBarcode());
             }
         }
         productMapper.updateEntity(request, product);
