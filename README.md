@@ -135,8 +135,7 @@ La clase `SaleServiceImpl` garantiza principios **ACID** y trazabilidad:
 ## 📡 Endpoints Principales
 
 ### 🔐 Auth & Seguridad (`/api/auth`)
-* `POST /api/auth/register` - Registro de usuario nuevo (rol CASHIER por defecto).
-* `POST /api/auth/login` - Obtención de Token JWT (con rate limiting: 5 intentos / 5 min).
+* `POST /api/auth/login` - Obtención de Token JWT (con rate limiting: 5 intentos / 5 min). No hay auto-registro público: los usuarios los crea un ADMIN vía `POST /users`.
 * `POST /api/auth/logout` - Invalida el token actual en Redis.
 
 ### 📍 Sucursales (`/branches`)
