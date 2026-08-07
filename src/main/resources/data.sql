@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE TABLE IF NOT EXISTS product (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
+    barcode VARCHAR(50) UNIQUE,
     category VARCHAR(50),
     price DECIMAL(19, 2),
     version BIGINT
@@ -136,12 +137,6 @@ CREATE TABLE IF NOT EXISTS payments (
     FOREIGN KEY (sale_id) REFERENCES sale(id)
 );
 
--- Datos de demo generados automaticamente (ver gen_data_sql.py en el historial de la conversacion).
--- Cadena valenciana de supermercados: 5 sucursales + almacen central, historico de ~3 semanas de ventas.
-
--- Datos de demo generados automaticamente (ver gen_data_sql.py en el historial de la conversacion).
--- Cadena valenciana de supermercados: 5 sucursales + almacen central, historico de ~3 semanas de ventas.
-
 INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, role, active, branch_id) VALUES
 (1, 'admin', 'admin@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'System', 'Administrator', 'ADMIN', true, NULL),
 (2, 'manager1', 'manager@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'Store', 'Manager', 'MANAGER', true, NULL),
@@ -167,28 +162,26 @@ INSERT IGNORE INTO branch (id, name, address, is_warehouse) VALUES
 (5, 'Sucursal Malvarrosa', 'Paseo Maritimo, 30, 46011 Valencia', false),
 (6, 'Almacen Central', 'Poligono Industrial Vara de Quart, Nave 14, 46014 Valencia', true);
 
--- Fix pre-existing deploys where the demo cashier (id 3) was seeded without a branch;
--- INSERT IGNORE above won't touch rows that already exist, so patch them explicitly.
 UPDATE users SET branch_id = 1 WHERE id = 3 AND branch_id IS NULL;
 
-INSERT IGNORE INTO product (id, name, category, price, version) VALUES
-(1, 'Leche Entera 1L', 'Lacteos', 1.15, 0), (2, 'Leche Semidesnatada 1L', 'Lacteos', 1.10, 0), (3, 'Yogur Natural Pack 4', 'Lacteos', 1.95, 0), (4, 'Yogur de Fresa Pack 4', 'Lacteos', 2.10, 0),
-(5, 'Queso Manchego Curado 300g', 'Lacteos', 5.90, 0), (6, 'Queso en Lonchas 200g', 'Lacteos', 2.40, 0), (7, 'Mantequilla 250g', 'Lacteos', 2.60, 0), (8, 'Nata para Cocinar 200ml', 'Lacteos', 1.35, 0),
-(9, 'Requeson 250g', 'Lacteos', 1.80, 0), (10, 'Manzanas Golden 1kg', 'Frutas y Verduras', 1.89, 0), (11, 'Platanos de Canarias 1kg', 'Frutas y Verduras', 2.15, 0), (12, 'Naranjas 1kg', 'Frutas y Verduras', 1.65, 0),
-(13, 'Zanahorias 1kg', 'Frutas y Verduras', 1.10, 0), (14, 'Tomates Pera 1kg', 'Frutas y Verduras', 2.30, 0), (15, 'Lechuga Iceberg Unidad', 'Frutas y Verduras', 0.95, 0), (16, 'Cebollas 1kg', 'Frutas y Verduras', 1.05, 0),
-(17, 'Patatas 2kg', 'Frutas y Verduras', 2.20, 0), (18, 'Pimientos Tricolor 500g', 'Frutas y Verduras', 1.99, 0), (19, 'Aguacates Pack 2', 'Frutas y Verduras', 2.75, 0), (20, 'Pechuga de Pollo 1kg', 'Carnes', 6.95, 0),
-(21, 'Filete de Ternera 500g', 'Carnes', 9.50, 0), (22, 'Carne Picada Mixta 500g', 'Carnes', 4.20, 0), (23, 'Chorizo Iberico 250g', 'Carnes', 3.80, 0), (24, 'Lomo de Cerdo 500g', 'Carnes', 5.10, 0),
-(25, 'Costillas de Cerdo 1kg', 'Carnes', 6.40, 0), (26, 'Filete de Merluza 400g', 'Pescaderia', 5.60, 0), (27, 'Salmon Fresco 300g', 'Pescaderia', 6.90, 0), (28, 'Gambas Congeladas 400g', 'Pescaderia', 7.20, 0),
-(29, 'Atun en Lata Pack 3', 'Pescaderia', 3.10, 0), (30, 'Pan de Barra Unidad', 'Panaderia', 0.90, 0), (31, 'Pan de Molde Integral', 'Panaderia', 1.75, 0), (32, 'Croissants Pack 4', 'Panaderia', 2.60, 0),
-(33, 'Magdalenas Pack 12', 'Panaderia', 2.10, 0), (34, 'Tarta de Chocolate', 'Panaderia', 8.50, 0), (35, 'Agua Mineral 1.5L', 'Bebidas', 0.55, 0), (36, 'Refresco de Cola 2L', 'Bebidas', 1.80, 0),
-(37, 'Zumo de Naranja 1L', 'Bebidas', 1.60, 0), (38, 'Cerveza Pack 6', 'Bebidas', 4.20, 0), (39, 'Vino Tinto Crianza 750ml', 'Bebidas', 5.90, 0), (40, 'Cafe Molido 250g', 'Bebidas', 3.40, 0),
-(41, 'Pizza Congelada Cuatro Quesos', 'Congelados', 3.20, 0), (42, 'Guisantes Congelados 1kg', 'Congelados', 1.90, 0), (43, 'Helado de Vainilla 1L', 'Congelados', 3.50, 0), (44, 'Croquetas de Jamon Congeladas 500g', 'Congelados', 3.10, 0),
-(45, 'Arroz Redondo 1kg', 'Despensa', 1.40, 0), (46, 'Pasta Espagueti 500g', 'Despensa', 1.10, 0), (47, 'Aceite de Oliva Virgen Extra 1L', 'Despensa', 6.50, 0), (48, 'Garbanzos Cocidos 400g', 'Despensa', 0.95, 0),
-(49, 'Tomate Frito 400g', 'Despensa', 1.15, 0), (50, 'Sal Fina 1kg', 'Despensa', 0.60, 0), (51, 'Azucar Blanco 1kg', 'Despensa', 1.05, 0), (52, 'Harina de Trigo 1kg', 'Despensa', 0.95, 0),
-(53, 'Miel 500g', 'Despensa', 4.10, 0), (54, 'Detergente Liquido 1.5L', 'Limpieza', 6.20, 0), (55, 'Suavizante 2L', 'Limpieza', 3.90, 0), (56, 'Lejia 1.5L', 'Limpieza', 1.10, 0),
-(57, 'Papel Higienico Pack 12', 'Limpieza', 5.80, 0), (58, 'Papel de Cocina Pack 4', 'Limpieza', 3.20, 0), (59, 'Limpiacristales 750ml', 'Limpieza', 1.95, 0), (60, 'Bolsas de Basura Pack 30', 'Limpieza', 2.50, 0),
-(61, 'Gel de Ducha 750ml', 'Higiene Personal', 2.80, 0), (62, 'Champu 400ml', 'Higiene Personal', 3.10, 0), (63, 'Pasta de Dientes 75ml', 'Higiene Personal', 2.20, 0), (64, 'Desodorante Spray 200ml', 'Higiene Personal', 2.60, 0),
-(65, 'Patatas Fritas 200g', 'Snacks y Dulces', 1.70, 0), (66, 'Galletas Maria Pack', 'Snacks y Dulces', 1.30, 0), (67, 'Chocolate con Leche 150g', 'Snacks y Dulces', 1.90, 0), (68, 'Frutos Secos Mix 200g', 'Snacks y Dulces', 2.90, 0);
+INSERT IGNORE INTO product (id, name, barcode, category, price, version) VALUES
+(1, 'Leche Entera 1L', '8410000000001', 'Lacteos', 1.15, 0), (2, 'Leche Semidesnatada 1L', '8410000000002', 'Lacteos', 1.10, 0), (3, 'Yogur Natural Pack 4', '8410000000003', 'Lacteos', 1.95, 0), (4, 'Yogur de Fresa Pack 4', '8410000000004', 'Lacteos', 2.10, 0),
+(5, 'Queso Manchego Curado 300g', '8410000000005', 'Lacteos', 5.90, 0), (6, 'Queso en Lonchas 200g', '8410000000006', 'Lacteos', 2.40, 0), (7, 'Mantequilla 250g', '8410000000007', 'Lacteos', 2.60, 0), (8, 'Nata para Cocinar 200ml', '8410000000008', 'Lacteos', 1.35, 0),
+(9, 'Requeson 250g', '8410000000009', 'Lacteos', 1.80, 0), (10, 'Manzanas Golden 1kg', '8410000000010', 'Frutas y Verduras', 1.89, 0), (11, 'Platanos de Canarias 1kg', '8410000000011', 'Frutas y Verduras', 2.15, 0), (12, 'Naranjas 1kg', '8410000000012', 'Frutas y Verduras', 1.65, 0),
+(13, 'Zanahorias 1kg', '8410000000013', 'Frutas y Verduras', 1.10, 0), (14, 'Tomates Pera 1kg', '8410000000014', 'Frutas y Verduras', 2.30, 0), (15, 'Lechuga Iceberg Unidad', '8410000000015', 'Frutas y Verduras', 0.95, 0), (16, 'Cebollas 1kg', '8410000000016', 'Frutas y Verduras', 1.05, 0),
+(17, 'Patatas 2kg', '8410000000017', 'Frutas y Verduras', 2.20, 0), (18, 'Pimientos Tricolor 500g', '8410000000018', 'Frutas y Verduras', 1.99, 0), (19, 'Aguacates Pack 2', '8410000000019', 'Frutas y Verduras', 2.75, 0), (20, 'Pechuga de Pollo 1kg', '8410000000020', 'Carnes', 6.95, 0),
+(21, 'Filete de Ternera 500g', '8410000000021', 'Carnes', 9.50, 0), (22, 'Carne Picada Mixta 500g', '8410000000022', 'Carnes', 4.20, 0), (23, 'Chorizo Iberico 250g', '8410000000023', 'Carnes', 3.80, 0), (24, 'Lomo de Cerdo 500g', '8410000000024', 'Carnes', 5.10, 0),
+(25, 'Costillas de Cerdo 1kg', '8410000000025', 'Carnes', 6.40, 0), (26, 'Filete de Merluza 400g', '8410000000026', 'Pescaderia', 5.60, 0), (27, 'Salmon Fresco 300g', '8410000000027', 'Pescaderia', 6.90, 0), (28, 'Gambas Congeladas 400g', '8410000000028', 'Pescaderia', 7.20, 0),
+(29, 'Atun en Lata Pack 3', '8410000000029', 'Pescaderia', 3.10, 0), (30, 'Pan de Barra Unidad', '8410000000030', 'Panaderia', 0.90, 0), (31, 'Pan de Molde Integral', '8410000000031', 'Panaderia', 1.75, 0), (32, 'Croissants Pack 4', '8410000000032', 'Panaderia', 2.60, 0),
+(33, 'Magdalenas Pack 12', '8410000000033', 'Panaderia', 2.10, 0), (34, 'Tarta de Chocolate', '8410000000034', 'Panaderia', 8.50, 0), (35, 'Agua Mineral 1.5L', '8410000000035', 'Bebidas', 0.55, 0), (36, 'Refresco de Cola 2L', '8410000000036', 'Bebidas', 1.80, 0),
+(37, 'Zumo de Naranja 1L', '8410000000037', 'Bebidas', 1.60, 0), (38, 'Cerveza Pack 6', '8410000000038', 'Bebidas', 4.20, 0), (39, 'Vino Tinto Crianza 750ml', '8410000000039', 'Bebidas', 5.90, 0), (40, 'Cafe Molido 250g', '8410000000040', 'Bebidas', 3.40, 0),
+(41, 'Pizza Congelada Cuatro Quesos', '8410000000041', 'Congelados', 3.20, 0), (42, 'Guisantes Congelados 1kg', '8410000000042', 'Congelados', 1.90, 0), (43, 'Helado de Vainilla 1L', '8410000000043', 'Congelados', 3.50, 0), (44, 'Croquetas de Jamon Congeladas 500g', '8410000000044', 'Congelados', 3.10, 0),
+(45, 'Arroz Redondo 1kg', '8410000000045', 'Despensa', 1.40, 0), (46, 'Pasta Espagueti 500g', '8410000000046', 'Despensa', 1.10, 0), (47, 'Aceite de Oliva Virgen Extra 1L', '8410000000047', 'Despensa', 6.50, 0), (48, 'Garbanzos Cocidos 400g', '8410000000048', 'Despensa', 0.95, 0),
+(49, 'Tomate Frito 400g', '8410000000049', 'Despensa', 1.15, 0), (50, 'Sal Fina 1kg', '8410000000050', 'Despensa', 0.60, 0), (51, 'Azucar Blanco 1kg', '8410000000051', 'Despensa', 1.05, 0), (52, 'Harina de Trigo 1kg', '8410000000052', 'Despensa', 0.95, 0),
+(53, 'Miel 500g', '8410000000053', 'Despensa', 4.10, 0), (54, 'Detergente Liquido 1.5L', '8410000000054', 'Limpieza', 6.20, 0), (55, 'Suavizante 2L', '8410000000055', 'Limpieza', 3.90, 0), (56, 'Lejia 1.5L', '8410000000056', 'Limpieza', 1.10, 0),
+(57, 'Papel Higienico Pack 12', '8410000000057', 'Limpieza', 5.80, 0), (58, 'Papel de Cocina Pack 4', '8410000000058', 'Limpieza', 3.20, 0), (59, 'Limpiacristales 750ml', '8410000000059', 'Limpieza', 1.95, 0), (60, 'Bolsas de Basura Pack 30', '8410000000060', 'Limpieza', 2.50, 0),
+(61, 'Gel de Ducha 750ml', '8410000000061', 'Higiene Personal', 2.80, 0), (62, 'Champu 400ml', '8410000000062', 'Higiene Personal', 3.10, 0), (63, 'Pasta de Dientes 75ml', '8410000000063', 'Higiene Personal', 2.20, 0), (64, 'Desodorante Spray 200ml', '8410000000064', 'Higiene Personal', 2.60, 0),
+(65, 'Patatas Fritas 200g', '8410000000065', 'Snacks y Dulces', 1.70, 0), (66, 'Galletas Maria Pack', '8410000000066', 'Snacks y Dulces', 1.30, 0), (67, 'Chocolate con Leche 150g', '8410000000067', 'Snacks y Dulces', 1.90, 0), (68, 'Frutos Secos Mix 200g', '8410000000068', 'Snacks y Dulces', 2.90, 0);
 
 INSERT IGNORE INTO branch_inventory (id, branch_id, product_id, stock, min_stock, last_restock_date, version) VALUES
 (1, 1, 1, 10, 11, NOW(), 0), (2, 1, 2, 0, 13, NOW(), 0), (3, 1, 3, 30, 9, NOW(), 0), (4, 1, 4, 2, 10, NOW(), 0), (5, 1, 5, 15, 14, NOW(), 0),

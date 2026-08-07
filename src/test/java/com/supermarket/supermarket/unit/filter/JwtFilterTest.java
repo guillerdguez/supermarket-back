@@ -56,8 +56,6 @@ class JwtFilterTest {
         request.addHeader("Authorization", "Bearer " + TOKEN);
         response = new MockHttpServletResponse();
         filterChain = new MockFilterChain();
-        // ObjectMapper isn't mocked - JwtFilter builds it via @RequiredArgsConstructor,
-        // and error responses need a real serializer to write JSON.
         jwtFilter = new JwtFilter(jwtService, userDetailsService, tokenBlacklistService, new ObjectMapper());
     }
 

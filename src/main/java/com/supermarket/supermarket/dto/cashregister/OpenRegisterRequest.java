@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OpenRegisterRequest {
-    // Optional: when omitted, the branch assigned to the current user is used.
     private Long branchId;
 
     @NotNull(message = "Opening balance is required")

@@ -31,9 +31,6 @@ public class TestUserHelper {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // There's no public self-registration endpoint (users are always created by an ADMIN,
-    // already active), so tests create the user directly through the repository instead of
-    // going through HTTP, then log in for a real token.
     public String registerAndGetToken(UserRequest request, UserRole role) throws Exception {
         User user = User.builder()
                 .username(request.getUsername())

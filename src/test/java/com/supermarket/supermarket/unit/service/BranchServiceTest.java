@@ -94,7 +94,7 @@ class BranchServiceTest {
 
         assertThat(result).isNotNull();
         then(branchRepository).should().save(entity);
-        then(inventoryService).should().initializeInventoryForNewBranch(entity);  // ← NUEVO
+        then(inventoryService).should().initializeInventoryForNewBranch(entity);
     }
 
     @Test

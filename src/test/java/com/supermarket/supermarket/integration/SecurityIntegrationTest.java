@@ -67,13 +67,13 @@ class SecurityIntegrationTest {
         String token = testUserHelper.registerAndGetToken(request, UserRole.CASHIER);
 
         mockMvc.perform(get("/branches").header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden()); // authenticated, just lacks permission - baseline
+                .andExpect(status().isForbidden());
 
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
         user.setActive(false);
         userRepository.save(user);
 
         mockMvc.perform(get("/branches").header("Authorization", "Bearer " + token))
-                .andExpect(status().isUnauthorized()); // same token, now rejected
+                .andExpect(status().isUnauthorized());
     }
 }

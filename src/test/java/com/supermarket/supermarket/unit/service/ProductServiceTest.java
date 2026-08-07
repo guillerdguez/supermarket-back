@@ -112,7 +112,7 @@ class ProductServiceTest {
 
         assertThat(result).isNotNull();
         then(productRepository).should().save(entity);
-        then(inventoryService).should().initializeInventoryForNewProduct(entity);  // ← NUEVO
+        then(inventoryService).should().initializeInventoryForNewProduct(entity);
     }
 
     @Test
@@ -120,6 +120,17 @@ class ProductServiceTest {
     void create_WhenNameExists_ShouldThrowException() {
         ProductRequest request = validProductRequest();
         given(productRepository.existsByName(request.getName())).willReturn(true);
+        assertThatThrownBy(() -> productService.create(request))
+                .isInstanceOf(DuplicateResourceException.class);
+        then(productRepository).should(never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("CREATE - should throw exception when barcode exists")
+    void create_WhenBarcodeExists_ShouldThrowException() {
+        ProductRequest request = validProductRequest();
+        given(productRepository.existsByName(request.getName())).willReturn(false);
+        given(productRepository.existsByBarcode(request.getBarcode())).willReturn(true);
         assertThatThrownBy(() -> productService.create(request))
                 .isInstanceOf(DuplicateResourceException.class);
         then(productRepository).should(never()).save(any(Product.class));
@@ -149,6 +160,19 @@ class ProductServiceTest {
         Product existingProduct = defaultProduct();
         given(productRepository.findById(id)).willReturn(Optional.of(existingProduct));
         given(productRepository.existsByName(request.getName())).willReturn(true);
+        assertThatThrownBy(() -> productService.update(id, request))
+                .isInstanceOf(DuplicateResourceException.class);
+    }
+
+    @Test
+    @DisplayName("UPDATE - should throw exception when duplicate barcode")
+    void update_WithDuplicateBarcode_ShouldThrowException() {
+        Long id = 1L;
+        ProductRequest request = validProductRequest();
+        Product existingProduct = defaultProduct();
+        given(productRepository.findById(id)).willReturn(Optional.of(existingProduct));
+        given(productRepository.existsByName(request.getName())).willReturn(false);
+        given(productRepository.existsByBarcode(request.getBarcode())).willReturn(true);
         assertThatThrownBy(() -> productService.update(id, request))
                 .isInstanceOf(DuplicateResourceException.class);
     }

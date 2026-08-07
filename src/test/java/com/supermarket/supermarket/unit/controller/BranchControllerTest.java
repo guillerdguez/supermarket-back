@@ -50,7 +50,7 @@ class BranchControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        branchController = new BranchController(branchService, inventoryService);  // ← ambas
+        branchController = new BranchController(branchService, inventoryService);
         mockMvc = MockMvcBuilders.standaloneSetup(branchController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

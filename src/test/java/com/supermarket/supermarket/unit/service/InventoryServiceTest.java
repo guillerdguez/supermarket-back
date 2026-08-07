@@ -552,7 +552,6 @@ class InventoryServiceTest {
             inventoryService.initializeInventoryForNewProduct(product);
 
             then(branchInventoryRepository).should().saveAll(any());
-            // Verificamos que se crearon 2 entradas con los valores por defecto
             verify(branchInventoryRepository).saveAll(org.mockito.ArgumentMatchers.argThat(list -> {
                 List<BranchInventory> inventories = (List<BranchInventory>) list;
                 return inventories.size() == 2

@@ -160,7 +160,6 @@ class InventoryControllerTest {
     @Test
     @DisplayName("PUT /inventory/branches/{branchId}/products/{productId} - should return 400 when request is invalid")
     void updateStock_WithInvalidRequest_ShouldReturn400() throws Exception {
-        // stock negativo → @Min(0) falla
         String invalidJson = """
                 {"stock": -5, "minStock": 10}
                 """;
