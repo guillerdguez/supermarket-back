@@ -101,6 +101,13 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setLastName(request.getLastName());
         user.setRole(request.getRole());
         user.setBranch(findBranchOrNull(request.getBranchId()));
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            List<String> passwordErrors = passwordValidator.validatePassword(request.getPassword());
+            if (!passwordErrors.isEmpty()) {
+                throw new IllegalArgumentException("Password validation failed: " + String.join(", ", passwordErrors));
+            }
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
         return toResponse(userRepository.save(user));
     }
 
