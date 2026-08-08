@@ -1,23 +1,41 @@
 # 🛒 Supermarket Management System (SMS) API
 
+![Deployed on Railway](https://img.shields.io/badge/deployed-Railway-0B0D0E?logo=railway&logoColor=white)
+
 **Enterprise-Grade REST API** diseñada para la gestión integral de inventarios distribuidos, control de caja y ventas seguras.
 
-**Frontend:** [supermarket-front](https://github.com/guillerdguez/supermarket-front) (Angular 20).
+**Frontend:** [supermarket-front](https://github.com/guillerdguez/supermarket-front) (Angular 20) — demo en vivo: [supermarket-front-production.up.railway.app](https://supermarket-front-production.up.railway.app/)
 
-<!-- 🔗 Demo en vivo: pendiente — ver "Despliegue" más abajo -->
-
-## 📸 Capturas
-
-El frontend conectado a esta API — ver [supermarket-front](https://github.com/guillerdguez/supermarket-front#-capturas) para las capturas de pantalla.
+🔗 **Demo en vivo (API):** [supermarket-back-production.up.railway.app](https://supermarket-back-production.up.railway.app)
+📖 **Swagger UI:** [supermarket-back-production.up.railway.app/swagger-ui/index.html](https://supermarket-back-production.up.railway.app/swagger-ui/index.html)
 
 ## 🔑 Credenciales de prueba
 
-Con `data.sql` corriendo (por defecto, ver más abajo), estos usuarios ya existen:
+Con `data.sql` corriendo (por defecto, ver más abajo), estos usuarios ya existen — tanto en local como en la demo:
 
 | Rol | Email | Password |
 | --- | --- | --- |
 | Admin | `admin@supermarket.com` | `password` |
 | Cajero | `cashier@supermarket.com` | `password` |
+
+## 🚀 Cómo empezar (API en 30 segundos)
+
+Sin instalar nada, prueba el flujo real de login + llamada autenticada contra la demo:
+
+```bash
+# 1. Login — obtén el token JWT
+TOKEN=$(curl -s -X POST https://supermarket-back-production.up.railway.app/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@supermarket.com","password":"password"}' | jq -r '.token')
+
+# 2. Úsalo en una llamada autenticada
+curl -s https://supermarket-back-production.up.railway.app/products \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+## 📸 Capturas
+
+El frontend conectado a esta API — ver [supermarket-front](https://github.com/guillerdguez/supermarket-front#-capturas) para las capturas de pantalla.
 
 ## 💡 Sobre el Proyecto
 
@@ -106,7 +124,7 @@ docker run -p 8080:8080 \
 
 ## ☁️ Despliegue en producción
 
-Pensado para desplegarse en **Railway** (backend + MySQL + Redis administrados en un mismo proyecto) con el frontend en Vercel/Netlify. Variables de entorno relevantes:
+Desplegado en **Railway**: backend, MySQL, Redis y frontend (contenedor Docker + nginx) como cuatro servicios del mismo proyecto. Variables de entorno relevantes:
 
 | Variable | Descripción | Default (dev) |
 | --- | --- | --- |
@@ -226,11 +244,11 @@ La clase `SaleServiceImpl` garantiza principios **ACID** y trazabilidad:
 
 ## 🔎 Accesos
 
-| Recurso | URL |
-| --- | --- |
-| **Swagger UI** | `http://localhost:8080/swagger-ui/index.html` |
-| **Docs JSON** | `http://localhost:8080/v3/api-docs` |
-| **DB (MySQL)** | `jdbc:mysql://localhost:3307/supermarketdb` |
+| Recurso | Local | Producción (Railway) |
+| --- | --- | --- |
+| **Swagger UI** | `http://localhost:8080/swagger-ui/index.html` | [supermarket-back-production.up.railway.app/swagger-ui/index.html](https://supermarket-back-production.up.railway.app/swagger-ui/index.html) |
+| **Docs JSON** | `http://localhost:8080/v3/api-docs` | `https://supermarket-back-production.up.railway.app/v3/api-docs` |
+| **DB (MySQL)** | `jdbc:mysql://localhost:3307/supermarketdb` | gestionada por Railway, no expuesta públicamente |
 
 ---
 
