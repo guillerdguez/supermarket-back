@@ -33,6 +33,27 @@ services:
       timeout: 3s
       retries: 5
 
+  backend:
+    build: .
+    container_name: supermarket-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: supermarketdb
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: "${DB_PASSWORD:-123456}"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    networks:
+      - supermarket-network
+
 volumes:
   mysql_data:
     driver: local
