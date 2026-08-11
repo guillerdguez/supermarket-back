@@ -15,6 +15,7 @@ import com.supermarket.supermarket.model.sale.Sale;
 import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.repository.BranchRepository;
+import com.supermarket.supermarket.repository.PaymentRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
@@ -69,6 +70,8 @@ class SaleServiceTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
+    private PaymentRepository paymentRepository;
+    @Mock
     private SaleMapper saleMapper;
     @Mock
     private SecurityUtils securityUtils;
@@ -111,7 +114,7 @@ class SaleServiceTest {
                 .validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
 
         given(saleRepository.save(any(Sale.class))).willReturn(sale);
-        given(saleMapper.toResponse(sale)).willReturn(response);
+        given(saleMapper.toResponse(sale, List.of())).willReturn(response);
 
         SaleResponse result = saleService.create(request);
 
@@ -216,7 +219,7 @@ class SaleServiceTest {
 
         given(saleRepository.findWithDetailsById(id)).willReturn(Optional.of(sale));
         given(saleRepository.save(sale)).willReturn(sale);
-        given(saleMapper.toResponse(sale)).willReturn(response);
+        given(saleMapper.toResponse(sale, List.of())).willReturn(response);
 
         SaleResponse result = saleService.cancel(id, request);
 
@@ -268,7 +271,7 @@ class SaleServiceTest {
         SaleResponse response = saleResponse();
 
         given(saleRepository.findWithDetailsById(id)).willReturn(Optional.of(sale));
-        given(saleMapper.toResponse(sale)).willReturn(response);
+        given(saleMapper.toResponse(sale, List.of())).willReturn(response);
 
         SaleResponse result = saleService.getById(id);
 
@@ -335,7 +338,7 @@ class SaleServiceTest {
         Page<Sale> salePage = new PageImpl<>(List.of(sale));
 
         given(saleRepository.findByCreatedById(1L, pageable)).willReturn(salePage);
-        given(saleMapper.toResponse(sale)).willReturn(response);
+        given(saleMapper.toResponse(sale, List.of())).willReturn(response);
 
         Page<SaleResponse> result = saleService.getSalesByCashier(1L, pageable);
 
@@ -350,7 +353,7 @@ class SaleServiceTest {
         SaleResponse response = saleResponse();
 
         given(saleRepository.findWithDetailsById(100L)).willReturn(Optional.of(sale));
-        given(saleMapper.toResponse(sale)).willReturn(response);
+        given(saleMapper.toResponse(sale, List.of())).willReturn(response);
 
         SaleResponse result = saleService.getSaleByIdAndCashier(100L, 1L);
 

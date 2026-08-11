@@ -2,12 +2,13 @@ package com.supermarket.supermarket.mapper;
 
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
+import com.supermarket.supermarket.model.sale.Payment;
 import com.supermarket.supermarket.model.sale.Sale;
-import com.supermarket.supermarket.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -15,9 +16,8 @@ import java.util.stream.Collectors;
 public class SaleMapper {
     private final SaleDetailMapper saleDetailMapper;
     private final PaymentMapper paymentMapper;
-    private final PaymentRepository paymentRepository;
 
-    public SaleResponse toResponse(Sale sale) {
+    public SaleResponse toResponse(Sale sale, List<Payment> payments) {
         if (sale == null) return null;
 
         return SaleResponse.builder()
@@ -38,7 +38,7 @@ public class SaleMapper {
                 .details(saleDetailMapper.toResponseList(sale.getDetails()))
                 .cashRegisterId(sale.getCashRegister() != null ? sale.getCashRegister().getId() : null)
                 .cashRegisterStatus(sale.getCashRegister() != null ? sale.getCashRegister().getStatus() : null)
-                .payments(paymentMapper.toResponseList(paymentRepository.findBySaleId(sale.getId())))
+                .payments(paymentMapper.toResponseList(payments))
                 .build();
     }
 
@@ -54,10 +54,10 @@ public class SaleMapper {
                 .build();
     }
 
-    public List<SaleResponse> toResponseList(List<Sale> sales) {
+    public List<SaleResponse> toResponseList(List<Sale> sales, Map<Long, List<Payment>> paymentsBySaleId) {
         if (sales == null) return null;
         return sales.stream()
-                .map(this::toResponse)
+                .map(sale -> toResponse(sale, paymentsBySaleId.getOrDefault(sale.getId(), List.of())))
                 .toList();
     }
 }

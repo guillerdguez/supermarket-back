@@ -11,11 +11,13 @@ import com.supermarket.supermarket.mapper.SaleMapper;
 import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.cashregister.CashRegister;
 import com.supermarket.supermarket.model.product.Product;
+import com.supermarket.supermarket.model.sale.Payment;
 import com.supermarket.supermarket.model.sale.Sale;
 import com.supermarket.supermarket.model.sale.SaleDetail;
 import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.model.user.User;
 import com.supermarket.supermarket.repository.BranchRepository;
+import com.supermarket.supermarket.repository.PaymentRepository;
 import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.security.SecurityUtils;
@@ -48,6 +50,7 @@ public class SaleServiceImpl implements SaleService {
     private final SaleRepository saleRepo;
     private final BranchRepository branchRepository;
     private final ProductRepository productRepository;
+    private final PaymentRepository paymentRepository;
     private final SaleMapper saleMapper;
     private final InventoryService inventoryService;
     private final SecurityUtils securityUtils;
@@ -68,7 +71,7 @@ public class SaleServiceImpl implements SaleService {
                 saved.getBranch().getId(),
                 saved.getTotal());
 
-        return saleMapper.toResponse(saved);
+        return saleMapper.toResponse(saved, List.of());
     }
 
     private Sale buildSale(SaleRequest request) {
@@ -140,7 +143,9 @@ public class SaleServiceImpl implements SaleService {
     @Override
     @Transactional(readOnly = true)
     public List<SaleResponse> getAll() {
-        return saleMapper.toResponseList(saleRepo.findAll());
+        List<Sale> sales = saleRepo.findAll();
+        Map<Long, List<Payment>> paymentsBySaleId = paymentsGroupedBySaleId(sales.stream().map(Sale::getId).toList());
+        return saleMapper.toResponseList(sales, paymentsBySaleId);
     }
 
     @Override
@@ -148,7 +153,12 @@ public class SaleServiceImpl implements SaleService {
     public SaleResponse getById(Long id) {
         Sale sale = saleRepo.findWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sale not found with id: " + id));
-        return saleMapper.toResponse(sale);
+        return saleMapper.toResponse(sale, paymentRepository.findBySaleId(id));
+    }
+
+    private Map<Long, List<Payment>> paymentsGroupedBySaleId(List<Long> saleIds) {
+        return paymentRepository.findBySaleIdIn(saleIds).stream()
+                .collect(Collectors.groupingBy(payment -> payment.getSale().getId()));
     }
 
     @Override
@@ -177,14 +187,16 @@ public class SaleServiceImpl implements SaleService {
 
         log.info("Sale cancelled with id: {}", id);
 
-        return saleMapper.toResponse(saved);
+        return saleMapper.toResponse(saved, paymentRepository.findBySaleId(saved.getId()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<SaleResponse> getSalesByCashier(Long cashierId, Pageable pageable) {
-        return saleRepo.findByCreatedById(cashierId, pageable)
-                .map(saleMapper::toResponse);
+        Page<Sale> sales = saleRepo.findByCreatedById(cashierId, pageable);
+        Map<Long, List<Payment>> paymentsBySaleId = paymentsGroupedBySaleId(
+                sales.getContent().stream().map(Sale::getId).toList());
+        return sales.map(sale -> saleMapper.toResponse(sale, paymentsBySaleId.getOrDefault(sale.getId(), List.of())));
     }
 
     @Override
@@ -195,7 +207,7 @@ public class SaleServiceImpl implements SaleService {
         if (sale.getCreatedBy() == null || !sale.getCreatedBy().getId().equals(cashierId)) {
             throw new InsufficientPermissionsException("You are not allowed to view this sale");
         }
-        return saleMapper.toResponse(sale);
+        return saleMapper.toResponse(sale, paymentRepository.findBySaleId(saleId));
     }
 
 
