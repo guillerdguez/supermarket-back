@@ -2,7 +2,7 @@
 
 ![Deployed on Railway](https://img.shields.io/badge/deployed-Railway-0B0D0E?logo=railway&logoColor=white)
 
-**Enterprise-Grade REST API** diseñada para la gestión integral de inventarios distribuidos, control de caja y ventas seguras.
+API REST en capas (Controller/Service/Repository) para la gestión de inventarios distribuidos, control de caja y ventas.
 
 **Frontend:** [supermarket-front](https://github.com/guillerdguez/supermarket-front) (Angular 20) — demo en vivo: [supermarket-front-production.up.railway.app](https://supermarket-front-production.up.railway.app/)
 
@@ -33,10 +33,6 @@ curl -s https://supermarket-back-production.up.railway.app/products \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-## 📸 Capturas
-
-El frontend conectado a esta API — ver [supermarket-front](https://github.com/guillerdguez/supermarket-front#-capturas) para las capturas de pantalla.
-
 ## 💡 Sobre el Proyecto
 
 Este proyecto es el núcleo backend de un sistema ERP para retail. Ha sido diseñado siguiendo principios de **Clean Architecture y SOLID**, priorizando la integridad financiera, la trazabilidad de operaciones y la seguridad.
@@ -47,7 +43,7 @@ El sistema resuelve el problema de la gestión de stock en múltiples sucursales
 
 Este backend implementa lógica de negocio compleja más allá de un simple CRUD:
 
-* 🏗️ **Arquitectura Robusta:** Diseño modular en capas (`Controller`, `Service`, `Repository`, `Domain`).
+* 🏗️ **Arquitectura en capas:** Diseño modular (`Controller`, `Service`, `Repository`, `Domain`).
 * 🔐 **Seguridad Avanzada:**
   * Autenticación vía **JWT** (JSON Web Tokens).
   * **Rate Limiting** con Redis para prevenir fuerza bruta, con `retryAfter` dinámico en la respuesta.
@@ -68,7 +64,7 @@ Este backend implementa lógica de negocio compleja más allá de un simple CRUD
 * 🛡️ **Auditoría:** Trazabilidad completa (**Quién, Cuándo, Qué**) en operaciones críticas.
 * ⚡ **Integridad Transaccional:** Gestión estricta (`@Transactional`) en ventas, cancelaciones y movimientos de inventario.
 * 🔍 **Especificaciones JPA:** Filtrado dinámico y paginación eficiente de catálogos.
-* 🐳 **Containerización:** Entorno MySQL y Redis orquestado con **Docker Compose**.
+* 🐳 **Containerización:** Backend + MySQL + Redis orquestados con **Docker Compose**, arrancan todos con un solo comando.
 * 🧪 **Testing:** Cobertura de integración y unitaria con **JUnit 5 y Mockito**, incluyendo Testcontainers con Redis real para rate limiting.
 
 ## 🛠️ Tech Stack
@@ -88,30 +84,32 @@ Este backend implementa lógica de negocio compleja más allá de un simple CRUD
 
 ### Prerrequisitos
 
-* Java JDK 17 o superior.
 * Docker Desktop activo.
 
-### 1. Iniciar Infraestructura
+### Un solo comando
 
-Levanta los contenedores de MySQL y Redis:
-
-```bash
-docker-compose up -d
-```
-
-### 2. Ejecutar Aplicación
-
-Inicia el servidor Spring Boot (esto cargará datos de prueba automáticamente):
+`docker-compose up` ya levanta MySQL + Redis + el propio backend (esto cargará datos de prueba automáticamente):
 
 ```bash
-./mvnw spring-boot:run
+docker compose up --build -d
 ```
 
 No hace falta exportar ninguna variable de entorno para levantarlo así: `MYSQL_*`, `REDIS_*` y `JWT_EXPIRATION` tienen valores por defecto que coinciden con `docker-compose.yml`. `JWT_SECRET` sí tiene un default, pero solo pensado para desarrollo — nunca lo uses en producción.
 
+### Alternativa: backend fuera de Docker
+
+Si prefieres correr el backend directamente con Maven (por ejemplo para debug), levanta solo la infraestructura y arranca la app aparte:
+
+```bash
+docker compose up -d mysql redis
+./mvnw spring-boot:run
+```
+
+En este caso el backend corre en el host, no dentro de la red de compose, así que usa el puerto publicado de MySQL (`MYSQL_PORT=3307`, el default de `application.properties`) en vez del puerto interno del contenedor.
+
 ## 🐳 Docker
 
-También se puede construir y correr la imagen directamente:
+También se puede construir y correr solo la imagen del backend, apuntando a una base de datos externa:
 
 ```bash
 docker build -t supermarket-back .
