@@ -15,9 +15,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import java.time.Duration;
 
 import static com.supermarket.supermarket.fixtures.auth.AuthFixtures.cashierRegisterRequest;
 import static com.supermarket.supermarket.fixtures.auth.AuthFixtures.userRegisterRequest;
@@ -33,7 +36,9 @@ class SecurityIntegrationTest {
     @Container
     @ServiceConnection
     static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7.0"))
-            .withExposedPorts(6379);
+            .withExposedPorts(6379)
+            .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1))
+            .withStartupTimeout(Duration.ofSeconds(60));
     @Autowired
     private MockMvc mockMvc;
     @Autowired
