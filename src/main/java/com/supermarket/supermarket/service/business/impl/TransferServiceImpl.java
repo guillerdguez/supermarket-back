@@ -23,6 +23,8 @@ import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.TransferService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -169,8 +171,8 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TransferResponse> getAllTransfers() {
-        return transferMapper.toResponseList(transferRepository.findAll());
+    public Page<TransferResponse> getAllTransfers(Pageable pageable) {
+        return transferRepository.findAll(pageable).map(transferMapper::toResponse);
     }
 
     @Override

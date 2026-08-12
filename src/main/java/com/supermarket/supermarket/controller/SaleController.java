@@ -9,13 +9,16 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/sales")
@@ -28,8 +31,9 @@ public class SaleController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Retrieve all sales - Requires ADMIN or MANAGER role")
-    public ResponseEntity<List<SaleResponse>> getAll() {
-        return ResponseEntity.ok(saleService.getAll());
+    public ResponseEntity<Page<SaleResponse>> getAll(
+            @PageableDefault(page = 0, size = 200, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(saleService.getAll(pageable));
     }
 
     @GetMapping("/{id}")

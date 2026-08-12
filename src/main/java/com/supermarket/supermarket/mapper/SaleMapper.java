@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -52,12 +51,5 @@ public class SaleMapper {
                         .collect(Collectors.toList())
                         : null)
                 .build();
-    }
-
-    public List<SaleResponse> toResponseList(List<Sale> sales, Map<Long, List<Payment>> paymentsBySaleId) {
-        if (sales == null) return null;
-        return sales.stream()
-                .map(sale -> toResponse(sale, paymentsBySaleId.getOrDefault(sale.getId(), List.of())))
-                .toList();
     }
 }

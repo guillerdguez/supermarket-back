@@ -142,10 +142,11 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SaleResponse> getAll() {
-        List<Sale> sales = saleRepo.findAll();
-        Map<Long, List<Payment>> paymentsBySaleId = paymentsGroupedBySaleId(sales.stream().map(Sale::getId).toList());
-        return saleMapper.toResponseList(sales, paymentsBySaleId);
+    public Page<SaleResponse> getAll(Pageable pageable) {
+        Page<Sale> sales = saleRepo.findAll(pageable);
+        Map<Long, List<Payment>> paymentsBySaleId = paymentsGroupedBySaleId(
+                sales.getContent().stream().map(Sale::getId).toList());
+        return sales.map(sale -> saleMapper.toResponse(sale, paymentsBySaleId.getOrDefault(sale.getId(), List.of())));
     }
 
     @Override

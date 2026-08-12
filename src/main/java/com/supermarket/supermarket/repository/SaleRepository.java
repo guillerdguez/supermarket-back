@@ -22,7 +22,7 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     @Override
     @EntityGraph(attributePaths = {"branch", "createdBy"})
-    List<Sale> findAll();
+    Page<Sale> findAll(Pageable pageable);
 
     @EntityGraph(attributePaths = {"branch", "details", "details.product", "createdBy"})
     Optional<Sale> findWithDetailsById(Long id);
