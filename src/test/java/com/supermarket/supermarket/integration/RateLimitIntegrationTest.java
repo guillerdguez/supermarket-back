@@ -63,13 +63,13 @@ class RateLimitIntegrationTest {
         String requestBody = String.format("{\"email\":\"%s\",\"password\":\"wrong\"}", email);
 
         for (int i = 0; i < MAX_ATTEMPTS; i++) {
-            mockMvc.perform(post("/api/auth/login")
+            mockMvc.perform(post("/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(requestBody))
                     .andExpect(status().isUnauthorized());
         }
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isTooManyRequests())

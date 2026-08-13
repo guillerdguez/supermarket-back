@@ -50,7 +50,7 @@ public class TestUserHelper {
                 }
                 """, request.getEmail(), request.getPassword());
 
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
+        MvcResult result = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginJson))
                 .andExpect(status().isOk())

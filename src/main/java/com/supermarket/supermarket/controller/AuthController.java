@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Endpoints for user authentication")
 public class AuthController {

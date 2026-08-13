@@ -7,7 +7,7 @@ API REST en capas (Controller/Service/Repository) para la gestión de inventario
 **Frontend:** [supermarket-front](https://github.com/guillerdguez/supermarket-front) (Angular 20) — demo en vivo: [supermarket-front-production.up.railway.app](https://supermarket-front-production.up.railway.app/)
 
 🔗 **Demo en vivo (API):** [supermarket-back-production.up.railway.app](https://supermarket-back-production.up.railway.app)
-📖 **Swagger UI:** [supermarket-back-production.up.railway.app/swagger-ui/index.html](https://supermarket-back-production.up.railway.app/swagger-ui/index.html)
+📖 **Swagger UI:** [supermarket-back-production.up.railway.app/api/swagger-ui/index.html](https://supermarket-back-production.up.railway.app/api/swagger-ui/index.html)
 
 ## 🔑 Credenciales de prueba
 
@@ -29,7 +29,7 @@ TOKEN=$(curl -s -X POST https://supermarket-back-production.up.railway.app/api/a
   -d '{"email":"admin@supermarket.com","password":"password"}' | jq -r '.token')
 
 # 2. Úsalo en una llamada autenticada
-curl -s https://supermarket-back-production.up.railway.app/products \
+curl -s https://supermarket-back-production.up.railway.app/api/products \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -58,12 +58,12 @@ Este backend implementa lógica de negocio compleja más allá de un simple CRUD
   * Rendimiento de productos con tasa de rotación de inventario.
   * Reporte de cierres de caja con detección de discrepancias.
 * 👤 **Gestión de Usuarios (Admin CRUD + Perfil propio):**
-  * CRUD completo de usuarios con filtros y paginación (solo ADMIN).
-  * Actualización de rol independiente (`PUT /users/{id}/role`).
-  * Endpoints de perfil propio para cualquier usuario autenticado (`GET/PUT /profile`, `POST /profile/change-password`).
+  * CRUD completo de usuarios con filtros (username, email, rol) (solo ADMIN).
+  * Actualización de rol independiente (`PUT /api/users/{id}/role`).
+  * Endpoints de perfil propio para cualquier usuario autenticado (`GET/PUT /api/profile`, `POST /api/profile/change-password`).
 * 🛡️ **Auditoría:** Trazabilidad completa (**Quién, Cuándo, Qué**) en operaciones críticas.
 * ⚡ **Integridad Transaccional:** Gestión estricta (`@Transactional`) en ventas, cancelaciones y movimientos de inventario.
-* 🔍 **Especificaciones JPA:** Filtrado dinámico y paginación eficiente de catálogos.
+* 🔍 **Especificaciones JPA:** Filtrado dinámico de catálogos con `Specification`.
 * 🐳 **Containerización:** Backend + MySQL + Redis orquestados con **Docker Compose**, arrancan todos con un solo comando.
 * 🧪 **Testing:** Cobertura de integración y unitaria con **JUnit 5 y Mockito**, incluyendo Testcontainers con Redis real para rate limiting.
 
@@ -151,67 +151,66 @@ La clase `SaleServiceImpl` garantiza principios **ACID** y trazabilidad:
 ## 📡 Endpoints Principales
 
 ### 🔐 Auth & Seguridad (`/api/auth`)
-* `POST /api/auth/login` - Obtención de Token JWT (con rate limiting: 5 intentos / 5 min). No hay auto-registro público: los usuarios los crea un ADMIN vía `POST /users`.
+* `POST /api/auth/login` - Obtención de Token JWT (con rate limiting: 5 intentos / 5 min). No hay auto-registro público: los usuarios los crea un ADMIN vía `POST /api/users`.
 * `POST /api/auth/logout` - Invalida el token actual en Redis.
 
-### 📍 Sucursales (`/branches`)
-* `GET /branches` - Listado general (ADMIN, MANAGER).
-* `POST /branches` - Alta de sucursal (ADMIN).
+### 📍 Sucursales (`/api/branches`)
+* `GET /api/branches` - Listado general (ADMIN, MANAGER).
+* `POST /api/branches` - Alta de sucursal (ADMIN).
 
-### 🛍️ Inventario (`/inventory`)
-* `GET /inventory/low-stock` - **Alert System**: Detecta productos a reponer globalmente.
-* `GET /inventory/branches/{branchId}/low-stock` - Bajo stock por sucursal.
+### 🛍️ Inventario (`/api/inventory`)
+* `GET /api/inventory/low-stock` - **Alert System**: Detecta productos a reponer globalmente.
+* `GET /api/inventory/branches/{branchId}/low-stock` - Bajo stock por sucursal.
 
-### 📦 Productos (`/products`)
-* `GET /products` - Búsqueda paginada con filtros (`name`, `category`, `price`).
-* `GET /products/all` - Lista simple para dropdowns.
+### 📦 Productos (`/api/products`)
+* `GET /api/products` - Búsqueda con filtros (`name`, `category`, `price`).
 
-### 💰 Transacciones (`/sales`)
-* `POST /sales` - Procesar nueva venta (requiere caja abierta en la sucursal).
-* `POST /sales/{id}/cancel` - Anulación con motivo: revierte stock automáticamente (ADMIN/MANAGER).
-* `GET /cashier/my-sales` - Historial paginado del cajero autenticado.
+### 💰 Transacciones (`/api/sales`)
+* `POST /api/sales` - Procesar nueva venta (requiere caja abierta en la sucursal).
+* `POST /api/sales/{id}/cancel` - Anulación con motivo: revierte stock automáticamente (ADMIN/MANAGER).
+* `GET /api/cashier/my-sales` - Historial de ventas del cajero autenticado.
 
-### 🏦 Caja Registradora (`/cash-registers`)
-* `POST /cash-registers/open` - Apertura de turno con saldo inicial.
-* `POST /cash-registers/{id}/close` - Cierre con saldo final.
-* `GET /cash-registers/branches/{branchId}/current` - Caja activa de una sucursal.
+### 🏦 Caja Registradora (`/api/cash-registers`)
+* `POST /api/cash-registers/open` - Apertura de turno con saldo inicial.
+* `POST /api/cash-registers/{id}/close` - Cierre con saldo final.
+* `GET /api/cash-registers/branches/{branchId}/current` - Caja activa de una sucursal.
 
-### 💳 Pagos (`/payments`)
-* `POST /payments` - Registrar pago para una venta (valida que no supere el total).
-* `GET /payments/sale/{saleId}` - Pagos de una venta.
+### 💳 Pagos (`/api/payments`)
+* `POST /api/payments` - Registrar pago para una venta (valida que no supere el total).
+* `GET /api/payments/sale/{saleId}` - Pagos de una venta.
 
-### 🔄 Transferencias de Stock (`/transfers`)
-* `POST /transfers` - Solicitar transferencia entre sucursales.
-* `POST /transfers/{id}/approve` - Aprobar solicitud pendiente (ADMIN/MANAGER).
-* `POST /transfers/{id}/reject` - Rechazar con motivo (ADMIN/MANAGER).
-* `POST /transfers/{id}/complete` - Ejecutar movimiento real de stock (ADMIN/MANAGER).
-* `POST /transfers/{id}/cancel` - Cancelar (solicitante o ADMIN).
-* `GET /transfers/status/{status}` - Filtrar por estado.
+### 🔄 Transferencias de Stock (`/api/transfers`)
+* `POST /api/transfers` - Solicitar transferencia entre sucursales.
+* `POST /api/transfers/{id}/approve` - Aprobar solicitud pendiente (ADMIN/MANAGER).
+* `POST /api/transfers/{id}/reject` - Rechazar con motivo (ADMIN/MANAGER).
+* `POST /api/transfers/{id}/complete` - Ejecutar movimiento real de stock (ADMIN/MANAGER).
+* `POST /api/transfers/{id}/cancel` - Cancelar (solicitante o ADMIN).
+* `GET /api/transfers/status/{status}` - Filtrar por estado.
 
-### 📊 Reportes (`/reports`) — ADMIN/MANAGER
-* `GET /reports/sales/summary` - Resumen global de ventas con filtros.
-* `GET /reports/sales/by-branch` - Ventas agrupadas por sucursal.
-* `GET /reports/sales/by-product` - Ventas por producto con paginación.
-* `GET /reports/sales/by-cashier` - Rendimiento por cajero con ticket promedio.
-* `GET /reports/sales/comparison` - Comparativa del período actual vs. período anterior.
-* `GET /reports/inventory/status` - Estado global del inventario.
-* `GET /reports/inventory/performance` - Rendimiento de productos con tasa de rotación.
-* `GET /reports/cash-registers` - Reporte de cierres con detección de discrepancias.
+### 📊 Reportes (`/api/reports`) — ADMIN/MANAGER
+* `GET /api/reports/sales/summary` - Resumen global de ventas con filtros.
+* `GET /api/reports/sales/by-branch` - Ventas agrupadas por sucursal.
+* `GET /api/reports/sales/by-product` - Ventas por producto.
+* `GET /api/reports/sales/by-cashier` - Rendimiento por cajero con ticket promedio.
+* `GET /api/reports/sales/comparison` - Comparativa del período actual vs. período anterior.
+* `GET /api/reports/inventory/status` - Estado global del inventario.
+* `GET /api/reports/inventory/performance` - Rendimiento de productos con tasa de rotación.
+* `GET /api/reports/cash-registers` - Reporte de cierres con detección de discrepancias.
 
-### 👤 Usuarios (`/users`) — ADMIN
-* `GET /users` - Lista con filtros (username, email, rol) y paginación.
-* `POST /users` - Crear usuario con cualquier rol.
-* `PUT /users/{id}/role` - Cambiar rol de un usuario.
-* `DELETE /users/{id}` - Desactivación lógica (soft delete).
+### 👤 Usuarios (`/api/users`) — ADMIN
+* `GET /api/users` - Lista con filtros (username, email, rol).
+* `POST /api/users` - Crear usuario con cualquier rol.
+* `PUT /api/users/{id}/role` - Cambiar rol de un usuario.
+* `DELETE /api/users/{id}` - Desactivación lógica (soft delete).
 
-### 🙋 Perfil propio (`/profile`)
-* `GET /profile` - Ver perfil del usuario autenticado.
-* `PUT /profile` - Actualizar username, nombre y apellido.
-* `POST /profile/change-password` - Cambiar contraseña con validación de la actual.
+### 🙋 Perfil propio (`/api/profile`)
+* `GET /api/profile` - Ver perfil del usuario autenticado.
+* `PUT /api/profile` - Actualizar username, nombre y apellido.
+* `POST /api/profile/change-password` - Cambiar contraseña con validación de la actual.
 
 ## 📝 Ejemplo de Venta (Payload)
 
-**Request (`POST /sales`):**
+**Request (`POST /api/sales`):**
 ```json
 {
   "branchId": 1,
@@ -244,8 +243,8 @@ La clase `SaleServiceImpl` garantiza principios **ACID** y trazabilidad:
 
 | Recurso | Local | Producción (Railway) |
 | --- | --- | --- |
-| **Swagger UI** | `http://localhost:8080/swagger-ui/index.html` | [supermarket-back-production.up.railway.app/swagger-ui/index.html](https://supermarket-back-production.up.railway.app/swagger-ui/index.html) |
-| **Docs JSON** | `http://localhost:8080/v3/api-docs` | `https://supermarket-back-production.up.railway.app/v3/api-docs` |
+| **Swagger UI** | `http://localhost:8080/api/swagger-ui/index.html` | [supermarket-back-production.up.railway.app/api/swagger-ui/index.html](https://supermarket-back-production.up.railway.app/api/swagger-ui/index.html) |
+| **Docs JSON** | `http://localhost:8080/api/v3/api-docs` | `https://supermarket-back-production.up.railway.app/api/v3/api-docs` |
 | **DB (MySQL)** | `jdbc:mysql://localhost:3307/supermarketdb` | gestionada por Railway, no expuesta públicamente |
 
 ---
