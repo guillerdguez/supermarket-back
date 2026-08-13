@@ -3,11 +3,11 @@ package com.supermarket.supermarket.service.business;
 import com.supermarket.supermarket.dto.sale.CancelSaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface SaleService {
-    Page<SaleResponse> getAll(Pageable pageable);
+    List<SaleResponse> getAll();
 
     SaleResponse getById(Long id);
 
@@ -17,7 +17,7 @@ public interface SaleService {
 
     void delete(Long id);
 
-    Page<SaleResponse> getSalesByCashier(Long cashierId, Pageable pageable);
+    List<SaleResponse> getSalesByCashier(Long cashierId);
 
     SaleResponse getSaleByIdAndCashier(Long saleId, Long cashierId);
 

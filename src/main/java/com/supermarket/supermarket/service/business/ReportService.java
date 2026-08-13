@@ -10,8 +10,6 @@ import com.supermarket.supermarket.dto.report.SalesByCashierDTO;
 import com.supermarket.supermarket.dto.report.SalesByProductDTO;
 import com.supermarket.supermarket.dto.report.SalesComparisonResponse;
 import com.supermarket.supermarket.dto.report.SalesSummaryResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -20,7 +18,7 @@ public interface ReportService {
 
     List<SalesByBranchDTO> getSalesByBranch(ReportFilterRequest filter);
 
-    Page<SalesByProductDTO> getSalesByProduct(ReportFilterRequest filter, Pageable pageable);
+    List<SalesByProductDTO> getSalesByProduct(ReportFilterRequest filter);
 
     List<SalesByCashierDTO> getSalesByCashier(ReportFilterRequest filter);
 
@@ -28,7 +26,7 @@ public interface ReportService {
 
     InventoryStatusResponse getInventoryStatus(ReportFilterRequest filter);
 
-    Page<ProductPerformanceDTO> getProductPerformance(ReportFilterRequest filter, Pageable pageable);
+    List<ProductPerformanceDTO> getProductPerformance(ReportFilterRequest filter);
 
-    CashRegisterReportResponse getCashRegisterReport(CashRegisterFilterRequest filter, Pageable pageable);
+    CashRegisterReportResponse getCashRegisterReport(CashRegisterFilterRequest filter);
 }

@@ -19,8 +19,7 @@ import com.supermarket.supermarket.specification.UserSpecifications;
 import com.supermarket.supermarket.validator.PasswordValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,10 +41,10 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponse> getAll(String username, String email, UserRole role, Pageable pageable) {
+    public List<UserResponse> getAll(String username, String email, UserRole role) {
         log.info("Fetching all users with filters");
         Specification<User> spec = UserSpecifications.withFilters(username, email, role);
-        return userRepository.findAll(spec, pageable).map(this::toResponse);
+        return userRepository.findAll(spec, Sort.by("username")).stream().map(this::toResponse).toList();
     }
 
     @Override

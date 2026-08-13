@@ -19,8 +19,6 @@ import com.supermarket.supermarket.repository.SaleRepository.PeriodSummaryProjec
 import com.supermarket.supermarket.service.business.ReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,18 +68,20 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public Page<SalesByProductDTO> getSalesByProduct(ReportFilterRequest filter, Pageable pageable) {
+    public List<SalesByProductDTO> getSalesByProduct(ReportFilterRequest filter) {
         return saleRepository
                 .findSalesGroupedByProduct(
                         filter.getStartDate(), resolveEndDate(filter.getEndDate()),
-                        filter.getBranchId(), filter.getProductId(), pageable)
+                        filter.getBranchId(), filter.getProductId())
+                .stream()
                 .map(p -> SalesByProductDTO.builder()
                         .productId(p.getProductId())
                         .productName(p.getProductName())
                         .productCategory(p.getProductCategory())
                         .totalQuantitySold(p.getTotalQuantitySold())
                         .totalRevenue(p.getTotalRevenue())
-                        .build());
+                        .build())
+                .toList();
     }
 
     @Override
@@ -152,9 +152,10 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public Page<ProductPerformanceDTO> getProductPerformance(ReportFilterRequest filter, Pageable pageable) {
+    public List<ProductPerformanceDTO> getProductPerformance(ReportFilterRequest filter) {
         return branchInventoryRepository
-                .findProductPerformance(filter.getStartDate(), resolveEndDate(filter.getEndDate()), filter.getBranchId(), pageable)
+                .findProductPerformance(filter.getStartDate(), resolveEndDate(filter.getEndDate()), filter.getBranchId())
+                .stream()
                 .map(p -> {
                     double turnover = p.getCurrentStock() != null && p.getCurrentStock() > 0
                             ? (double) p.getTotalSold() / p.getCurrentStock()
@@ -167,18 +168,18 @@ public class ReportServiceImpl implements ReportService {
                             .currentStock(p.getCurrentStock())
                             .inventoryTurnoverRate(BigDecimal.valueOf(turnover).setScale(2, RoundingMode.HALF_UP))
                             .build();
-                });
+                })
+                .toList();
     }
 
     @Override
-    public CashRegisterReportResponse getCashRegisterReport(CashRegisterFilterRequest filter, Pageable pageable) {
-        Page<ClosureDiscrepancyProjection> page = cashRegisterRepository.findClosureDiscrepancies(
+    public CashRegisterReportResponse getCashRegisterReport(CashRegisterFilterRequest filter) {
+        List<ClosureDiscrepancyProjection> projections = cashRegisterRepository.findClosureDiscrepancies(
                 filter.getStartDate(),
                 resolveEndDate(filter.getEndDate()),
                 filter.getBranchId(),
-                filter.isShowOnlyDiscrepancies(),
-                pageable);
-        List<CashRegisterReportResponse.ClosureDiscrepancyDTO> discrepancies = page.getContent().stream()
+                filter.isShowOnlyDiscrepancies());
+        List<CashRegisterReportResponse.ClosureDiscrepancyDTO> discrepancies = projections.stream()
                 .map(p -> CashRegisterReportResponse.ClosureDiscrepancyDTO.builder()
                         .registerId(p.getRegisterId())
                         .branchId(p.getBranchId())
@@ -201,7 +202,7 @@ public class ReportServiceImpl implements ReportService {
                 .filter(v -> v != null && v.compareTo(BigDecimal.ZERO) < 0)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return CashRegisterReportResponse.builder()
-                .totalClosures(page.getTotalElements())
+                .totalClosures((long) discrepancies.size())
                 .totalSurplus(totalSurplus)
                 .totalShortage(totalShortage)
                 .discrepancies(discrepancies)

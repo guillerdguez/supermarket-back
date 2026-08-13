@@ -17,10 +17,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,11 +50,10 @@ public class ReportController {
     }
 
     @GetMapping("/sales/by-product")
-    @Operation(summary = "Get sales grouped by product with pagination")
-    public ResponseEntity<Page<SalesByProductDTO>> getSalesByProduct(
-            @Valid @ModelAttribute ReportFilterRequest filter,
-            @PageableDefault(page = 0, size = 20, sort = "totalRevenue", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(reportService.getSalesByProduct(filter, pageable));
+    @Operation(summary = "Get sales grouped by product")
+    public ResponseEntity<List<SalesByProductDTO>> getSalesByProduct(
+            @Valid @ModelAttribute ReportFilterRequest filter) {
+        return ResponseEntity.ok(reportService.getSalesByProduct(filter));
     }
 
     @GetMapping("/sales/by-cashier")
@@ -83,18 +78,16 @@ public class ReportController {
     }
 
     @GetMapping("/inventory/performance")
-    @Operation(summary = "Get product performance with turnover rate and pagination")
-    public ResponseEntity<Page<ProductPerformanceDTO>> getProductPerformance(
-            @Valid @ModelAttribute ReportFilterRequest filter,
-            @PageableDefault(page = 0, size = 20, sort = "totalSold", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(reportService.getProductPerformance(filter, pageable));
+    @Operation(summary = "Get product performance with turnover rate")
+    public ResponseEntity<List<ProductPerformanceDTO>> getProductPerformance(
+            @Valid @ModelAttribute ReportFilterRequest filter) {
+        return ResponseEntity.ok(reportService.getProductPerformance(filter));
     }
 
     @GetMapping("/cash-registers")
     @Operation(summary = "Get cash register closure report with discrepancy detection")
     public ResponseEntity<CashRegisterReportResponse> getCashRegisterReport(
-            @Valid @ModelAttribute CashRegisterFilterRequest filter,
-            @PageableDefault(page = 0, size = 20, sort = "closingTime", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(reportService.getCashRegisterReport(filter, pageable));
+            @Valid @ModelAttribute CashRegisterFilterRequest filter) {
+        return ResponseEntity.ok(reportService.getCashRegisterReport(filter));
     }
 }

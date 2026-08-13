@@ -27,8 +27,7 @@ import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.SaleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -47,6 +46,8 @@ import java.util.stream.Collectors;
 @Transactional
 @Slf4j
 public class SaleServiceImpl implements SaleService {
+    private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "createdAt");
+
     private final SaleRepository saleRepo;
     private final BranchRepository branchRepository;
     private final ProductRepository productRepository;
@@ -142,11 +143,13 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<SaleResponse> getAll(Pageable pageable) {
-        Page<Sale> sales = saleRepo.findAll(pageable);
+    public List<SaleResponse> getAll() {
+        List<Sale> sales = saleRepo.findAll(DEFAULT_SORT);
         Map<Long, List<Payment>> paymentsBySaleId = paymentsGroupedBySaleId(
-                sales.getContent().stream().map(Sale::getId).toList());
-        return sales.map(sale -> saleMapper.toResponse(sale, paymentsBySaleId.getOrDefault(sale.getId(), List.of())));
+                sales.stream().map(Sale::getId).toList());
+        return sales.stream()
+                .map(sale -> saleMapper.toResponse(sale, paymentsBySaleId.getOrDefault(sale.getId(), List.of())))
+                .toList();
     }
 
     @Override
@@ -193,11 +196,13 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<SaleResponse> getSalesByCashier(Long cashierId, Pageable pageable) {
-        Page<Sale> sales = saleRepo.findByCreatedById(cashierId, pageable);
+    public List<SaleResponse> getSalesByCashier(Long cashierId) {
+        List<Sale> sales = saleRepo.findByCreatedById(cashierId, DEFAULT_SORT);
         Map<Long, List<Payment>> paymentsBySaleId = paymentsGroupedBySaleId(
-                sales.getContent().stream().map(Sale::getId).toList());
-        return sales.map(sale -> saleMapper.toResponse(sale, paymentsBySaleId.getOrDefault(sale.getId(), List.of())));
+                sales.stream().map(Sale::getId).toList());
+        return sales.stream()
+                .map(sale -> saleMapper.toResponse(sale, paymentsBySaleId.getOrDefault(sale.getId(), List.of())))
+                .toList();
     }
 
     @Override

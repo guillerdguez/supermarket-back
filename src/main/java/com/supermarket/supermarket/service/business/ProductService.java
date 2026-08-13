@@ -3,17 +3,13 @@ package com.supermarket.supermarket.service.business;
 import com.supermarket.supermarket.dto.product.ProductRequest;
 import com.supermarket.supermarket.dto.product.ProductResponse;
 import com.supermarket.supermarket.model.product.Product;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
 public interface ProductService {
 
-    Page<ProductResponse> getAll(Specification<Product> spec, Pageable pageable);
-
-    List<ProductResponse> getAllForDropdown();
+    List<ProductResponse> getAll(Specification<Product> spec);
 
     ProductResponse getById(Long id);
 

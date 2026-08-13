@@ -1,8 +1,7 @@
 package com.supermarket.supermarket.repository;
 
 import com.supermarket.supermarket.model.sale.Sale;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,12 +21,12 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     @Override
     @EntityGraph(attributePaths = {"branch", "createdBy"})
-    Page<Sale> findAll(Pageable pageable);
+    List<Sale> findAll(Sort sort);
 
     @EntityGraph(attributePaths = {"branch", "details", "details.product", "createdBy"})
     Optional<Sale> findWithDetailsById(Long id);
 
-    Page<Sale> findByCreatedById(Long cashierId, Pageable pageable);
+    List<Sale> findByCreatedById(Long cashierId, Sort sort);
 
     @Query("""
             SELECT
@@ -79,13 +78,13 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
             AND (:branchId  IS NULL OR s.branch.id = :branchId)
             AND (:productId IS NULL OR p.id = :productId)
             GROUP BY p.id, p.name, p.category
+            ORDER BY totalRevenue DESC
             """)
-    Page<SalesByProductProjection> findSalesGroupedByProduct(
+    List<SalesByProductProjection> findSalesGroupedByProduct(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("branchId") Long branchId,
-            @Param("productId") Long productId,
-            Pageable pageable);
+            @Param("productId") Long productId);
 
     @Query("""
             SELECT

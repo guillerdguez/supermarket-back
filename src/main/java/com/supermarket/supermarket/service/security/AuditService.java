@@ -10,8 +10,7 @@ import com.supermarket.supermarket.specification.AuditLogSpecifications;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +18,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -47,16 +47,16 @@ public class AuditService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AuditLogResponse> getAll(
+    public List<AuditLogResponse> getAll(
             String username,
             String action,
             AuditStatus status,
             LocalDateTime fromDate,
-            LocalDateTime toDate,
-            Pageable pageable) {
+            LocalDateTime toDate) {
         Specification<AuditLog> spec =
                 AuditLogSpecifications.withFilters(username, action, status, fromDate, toDate);
-        return auditLogRepository.findAll(spec, pageable).map(auditLogMapper::toResponse);
+        Sort sort = Sort.by(Sort.Direction.DESC, "timestamp");
+        return auditLogRepository.findAll(spec, sort).stream().map(auditLogMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)

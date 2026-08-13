@@ -2,8 +2,6 @@ package com.supermarket.supermarket.repository;
 
 
 import com.supermarket.supermarket.model.branch.BranchInventory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -43,7 +41,7 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
             """)
     InventoryStatusProjection findInventoryStatus(@Param("branchId") Long branchId);
 
-    @Query(value = """
+    @Query("""
             SELECT
                 p.id          as productId,
                 p.name        as productName,
@@ -59,19 +57,12 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
                 AND (CAST(:endDate   AS date) IS NULL OR s.date <= :endDate)
             WHERE (:branchId IS NULL OR bi.branch.id = :branchId)
             GROUP BY p.id, p.name, p.category, bi.stock
-            """,
-            countQuery = """
-                    SELECT COUNT(DISTINCT p.id)
-                    FROM Product p
-                    LEFT JOIN BranchInventory bi ON bi.product.id = p.id
-                        AND (:branchId IS NULL OR bi.branch.id = :branchId)
-                    WHERE (:branchId IS NULL OR bi.branch.id = :branchId)
-                    """)
-    Page<ProductPerformanceProjection> findProductPerformance(
+            ORDER BY totalSold DESC
+            """)
+    List<ProductPerformanceProjection> findProductPerformance(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("branchId") Long branchId,
-            Pageable pageable);
+            @Param("branchId") Long branchId);
 
     interface InventoryStatusProjection {
         Long getTotalProducts();

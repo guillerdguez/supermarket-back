@@ -9,10 +9,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,9 +46,8 @@ public class TransferController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Get all transfers - Requires ADMIN or MANAGER role")
-    public ResponseEntity<Page<TransferResponse>> getAllTransfers(
-            @PageableDefault(page = 0, size = 200, sort = "requestedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(transferService.getAllTransfers(pageable));
+    public ResponseEntity<List<TransferResponse>> getAllTransfers() {
+        return ResponseEntity.ok(transferService.getAllTransfers());
     }
 
     @GetMapping("/mine")

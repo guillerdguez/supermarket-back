@@ -10,10 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,22 +39,14 @@ public class ProductController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CASHIER')")
-    @Operation(summary = "Get all products with pagination and filters")
-    public ResponseEntity<Page<ProductResponse>> getAll(
-            @PageableDefault(page = 0, size = 10, sort = "name") Pageable pageable,
+    @Operation(summary = "Get all products with filters")
+    public ResponseEntity<List<ProductResponse>> getAll(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice) {
         Specification<Product> spec = ProductSpecifications.withFilters(name, category, minPrice, maxPrice);
-        return ResponseEntity.ok(productService.getAll(spec, pageable));
-    }
-
-    @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CASHIER')")
-    @Operation(summary = "Get all products as a simple list (for dropdowns)")
-    public ResponseEntity<List<ProductResponse>> getAllList() {
-        return ResponseEntity.ok(productService.getAllForDropdown());
+        return ResponseEntity.ok(productService.getAll(spec));
     }
 
     @GetMapping("/{id}")
