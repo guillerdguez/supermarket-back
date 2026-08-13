@@ -17,10 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -33,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -51,27 +49,13 @@ class ProductServiceTest {
     private ProductServiceImpl productService;
 
     @Test
-    @DisplayName("GET ALL - should return paginated list")
-    void getAll_ShouldReturnPaginatedList() {
+    @DisplayName("GET ALL - should return list")
+    void getAll_ShouldReturnList() {
         Product product = defaultProduct();
         ProductResponse response = productResponse();
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Product> page = new PageImpl<>(List.of(product));
-        given(productRepository.findAll((Specification<Product>) any(), eq(pageable))).willReturn(page);
-        given(productMapper.toResponse(product)).willReturn(response);
-        Page<ProductResponse> result = productService.getAll(null, pageable);
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getTotalPages()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("GET ALL DROPDOWN - should return simple list")
-    void getAllForDropdown_ShouldReturnList() {
-        Product product = defaultProduct();
-        ProductResponse response = productResponse();
-        given(productRepository.findAll()).willReturn(List.of(product));
+        given(productRepository.findAll(nullable(Specification.class), eq(Sort.by("name")))).willReturn(List.of(product));
         given(productMapper.toResponseList(List.of(product))).willReturn(List.of(response));
-        List<ProductResponse> result = productService.getAllForDropdown();
+        List<ProductResponse> result = productService.getAll(null);
         assertThat(result).hasSize(1);
     }
 

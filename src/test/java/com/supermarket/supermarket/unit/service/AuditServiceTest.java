@@ -15,10 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
@@ -29,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -90,7 +86,7 @@ class AuditServiceTest {
     class GetAll {
         @Test
         @DisplayName("should filter with a specification and map results")
-        void getAll_ReturnsMappedPage() {
+        void getAll_ReturnsMappedList() {
             AuditLog log = AuditLog.builder()
                     .id(1L).username("admin").action("LOGIN_SUCCESS")
                     .timestamp(LocalDateTime.now()).status(AuditStatus.SUCCESS)
@@ -99,16 +95,14 @@ class AuditServiceTest {
                     .id(1L).username("admin").action("LOGIN_SUCCESS").status(AuditStatus.SUCCESS)
                     .build();
 
-            Pageable pageable = PageRequest.of(0, 10);
-            Page<AuditLog> page = new PageImpl<>(List.of(log), pageable, 1);
-            given(auditLogRepository.findAll(any(Specification.class), eq(pageable))).willReturn(page);
+            given(auditLogRepository.findAll(any(Specification.class), any(Sort.class))).willReturn(List.of(log));
             given(auditLogMapper.toResponse(log)).willReturn(response);
 
-            Page<AuditLogResponse> result = auditService.getAll(
-                    "admin", "LOGIN_SUCCESS", AuditStatus.SUCCESS, null, null, pageable);
+            List<AuditLogResponse> result = auditService.getAll(
+                    "admin", "LOGIN_SUCCESS", AuditStatus.SUCCESS, null, null);
 
-            assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getUsername()).isEqualTo("admin");
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getUsername()).isEqualTo("admin");
         }
     }
 

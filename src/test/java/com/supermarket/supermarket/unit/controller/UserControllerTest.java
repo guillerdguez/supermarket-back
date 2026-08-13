@@ -17,10 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -53,9 +49,7 @@ class UserControllerTest {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         UserController userController = new UserController(userManagementService);
-        PageableHandlerMethodArgumentResolver pageableResolver = new PageableHandlerMethodArgumentResolver();
         mockMvc = MockMvcBuilders.standaloneSetup(userController)
-                .setCustomArgumentResolvers(pageableResolver)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -67,13 +61,12 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("GET /users - should return paginated list")
-    void getAll_ShouldReturnPage() throws Exception {
-        Page<UserResponse> page = new PageImpl<>(List.of(buildUserResponse()), PageRequest.of(0, 10), 1);
-        given(userManagementService.getAll(any(), any(), any(), any())).willReturn(page);
+    @DisplayName("GET /users - should return list")
+    void getAll_ShouldReturnList() throws Exception {
+        given(userManagementService.getAll(any(), any(), any())).willReturn(List.of(buildUserResponse()));
         mockMvc.perform(get("/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(1)));
+                .andExpect(jsonPath("$", hasSize(1)));
     }
 
     @Test

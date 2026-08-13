@@ -19,12 +19,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
-import org.springframework.data.web.SortHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -34,6 +28,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -57,10 +52,7 @@ class TransferControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        PageableHandlerMethodArgumentResolver pageableResolver = new PageableHandlerMethodArgumentResolver();
-        SortHandlerMethodArgumentResolver sortResolver = new SortHandlerMethodArgumentResolver();
         mockMvc = MockMvcBuilders.standaloneSetup(transferController)
-                .setCustomArgumentResolvers(pageableResolver, sortResolver)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -97,15 +89,14 @@ class TransferControllerTest {
     }
 
     @Test
-    @DisplayName("GET /transfers - should return paginated list of transfers")
+    @DisplayName("GET /transfers - should return list of transfers")
     void getAllTransfers_ShouldReturnList() throws Exception {
-        Page<TransferResponse> transferPage = new PageImpl<>(
-                List.of(TransferFixtures.transferResponse(TransferStatus.PENDING)), PageRequest.of(0, 200), 1);
-        given(transferService.getAllTransfers(any(Pageable.class))).willReturn(transferPage);
+        given(transferService.getAllTransfers())
+                .willReturn(List.of(TransferFixtures.transferResponse(TransferStatus.PENDING)));
 
         mockMvc.perform(get("/transfers"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(1)));
+                .andExpect(jsonPath("$", hasSize(1)));
     }
 
     @Test

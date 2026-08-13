@@ -28,11 +28,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -122,8 +117,8 @@ class ReportServiceTest {
     @DisplayName("getSalesByProduct")
     class GetSalesByProduct {
         @Test
-        @DisplayName("should map a page of grouped projections to DTOs")
-        void getSalesByProduct_ReturnsMappedPage() {
+        @DisplayName("should map grouped projections to DTOs")
+        void getSalesByProduct_ReturnsMappedList() {
             SalesByProductProjection projection = mock(SalesByProductProjection.class);
             given(projection.getProductId()).willReturn(10L);
             given(projection.getProductName()).willReturn("Milk");
@@ -131,16 +126,14 @@ class ReportServiceTest {
             given(projection.getTotalQuantitySold()).willReturn(20L);
             given(projection.getTotalRevenue()).willReturn(new BigDecimal("200"));
 
-            Pageable pageable = PageRequest.of(0, 10);
-            Page<SalesByProductProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
-            given(saleRepository.findSalesGroupedByProduct(any(), any(), any(), any(), eq(pageable))).willReturn(page);
+            given(saleRepository.findSalesGroupedByProduct(any(), any(), any(), any())).willReturn(List.of(projection));
 
-            Page<SalesByProductDTO> result = reportService.getSalesByProduct(ReportFilterRequest.builder().build(), pageable);
+            List<SalesByProductDTO> result = reportService.getSalesByProduct(ReportFilterRequest.builder().build());
 
-            assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getProductId()).isEqualTo(10L);
-            assertThat(result.getContent().get(0).getProductName()).isEqualTo("Milk");
-            assertThat(result.getContent().get(0).getTotalQuantitySold()).isEqualTo(20L);
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getProductId()).isEqualTo(10L);
+            assertThat(result.get(0).getProductName()).isEqualTo("Milk");
+            assertThat(result.get(0).getTotalQuantitySold()).isEqualTo(20L);
         }
     }
 
@@ -256,14 +249,12 @@ class ReportServiceTest {
             given(projection.getTotalSold()).willReturn(50L);
             given(projection.getCurrentStock()).willReturn(25);
 
-            Pageable pageable = PageRequest.of(0, 10);
-            Page<ProductPerformanceProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
-            given(branchInventoryRepository.findProductPerformance(any(), any(), any(), eq(pageable))).willReturn(page);
+            given(branchInventoryRepository.findProductPerformance(any(), any(), any())).willReturn(List.of(projection));
 
-            Page<ProductPerformanceDTO> result = reportService.getProductPerformance(
-                    ReportFilterRequest.builder().build(), pageable);
+            List<ProductPerformanceDTO> result = reportService.getProductPerformance(
+                    ReportFilterRequest.builder().build());
 
-            assertThat(result.getContent().get(0).getInventoryTurnoverRate()).isEqualByComparingTo("2.00");
+            assertThat(result.get(0).getInventoryTurnoverRate()).isEqualByComparingTo("2.00");
         }
 
         @Test
@@ -273,14 +264,12 @@ class ReportServiceTest {
             given(projection.getTotalSold()).willReturn(10L);
             given(projection.getCurrentStock()).willReturn(0);
 
-            Pageable pageable = PageRequest.of(0, 10);
-            Page<ProductPerformanceProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
-            given(branchInventoryRepository.findProductPerformance(any(), any(), any(), eq(pageable))).willReturn(page);
+            given(branchInventoryRepository.findProductPerformance(any(), any(), any())).willReturn(List.of(projection));
 
-            Page<ProductPerformanceDTO> result = reportService.getProductPerformance(
-                    ReportFilterRequest.builder().build(), pageable);
+            List<ProductPerformanceDTO> result = reportService.getProductPerformance(
+                    ReportFilterRequest.builder().build());
 
-            assertThat(result.getContent().get(0).getInventoryTurnoverRate()).isEqualByComparingTo("0.00");
+            assertThat(result.get(0).getInventoryTurnoverRate()).isEqualByComparingTo("0.00");
         }
     }
 
@@ -299,14 +288,11 @@ class ReportServiceTest {
             ClosureDiscrepancyProjection noVariance = mock(ClosureDiscrepancyProjection.class);
             given(noVariance.getVarianceAmount()).willReturn(null);
 
-            Pageable pageable = PageRequest.of(0, 10);
-            Page<ClosureDiscrepancyProjection> page =
-                    new PageImpl<>(List.of(surplus, shortage, noVariance), pageable, 3);
-            given(cashRegisterRepository.findClosureDiscrepancies(any(), any(), any(), eq(false), eq(pageable)))
-                    .willReturn(page);
+            given(cashRegisterRepository.findClosureDiscrepancies(any(), any(), any(), eq(false)))
+                    .willReturn(List.of(surplus, shortage, noVariance));
 
             CashRegisterFilterRequest filter = CashRegisterFilterRequest.builder().showOnlyDiscrepancies(false).build();
-            CashRegisterReportResponse result = reportService.getCashRegisterReport(filter, pageable);
+            CashRegisterReportResponse result = reportService.getCashRegisterReport(filter);
 
             assertThat(result.getTotalClosures()).isEqualTo(3L);
             assertThat(result.getDiscrepancies()).hasSize(3);

@@ -13,13 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
-import org.springframework.data.web.SortHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -48,29 +42,15 @@ class ProductControllerTest {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         productController = new ProductController(productService);
-        PageableHandlerMethodArgumentResolver pageableResolver = new PageableHandlerMethodArgumentResolver();
-        SortHandlerMethodArgumentResolver sortResolver = new SortHandlerMethodArgumentResolver();
         mockMvc = MockMvcBuilders.standaloneSetup(productController)
-                .setCustomArgumentResolvers(pageableResolver, sortResolver)
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
     }
 
     @Test
-    @DisplayName("GET /products - should return paginated list")
-    void getAll_ShouldReturnPaginatedList() throws Exception {
-        Page<ProductResponse> productPage = new PageImpl<>(List.of(productResponse()), PageRequest.of(0, 10), 1);
-        given(productService.getAll(any(Specification.class), any(Pageable.class))).willReturn(productPage);
-        mockMvc.perform(get("/products").param("page", "0").param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(1)))
-                .andExpect(jsonPath("$.totalElements").value(1));
-    }
-
-    @Test
-    @DisplayName("GET /products/all - should return simple list")
-    void getAllList_ShouldReturnList() throws Exception {
-        given(productService.getAllForDropdown()).willReturn(List.of(productResponse()));
-        mockMvc.perform(get("/products/all"))
+    @DisplayName("GET /products - should return list")
+    void getAll_ShouldReturnList() throws Exception {
+        given(productService.getAll(any(Specification.class))).willReturn(List.of(productResponse()));
+        mockMvc.perform(get("/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
     }

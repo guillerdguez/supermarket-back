@@ -23,6 +23,7 @@ import com.supermarket.supermarket.service.business.CashRegisterService;
 import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.NotificationEventService;
 import com.supermarket.supermarket.service.business.impl.SaleServiceImpl;
+import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,10 +31,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.then;
@@ -330,20 +328,18 @@ class SaleServiceTest {
     }
 
     @Test
-    @DisplayName("GET SALES BY CASHIER - should return paginated cashier sales")
-    void getSalesByCashier_ShouldReturnPage() {
+    @DisplayName("GET SALES BY CASHIER - should return cashier sales")
+    void getSalesByCashier_ShouldReturnList() {
         Sale sale = saleWithDetails();
         SaleResponse response = saleResponse();
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Sale> salePage = new PageImpl<>(List.of(sale));
 
-        given(saleRepository.findByCreatedById(1L, pageable)).willReturn(salePage);
+        given(saleRepository.findByCreatedById(eq(1L), any(Sort.class))).willReturn(List.of(sale));
         given(saleMapper.toResponse(sale, List.of())).willReturn(response);
 
-        Page<SaleResponse> result = saleService.getSalesByCashier(1L, pageable);
+        List<SaleResponse> result = saleService.getSalesByCashier(1L);
 
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getCreatedById()).isEqualTo(1L);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getCreatedById()).isEqualTo(1L);
     }
 
     @Test

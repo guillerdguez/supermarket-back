@@ -13,12 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
-import org.springframework.data.web.SortHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -56,23 +50,19 @@ class SaleControllerTest {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         saleController = new SaleController(saleService);
-        PageableHandlerMethodArgumentResolver pageableResolver = new PageableHandlerMethodArgumentResolver();
-        SortHandlerMethodArgumentResolver sortResolver = new SortHandlerMethodArgumentResolver();
         mockMvc = MockMvcBuilders.standaloneSetup(saleController)
-                .setCustomArgumentResolvers(pageableResolver, sortResolver)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
     @Test
-    @DisplayName("GET /sales - should return paginated list")
+    @DisplayName("GET /sales - should return list")
     void getAll_ShouldReturnList() throws Exception {
-        Page<SaleResponse> salePage = new PageImpl<>(List.of(saleResponse()), PageRequest.of(0, 200), 1);
-        given(saleService.getAll(any(Pageable.class))).willReturn(salePage);
+        given(saleService.getAll()).willReturn(List.of(saleResponse()));
 
         mockMvc.perform(get("/sales"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(1)));
+                .andExpect(jsonPath("$", hasSize(1)));
     }
 
     @Test
