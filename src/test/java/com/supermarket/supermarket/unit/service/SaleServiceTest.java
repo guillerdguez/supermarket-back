@@ -5,12 +5,14 @@ import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.exception.InsufficientPermissionsException;
 import com.supermarket.supermarket.exception.InsufficientStockException;
+import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.InvalidSaleStateException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.SaleMapper;
 import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.cashregister.CashRegister;
 import com.supermarket.supermarket.model.product.Product;
+import com.supermarket.supermarket.model.sale.Payment;
 import com.supermarket.supermarket.model.sale.Sale;
 import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.model.user.User;
@@ -32,6 +34,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -112,7 +115,13 @@ class SaleServiceTest {
                 .validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
 
         given(saleRepository.save(any(Sale.class))).willReturn(sale);
-        given(saleMapper.toResponse(sale, List.of())).willReturn(response);
+        Payment payment = Payment.builder()
+                .sale(sale)
+                .amount(request.getAmount())
+                .paymentType(request.getPaymentType())
+                .build();
+        given(paymentRepository.save(any(Payment.class))).willReturn(payment);
+        given(saleMapper.toResponse(sale, List.of(payment))).willReturn(response);
 
         SaleResponse result = saleService.create(request);
 
@@ -120,6 +129,57 @@ class SaleServiceTest {
         then(inventoryService).should().validateAndReduceStockBatch(request.getBranchId(), request.getDetails());
         then(productRepository).should().findAllById(productIds);
         then(saleRepository).should().save(sale);
+        then(paymentRepository).should().save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("CREATE - should throw exception when payment amount is less than sale total")
+    void create_WithInsufficientPayment_ShouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        given(cashRegisterService.getRegisterEntityByBranch(anyLong())).willReturn(mockOpenRegister);
+
+        SaleRequest request = validSaleRequest();
+        request.setAmount(new BigDecimal("5.00"));
+        Branch branch = defaultBranch();
+        Product product = defaultProduct();
+        Sale sale = saleWithDetails();
+
+        given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
+        given(saleMapper.toEntity(request)).willReturn(sale);
+
+        Set<Long> productIds = Set.of(1L);
+        given(productRepository.findAllById(productIds)).willReturn(List.of(product));
+
+        assertThatThrownBy(() -> saleService.create(request))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("does not cover");
+        then(saleRepository).should(never()).save(any());
+        then(paymentRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("CREATE - should throw exception when payment amount exceeds sale total")
+    void create_WithExcessPayment_ShouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        given(cashRegisterService.getRegisterEntityByBranch(anyLong())).willReturn(mockOpenRegister);
+
+        SaleRequest request = validSaleRequest();
+        request.setAmount(new BigDecimal("20.00"));
+        Branch branch = defaultBranch();
+        Product product = defaultProduct();
+        Sale sale = saleWithDetails();
+
+        given(branchRepository.findById(1L)).willReturn(Optional.of(branch));
+        given(saleMapper.toEntity(request)).willReturn(sale);
+
+        Set<Long> productIds = Set.of(1L);
+        given(productRepository.findAllById(productIds)).willReturn(List.of(product));
+
+        assertThatThrownBy(() -> saleService.create(request))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("exceeds");
+        then(saleRepository).should(never()).save(any());
+        then(paymentRepository).should(never()).save(any());
     }
 
     @Test
@@ -284,47 +344,6 @@ class SaleServiceTest {
 
         assertThatThrownBy(() -> saleService.getById(999L))
                 .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    @DisplayName("DELETE - should delete sale and restore stock")
-    void delete_ShouldDeleteSale() {
-        Long id = 100L;
-        Sale sale = saleWithDetails();
-        sale.setStatus(SaleStatus.REGISTERED);
-
-        given(saleRepository.findById(id)).willReturn(Optional.of(sale));
-
-        saleService.delete(id);
-
-        then(inventoryService).should().restoreStockBatch(sale.getBranch().getId(), sale.getDetails());
-        then(saleRepository).should().delete(sale);
-    }
-
-    @Test
-    @DisplayName("DELETE - should not restore stock if sale is cancelled")
-    void delete_WhenSaleCancelled_ShouldNotRestoreStock() {
-        Long id = 100L;
-        Sale sale = saleWithDetails();
-        sale.setStatus(SaleStatus.CANCELLED);
-
-        given(saleRepository.findById(id)).willReturn(Optional.of(sale));
-
-        saleService.delete(id);
-
-        then(inventoryService).shouldHaveNoInteractions();
-        then(saleRepository).should().delete(sale);
-    }
-
-    @Test
-    @DisplayName("DELETE - should throw exception when sale not found")
-    void delete_WhenNotFound_ShouldThrowException() {
-        given(saleRepository.findById(999L)).willReturn(Optional.empty());
-
-        assertThatThrownBy(() -> saleService.delete(999L))
-                .isInstanceOf(ResourceNotFoundException.class);
-        then(inventoryService).shouldHaveNoInteractions();
-        then(saleRepository).should(never()).delete(any());
     }
 
     @Test

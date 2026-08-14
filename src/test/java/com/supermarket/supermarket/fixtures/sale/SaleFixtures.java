@@ -14,6 +14,7 @@ import com.supermarket.supermarket.model.cashregister.CashRegister;
 import com.supermarket.supermarket.model.cashregister.CashRegisterStatus;
 import com.supermarket.supermarket.model.product.Product;
 import com.supermarket.supermarket.model.sale.Sale;
+import com.supermarket.supermarket.model.sale.PaymentType;
 import com.supermarket.supermarket.model.sale.SaleDetail;
 import com.supermarket.supermarket.model.sale.SaleStatus;
 import com.supermarket.supermarket.model.user.User;
@@ -37,6 +38,8 @@ public class SaleFixtures {
                                 .productId(1L)
                                 .quantity(5)
                                 .build()))
+                .amount(new BigDecimal("12.50"))
+                .paymentType(PaymentType.CASH)
                 .build();
     }
 

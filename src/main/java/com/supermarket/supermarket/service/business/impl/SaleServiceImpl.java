@@ -5,6 +5,7 @@ import com.supermarket.supermarket.dto.sale.SaleRequest;
 import com.supermarket.supermarket.dto.sale.SaleResponse;
 import com.supermarket.supermarket.dto.saleDetail.SaleDetailRequest;
 import com.supermarket.supermarket.exception.InsufficientPermissionsException;
+import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.InvalidSaleStateException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.SaleMapper;
@@ -63,16 +64,33 @@ public class SaleServiceImpl implements SaleService {
         Sale sale = buildSale(request);
         List<SaleDetail> details = buildSaleDetails(request, sale);
         sale.getDetails().addAll(details);
-        sale.setTotal(calculateTotal(details));
+        BigDecimal total = calculateTotal(details);
+        sale.setTotal(total);
+
+        int comparison = request.getAmount().compareTo(total);
+        if (comparison < 0) {
+            throw new InvalidOperationException("Payment amount does not cover the sale total");
+        }
+        if (comparison > 0) {
+            throw new InvalidOperationException("Payment amount exceeds the sale total");
+        }
 
         Sale saved = saleRepo.save(sale);
+
+        Payment payment = paymentRepository.save(Payment.builder()
+                .sale(saved)
+                .amount(request.getAmount())
+                .paymentType(request.getPaymentType())
+                .paymentDate(LocalDateTime.now())
+                .reference(request.getReference())
+                .build());
 
         log.info("Sale created with id: {}, branch: {}, total: {}",
                 saved.getId(),
                 saved.getBranch().getId(),
                 saved.getTotal());
 
-        return saleMapper.toResponse(saved, List.of());
+        return saleMapper.toResponse(saved, List.of(payment));
     }
 
     private Sale buildSale(SaleRequest request) {
@@ -125,21 +143,6 @@ public class SaleServiceImpl implements SaleService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-
-    @Override
-    public void delete(Long id) {
-        Sale sale = saleRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Sale not found"));
-
-        log.info("Attempting to delete sale with ID: {}", id);
-
-        if (sale.getStatus() == SaleStatus.REGISTERED && !CollectionUtils.isEmpty(sale.getDetails())) {
-            inventoryService.restoreStockBatch(sale.getBranch().getId(), sale.getDetails());
-        }
-        saleRepo.delete(sale);
-
-        log.info("Sale deleted successfully - ID: {}", id);
-    }
 
     @Override
     @Transactional(readOnly = true)
