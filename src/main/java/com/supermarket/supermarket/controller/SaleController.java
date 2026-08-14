@@ -59,12 +59,4 @@ public class SaleController {
             @Valid @RequestBody CancelSaleRequest request) {
         return ResponseEntity.ok(saleService.cancel(id, request));
     }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Delete a sale - Requires ADMIN role only")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        saleService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
 }

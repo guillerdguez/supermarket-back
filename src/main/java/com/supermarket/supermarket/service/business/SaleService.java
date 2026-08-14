@@ -15,8 +15,6 @@ public interface SaleService {
 
     SaleResponse cancel(Long id, CancelSaleRequest request);
 
-    void delete(Long id);
-
     List<SaleResponse> getSalesByCashier(Long cashierId);
 
     SaleResponse getSaleByIdAndCashier(Long saleId, Long cashierId);
