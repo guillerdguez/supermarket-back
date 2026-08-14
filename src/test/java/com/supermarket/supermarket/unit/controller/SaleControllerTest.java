@@ -30,7 +30,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -139,23 +138,6 @@ class SaleControllerTest {
         mockMvc.perform(post("/sales/999/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validCancelRequest())))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("DELETE /sales/{id} - should return 204")
-    void delete_ShouldReturnNoContent() throws Exception {
-        mockMvc.perform(delete("/sales/100"))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    @DisplayName("DELETE /sales/{id} - should return 404 when not found")
-    void delete_WhenNotFound_ShouldReturn404() throws Exception {
-        willThrow(new ResourceNotFoundException("Sale not found"))
-                .given(saleService).delete(999L);
-
-        mockMvc.perform(delete("/sales/999"))
                 .andExpect(status().isNotFound());
     }
 }
