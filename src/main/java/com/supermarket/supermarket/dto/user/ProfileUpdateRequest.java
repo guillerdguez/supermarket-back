@@ -32,6 +32,5 @@ public class ProfileUpdateRequest {
     @Email(message = "Email must be valid")
     private String email;
 
-    /** Only applied when the current user's role is ADMIN or MANAGER; ignored otherwise. */
     private Long branchId;
 }

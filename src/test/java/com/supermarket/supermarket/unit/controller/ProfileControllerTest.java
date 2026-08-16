@@ -65,7 +65,7 @@ class ProfileControllerTest {
     @Test
     @DisplayName("PUT /profile - should update profile")
     void updateProfile_ShouldReturnUpdatedProfile() throws Exception {
-        ProfileUpdateRequest request = new ProfileUpdateRequest("newusername", "NewFirst", "NewLast");
+        ProfileUpdateRequest request = new ProfileUpdateRequest("newusername", "NewFirst", "NewLast", "admin@test.com", null);
         UserResponse updated = buildUserResponse();
         updated.setUsername("newusername");
         given(userManagementService.updateProfile(any())).willReturn(updated);
@@ -79,7 +79,7 @@ class ProfileControllerTest {
     @Test
     @DisplayName("PUT /profile - should return 400 when request is invalid")
     void updateProfile_WithInvalidRequest_ShouldReturn400() throws Exception {
-        ProfileUpdateRequest invalid = new ProfileUpdateRequest("", "", "");
+        ProfileUpdateRequest invalid = new ProfileUpdateRequest("", "", "", "", null);
         mockMvc.perform(put("/profile")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))

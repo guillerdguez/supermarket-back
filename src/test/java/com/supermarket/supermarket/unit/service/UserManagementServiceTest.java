@@ -339,7 +339,7 @@ class UserManagementServiceTest {
     void updateProfile_ShouldUpdateFields() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
 
-        ProfileUpdateRequest request = new ProfileUpdateRequest("newusername", "NewFirst", "NewLast");
+        ProfileUpdateRequest request = new ProfileUpdateRequest("newusername", "NewFirst", "NewLast", mockUser.getEmail(), null);
         given(userRepository.existsByUsername("newusername")).willReturn(false);
         given(userRepository.save(mockUser)).willReturn(mockUser);
 
@@ -355,12 +355,47 @@ class UserManagementServiceTest {
     void updateProfile_WhenUsernameTaken_ShouldThrow() {
         given(securityUtils.getCurrentUser()).willReturn(mockUser);
 
-        ProfileUpdateRequest request = new ProfileUpdateRequest("taken", "First", "Last");
+        ProfileUpdateRequest request = new ProfileUpdateRequest("taken", "First", "Last", mockUser.getEmail(), null);
         given(userRepository.existsByUsername("taken")).willReturn(true);
 
         assertThatThrownBy(() -> userManagementService.updateProfile(request))
                 .isInstanceOf(DuplicateResourceException.class);
         then(userRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("UPDATE PROFILE - ADMIN should be able to change own email and branch")
+    void updateProfile_AsAdmin_ShouldUpdateEmailAndBranch() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+        Branch branch = BranchFixtures.defaultBranch();
+
+        ProfileUpdateRequest request = new ProfileUpdateRequest("admin-test", "Admin", "System", "new-admin@test.com", branch.getId());
+        given(userRepository.existsByEmail("new-admin@test.com")).willReturn(false);
+        given(branchRepository.findById(branch.getId())).willReturn(Optional.of(branch));
+        given(userRepository.save(mockUser)).willReturn(mockUser);
+
+        userManagementService.updateProfile(request);
+
+        assertThat(mockUser.getEmail()).isEqualTo("new-admin@test.com");
+        assertThat(mockUser.getBranch()).isEqualTo(branch);
+    }
+
+    @Test
+    @DisplayName("UPDATE PROFILE - CASHIER should not be able to change email or branch")
+    void updateProfile_AsCashier_ShouldIgnoreEmailAndBranch() {
+        User cashier = UserFixtures.defaultCashier();
+        Branch originalBranch = cashier.getBranch();
+        given(securityUtils.getCurrentUser()).willReturn(cashier);
+
+        ProfileUpdateRequest request = new ProfileUpdateRequest("cashier-test", "John", "Cashier", "hacked@test.com", 999L);
+        given(userRepository.save(cashier)).willReturn(cashier);
+
+        userManagementService.updateProfile(request);
+
+        assertThat(cashier.getEmail()).isEqualTo("cashier@test.com");
+        assertThat(cashier.getBranch()).isSameAs(originalBranch);
+        then(userRepository).should(never()).existsByEmail(any());
+        then(branchRepository).should(never()).findById(any());
     }
 
     @Test
