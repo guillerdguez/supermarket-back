@@ -4,9 +4,10 @@
 
 API REST en capas (Controller/Service/Repository) para la gestión de inventarios distribuidos, control de caja y ventas.
 
-**Frontend:** [supermarket-front](https://github.com/guillerdguez/supermarket-front) (Angular 20) — demo en vivo: [supermarket-front-production.up.railway.app](https://supermarket-front-production.up.railway.app/)
+**Frontend:** [supermarket-front](https://github.com/guillerdguez/supermarket-front) (Angular 20) — demo en vivo: [supermarketweb.up.railway.app](https://supermarketweb.up.railway.app/)
 
 🔗 **Demo en vivo (API):** [supermarket-back-production.up.railway.app](https://supermarket-back-production.up.railway.app)
+
 📖 **Swagger UI:** [supermarket-back-production.up.railway.app/api/swagger-ui/index.html](https://supermarket-back-production.up.railway.app/api/swagger-ui/index.html)
 
 ## 🔑 Credenciales de prueba
