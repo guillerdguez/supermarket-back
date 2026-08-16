@@ -159,6 +159,15 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setUsername(request.getUsername());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+
+        boolean canEditSensitive = user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.MANAGER;
+        if (canEditSensitive) {
+            if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+                throw new DuplicateResourceException("Email already registered: " + request.getEmail());
+            }
+            user.setEmail(request.getEmail());
+            user.setBranch(findBranchOrNull(request.getBranchId()));
+        }
         return toResponse(userRepository.save(user));
     }
 
