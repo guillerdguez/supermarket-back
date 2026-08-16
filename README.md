@@ -1,4 +1,4 @@
-# 🛒 Supermarket Management System (SMS) API
+# 🛒 Supermarket Management System API
 
 ![Deployed on Railway](https://img.shields.io/badge/deployed-Railway-0B0D0E?logo=railway&logoColor=white)
 
