@@ -12,9 +12,11 @@ import com.supermarket.supermarket.dto.report.SalesComparisonResponse;
 import com.supermarket.supermarket.dto.report.SalesSummaryResponse;
 import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.repository.BranchInventoryRepository.InventoryStatusProjection;
-import com.supermarket.supermarket.repository.BranchInventoryRepository.ProductPerformanceProjection;
+import com.supermarket.supermarket.repository.BranchInventoryRepository.ProductStockProjection;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository.ClosureDiscrepancyProjection;
+import com.supermarket.supermarket.repository.ProductRepository;
+import com.supermarket.supermarket.repository.ProductRepository.ProductSalesProjection;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.repository.SaleRepository.PeriodSummaryProjection;
 import com.supermarket.supermarket.repository.SaleRepository.SalesByBranchProjection;
@@ -47,6 +49,8 @@ class ReportServiceTest {
     private BranchInventoryRepository branchInventoryRepository;
     @Mock
     private CashRegisterRepository cashRegisterRepository;
+    @Mock
+    private ProductRepository productRepository;
 
     @InjectMocks
     private ReportServiceImpl reportService;
@@ -242,14 +246,17 @@ class ReportServiceTest {
         @Test
         @DisplayName("should calculate inventory turnover rate")
         void getProductPerformance_WithStock_CalculatesTurnover() {
-            ProductPerformanceProjection projection = mock(ProductPerformanceProjection.class);
-            given(projection.getProductId()).willReturn(1L);
-            given(projection.getProductName()).willReturn("Milk");
-            given(projection.getProductCategory()).willReturn("Dairy");
-            given(projection.getTotalSold()).willReturn(50L);
-            given(projection.getCurrentStock()).willReturn(25);
+            ProductSalesProjection sales = mock(ProductSalesProjection.class);
+            given(sales.getProductId()).willReturn(1L);
+            given(sales.getProductName()).willReturn("Milk");
+            given(sales.getProductCategory()).willReturn("Dairy");
+            given(sales.getTotalSold()).willReturn(50L);
+            given(productRepository.findProductSalesTotals(any(), any(), any())).willReturn(List.of(sales));
 
-            given(branchInventoryRepository.findProductPerformance(any(), any(), any())).willReturn(List.of(projection));
+            ProductStockProjection stock = mock(ProductStockProjection.class);
+            given(stock.getProductId()).willReturn(1L);
+            given(stock.getStock()).willReturn(25L);
+            given(branchInventoryRepository.findStockByProduct(any())).willReturn(List.of(stock));
 
             List<ProductPerformanceDTO> result = reportService.getProductPerformance(
                     ReportFilterRequest.builder().build());
@@ -260,11 +267,11 @@ class ReportServiceTest {
         @Test
         @DisplayName("should return zero turnover when current stock is zero")
         void getProductPerformance_NoStock_ReturnsZeroTurnover() {
-            ProductPerformanceProjection projection = mock(ProductPerformanceProjection.class);
-            given(projection.getTotalSold()).willReturn(10L);
-            given(projection.getCurrentStock()).willReturn(0);
-
-            given(branchInventoryRepository.findProductPerformance(any(), any(), any())).willReturn(List.of(projection));
+            ProductSalesProjection sales = mock(ProductSalesProjection.class);
+            given(sales.getProductId()).willReturn(1L);
+            given(sales.getTotalSold()).willReturn(10L);
+            given(productRepository.findProductSalesTotals(any(), any(), any())).willReturn(List.of(sales));
+            given(branchInventoryRepository.findStockByProduct(any())).willReturn(List.of());
 
             List<ProductPerformanceDTO> result = reportService.getProductPerformance(
                     ReportFilterRequest.builder().build());

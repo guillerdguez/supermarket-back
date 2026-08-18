@@ -14,6 +14,7 @@ import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.repository.BranchInventoryRepository.InventoryStatusProjection;
 import com.supermarket.supermarket.repository.CashRegisterRepository;
 import com.supermarket.supermarket.repository.CashRegisterRepository.ClosureDiscrepancyProjection;
+import com.supermarket.supermarket.repository.ProductRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
 import com.supermarket.supermarket.repository.SaleRepository.PeriodSummaryProjection;
 import com.supermarket.supermarket.service.business.ReportService;
@@ -27,6 +28,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class ReportServiceImpl implements ReportService {
     private final SaleRepository saleRepository;
     private final BranchInventoryRepository branchInventoryRepository;
     private final CashRegisterRepository cashRegisterRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public SalesSummaryResponse getSalesSummary(ReportFilterRequest filter) {
@@ -153,19 +157,23 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<ProductPerformanceDTO> getProductPerformance(ReportFilterRequest filter) {
-        return branchInventoryRepository
-                .findProductPerformance(filter.getStartDate(), resolveEndDate(filter.getEndDate()), filter.getBranchId())
+        Map<Long, Long> stockByProduct = branchInventoryRepository.findStockByProduct(filter.getBranchId()).stream()
+                .collect(Collectors.toMap(
+                        BranchInventoryRepository.ProductStockProjection::getProductId,
+                        p -> p.getStock() != null ? p.getStock() : 0L));
+
+        return productRepository
+                .findProductSalesTotals(filter.getStartDate(), resolveEndDate(filter.getEndDate()), filter.getBranchId())
                 .stream()
                 .map(p -> {
-                    double turnover = p.getCurrentStock() != null && p.getCurrentStock() > 0
-                            ? (double) p.getTotalSold() / p.getCurrentStock()
-                            : 0.0;
+                    long stock = stockByProduct.getOrDefault(p.getProductId(), 0L);
+                    double turnover = stock > 0 ? (double) p.getTotalSold() / stock : 0.0;
                     return ProductPerformanceDTO.builder()
                             .productId(p.getProductId())
                             .productName(p.getProductName())
                             .productCategory(p.getProductCategory())
                             .totalSold(p.getTotalSold())
-                            .currentStock(p.getCurrentStock())
+                            .currentStock((int) stock)
                             .inventoryTurnoverRate(BigDecimal.valueOf(turnover).setScale(2, RoundingMode.HALF_UP))
                             .build();
                 })
