@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,26 +42,13 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
 
     @Query("""
             SELECT
-                p.id          as productId,
-                p.name        as productName,
-                p.category    as productCategory,
-                COALESCE(SUM(sd.quantity), 0)  as totalSold,
-                COALESCE(bi.stock, 0)       as currentStock
-            FROM Product p
-            LEFT JOIN BranchInventory bi ON bi.product.id = p.id
-                AND (:branchId IS NULL OR bi.branch.id = :branchId)
-            LEFT JOIN SaleDetail sd ON sd.product.id = p.id
-            LEFT JOIN sd.sale s ON s.status = 'REGISTERED'
-                AND (CAST(:startDate AS date) IS NULL OR s.date >= :startDate)
-                AND (CAST(:endDate   AS date) IS NULL OR s.date <= :endDate)
+                bi.product.id as productId,
+                SUM(bi.stock) as stock
+            FROM BranchInventory bi
             WHERE (:branchId IS NULL OR bi.branch.id = :branchId)
-            GROUP BY p.id, p.name, p.category, bi.stock
-            ORDER BY totalSold DESC
+            GROUP BY bi.product.id
             """)
-    List<ProductPerformanceProjection> findProductPerformance(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("branchId") Long branchId);
+    List<ProductStockProjection> findStockByProduct(@Param("branchId") Long branchId);
 
     interface InventoryStatusProjection {
         Long getTotalProducts();
@@ -76,15 +62,9 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
         Long getOutOfStockCount();
     }
 
-    interface ProductPerformanceProjection {
+    interface ProductStockProjection {
         Long getProductId();
 
-        String getProductName();
-
-        String getProductCategory();
-
-        Long getTotalSold();
-
-        Integer getCurrentStock();
+        Long getStock();
     }
 }
