@@ -18,6 +18,8 @@ import java.util.Optional;
 public interface CashRegisterRepository extends JpaRepository<CashRegister, Long> {
     Optional<CashRegister> findByBranchIdAndStatus(Long branchId, CashRegisterStatus status);
 
+    boolean existsByBranchId(Long branchId);
+
     @Query("""
             SELECT
                 cr.id                        as registerId,

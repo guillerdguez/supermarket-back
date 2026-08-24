@@ -3,6 +3,7 @@ package com.supermarket.supermarket.repository;
 
 import com.supermarket.supermarket.model.branch.BranchInventory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,14 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
     Optional<BranchInventory> findByBranchIdAndProductId(Long branchId, Long productId);
 
     List<BranchInventory> findByBranchId(Long branchId);
+
+    boolean existsByBranchIdAndStockGreaterThan(Long branchId, Integer stock);
+
+    // Borra TODAS las filas de la sucursal, sin filtrar por stock; el caller debe
+    // haber verificado antes que no hay stock real (existsByBranchIdAndStockGreaterThan).
+    @Modifying
+    @Query("DELETE FROM BranchInventory bi WHERE bi.branch.id = :branchId")
+    void deleteByBranchId(@Param("branchId") Long branchId);
 
     List<BranchInventory> findByProductId(Long productId);
 

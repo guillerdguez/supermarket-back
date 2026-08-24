@@ -20,4 +20,6 @@ public interface StockTransferRepository extends JpaRepository<StockTransfer, Lo
     List<StockTransfer> findBySourceBranchIdAndStatus(Long sourceBranchId, TransferStatus status);
 
     List<StockTransfer> findByTargetBranchIdAndStatus(Long targetBranchId, TransferStatus status);
+
+    boolean existsBySourceBranchIdOrTargetBranchId(Long sourceBranchId, Long targetBranchId);
 }

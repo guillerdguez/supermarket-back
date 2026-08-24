@@ -7,8 +7,12 @@ import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.BranchMapper;
 import com.supermarket.supermarket.model.branch.Branch;
+import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.repository.BranchRepository;
+import com.supermarket.supermarket.repository.CashRegisterRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.repository.StockTransferRepository;
+import com.supermarket.supermarket.repository.UserRepository;
 import com.supermarket.supermarket.service.business.BranchService;
 import com.supermarket.supermarket.service.business.InventoryService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,10 @@ public class BranchServiceImpl implements BranchService {
     private final BranchRepository branchRepository;
     private final BranchMapper branchMapper;
     private final SaleRepository saleRepo;
+    private final BranchInventoryRepository branchInventoryRepo;
+    private final CashRegisterRepository cashRegisterRepo;
+    private final StockTransferRepository stockTransferRepo;
+    private final UserRepository userRepo;
     private final InventoryService inventoryService;
 
     @Transactional(readOnly = true)
@@ -81,7 +89,21 @@ public class BranchServiceImpl implements BranchService {
         if (saleRepo.existsByBranchId(id)) {
             throw new InvalidOperationException("Cannot delete branch: It has associated sales records");
         }
+        if (cashRegisterRepo.existsByBranchId(id)) {
+            throw new InvalidOperationException("Cannot delete branch: It has associated cash registers");
+        }
+        if (stockTransferRepo.existsBySourceBranchIdOrTargetBranchId(id, id)) {
+            throw new InvalidOperationException("Cannot delete branch: It has associated stock transfers");
+        }
+        if (userRepo.existsByBranchId(id)) {
+            throw new InvalidOperationException("Cannot delete branch: It has users assigned to it");
+        }
+        if (branchInventoryRepo.existsByBranchIdAndStockGreaterThan(id, 0)) {
+            throw new InvalidOperationException("Cannot delete branch: It has products in stock");
+        }
 
+        branchInventoryRepo.deleteByBranchId(id);
+        branchInventoryRepo.flush();
         branchRepository.delete(branch);
         log.info("Branch deleted successfully - ID: {}", id);
     }

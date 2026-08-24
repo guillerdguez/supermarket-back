@@ -7,8 +7,12 @@ import com.supermarket.supermarket.exception.InvalidOperationException;
 import com.supermarket.supermarket.exception.ResourceNotFoundException;
 import com.supermarket.supermarket.mapper.BranchMapper;
 import com.supermarket.supermarket.model.branch.Branch;
+import com.supermarket.supermarket.repository.BranchInventoryRepository;
 import com.supermarket.supermarket.repository.BranchRepository;
+import com.supermarket.supermarket.repository.CashRegisterRepository;
 import com.supermarket.supermarket.repository.SaleRepository;
+import com.supermarket.supermarket.repository.StockTransferRepository;
+import com.supermarket.supermarket.repository.UserRepository;
 import com.supermarket.supermarket.service.business.InventoryService;
 import com.supermarket.supermarket.service.business.impl.BranchServiceImpl;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +43,14 @@ class BranchServiceTest {
     private BranchMapper branchMapper;
     @Mock
     private SaleRepository saleRepository;
+    @Mock
+    private BranchInventoryRepository branchInventoryRepository;
+    @Mock
+    private CashRegisterRepository cashRegisterRepository;
+    @Mock
+    private StockTransferRepository stockTransferRepository;
+    @Mock
+    private UserRepository userRepository;
     @Mock
     private InventoryService inventoryService;
     @InjectMocks
@@ -136,13 +148,18 @@ class BranchServiceTest {
     }
 
     @Test
-    @DisplayName("DELETE - should delete when no associated sales")
-    void delete_WhenNoSales_ShouldDelete() {
+    @DisplayName("DELETE - should delete when no associated data")
+    void delete_WhenNoAssociatedData_ShouldDelete() {
         Long id = 1L;
         Branch branch = defaultBranch();
         given(branchRepository.findById(id)).willReturn(Optional.of(branch));
         given(saleRepository.existsByBranchId(id)).willReturn(false);
+        given(cashRegisterRepository.existsByBranchId(id)).willReturn(false);
+        given(stockTransferRepository.existsBySourceBranchIdOrTargetBranchId(id, id)).willReturn(false);
+        given(userRepository.existsByBranchId(id)).willReturn(false);
+        given(branchInventoryRepository.existsByBranchIdAndStockGreaterThan(id, 0)).willReturn(false);
         branchService.delete(id);
+        then(branchInventoryRepository).should().deleteByBranchId(id);
         then(branchRepository).should().delete(branch);
     }
 
@@ -155,6 +172,65 @@ class BranchServiceTest {
         given(saleRepository.existsByBranchId(id)).willReturn(true);
         assertThatThrownBy(() -> branchService.delete(id))
                 .isInstanceOf(InvalidOperationException.class);
+        then(branchRepository).should(never()).delete(branch);
+    }
+
+    @Test
+    @DisplayName("DELETE - should throw exception when cash registers exist")
+    void delete_WhenCashRegistersExist_ShouldThrowException() {
+        Long id = 1L;
+        Branch branch = defaultBranch();
+        given(branchRepository.findById(id)).willReturn(Optional.of(branch));
+        given(saleRepository.existsByBranchId(id)).willReturn(false);
+        given(cashRegisterRepository.existsByBranchId(id)).willReturn(true);
+        assertThatThrownBy(() -> branchService.delete(id))
+                .isInstanceOf(InvalidOperationException.class);
+        then(branchRepository).should(never()).delete(branch);
+    }
+
+    @Test
+    @DisplayName("DELETE - should throw exception when stock transfers exist")
+    void delete_WhenStockTransfersExist_ShouldThrowException() {
+        Long id = 1L;
+        Branch branch = defaultBranch();
+        given(branchRepository.findById(id)).willReturn(Optional.of(branch));
+        given(saleRepository.existsByBranchId(id)).willReturn(false);
+        given(cashRegisterRepository.existsByBranchId(id)).willReturn(false);
+        given(stockTransferRepository.existsBySourceBranchIdOrTargetBranchId(id, id)).willReturn(true);
+        assertThatThrownBy(() -> branchService.delete(id))
+                .isInstanceOf(InvalidOperationException.class);
+        then(branchRepository).should(never()).delete(branch);
+    }
+
+    @Test
+    @DisplayName("DELETE - should throw exception when users are assigned")
+    void delete_WhenUsersAssigned_ShouldThrowException() {
+        Long id = 1L;
+        Branch branch = defaultBranch();
+        given(branchRepository.findById(id)).willReturn(Optional.of(branch));
+        given(saleRepository.existsByBranchId(id)).willReturn(false);
+        given(cashRegisterRepository.existsByBranchId(id)).willReturn(false);
+        given(stockTransferRepository.existsBySourceBranchIdOrTargetBranchId(id, id)).willReturn(false);
+        given(userRepository.existsByBranchId(id)).willReturn(true);
+        assertThatThrownBy(() -> branchService.delete(id))
+                .isInstanceOf(InvalidOperationException.class);
+        then(branchRepository).should(never()).delete(branch);
+    }
+
+    @Test
+    @DisplayName("DELETE - should throw exception when branch has stock, and should not delete placeholder inventory")
+    void delete_WhenHasStock_ShouldThrowException() {
+        Long id = 1L;
+        Branch branch = defaultBranch();
+        given(branchRepository.findById(id)).willReturn(Optional.of(branch));
+        given(saleRepository.existsByBranchId(id)).willReturn(false);
+        given(cashRegisterRepository.existsByBranchId(id)).willReturn(false);
+        given(stockTransferRepository.existsBySourceBranchIdOrTargetBranchId(id, id)).willReturn(false);
+        given(userRepository.existsByBranchId(id)).willReturn(false);
+        given(branchInventoryRepository.existsByBranchIdAndStockGreaterThan(id, 0)).willReturn(true);
+        assertThatThrownBy(() -> branchService.delete(id))
+                .isInstanceOf(InvalidOperationException.class);
+        then(branchInventoryRepository).should(never()).deleteByBranchId(id);
         then(branchRepository).should(never()).delete(branch);
     }
 
