@@ -21,8 +21,6 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
 
     boolean existsByBranchIdAndStockGreaterThan(Long branchId, Integer stock);
 
-    // Borra TODAS las filas de la sucursal, sin filtrar por stock; el caller debe
-    // haber verificado antes que no hay stock real (existsByBranchIdAndStockGreaterThan).
     @Modifying
     @Query("DELETE FROM BranchInventory bi WHERE bi.branch.id = :branchId")
     void deleteByBranchId(@Param("branchId") Long branchId);

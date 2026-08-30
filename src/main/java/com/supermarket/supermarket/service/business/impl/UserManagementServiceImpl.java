@@ -125,6 +125,10 @@ public class UserManagementServiceImpl implements UserManagementService {
     public void delete(Long id) {
         log.info("Deactivating user with ID: {}", id);
         User user = findUser(id);
+        if (user.getRole() == UserRole.ADMIN && user.getActive()
+                && userRepository.countByRoleAndActiveTrue(UserRole.ADMIN) <= 1) {
+            throw new InvalidOperationException("Cannot deactivate the last active ADMIN user");
+        }
         user.setActive(false);
         userRepository.save(user);
         log.info("User deactivated successfully - ID: {}", id);

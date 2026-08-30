@@ -830,15 +830,3 @@ INSERT IGNORE INTO notifications (id, user_id, type, message, data, `read`, crea
 (220, 2, 'LOW_STOCK', 'Low stock alert: ''Pan de Barra Unidad'' in branch ''Sucursal Benimaclet''. Current: 6, Minimum: 11', NULL, false, '2026-08-04 15:29:00'), (221, 15, 'LOW_STOCK', 'Low stock alert: ''Pan de Barra Unidad'' in branch ''Sucursal Benimaclet''. Current: 6, Minimum: 11', NULL, false, '2026-08-04 15:29:00'), (222, 1, 'LOW_STOCK', 'Low stock alert: ''Miel 500g'' in branch ''Sucursal Patraix''. Current: 10, Minimum: 17', NULL, false, '2026-08-04 19:29:00'),
 (223, 2, 'LOW_STOCK', 'Low stock alert: ''Miel 500g'' in branch ''Sucursal Patraix''. Current: 10, Minimum: 17', NULL, false, '2026-08-04 19:29:00'), (224, 15, 'LOW_STOCK', 'Low stock alert: ''Miel 500g'' in branch ''Sucursal Patraix''. Current: 10, Minimum: 17', NULL, false, '2026-08-04 19:29:00'), (225, 1, 'LOW_STOCK', 'Low stock alert: ''Mantequilla 250g'' in branch ''Sucursal Patraix''. Current: 9, Minimum: 10', NULL, false, '2026-08-04 20:39:00'),
 (226, 2, 'LOW_STOCK', 'Low stock alert: ''Mantequilla 250g'' in branch ''Sucursal Patraix''. Current: 9, Minimum: 10', NULL, false, '2026-08-04 20:39:00'), (227, 15, 'LOW_STOCK', 'Low stock alert: ''Mantequilla 250g'' in branch ''Sucursal Patraix''. Current: 9, Minimum: 10', NULL, false, '2026-08-04 20:39:00');
-
-ALTER TABLE notifications AUTO_INCREMENT = 228;
-ALTER TABLE users AUTO_INCREMENT = 16;
-ALTER TABLE audit_logs AUTO_INCREMENT = 1;
-ALTER TABLE branch AUTO_INCREMENT = 7;
-ALTER TABLE product AUTO_INCREMENT = 69;
-ALTER TABLE cash_registers AUTO_INCREMENT = 106;
-ALTER TABLE branch_inventory AUTO_INCREMENT = 409;
-ALTER TABLE stock_transfers AUTO_INCREMENT = 15;
-ALTER TABLE sale AUTO_INCREMENT = 409;
-ALTER TABLE sale_detail AUTO_INCREMENT = 1199;
-ALTER TABLE payments AUTO_INCREMENT = 395;

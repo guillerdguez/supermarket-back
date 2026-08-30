@@ -286,6 +286,35 @@ class UserManagementServiceTest {
     }
 
     @Test
+    @DisplayName("DELETE - should throw when deactivating the last active admin")
+    void delete_WhenLastActiveAdmin_ShouldThrow() {
+        User admin = UserFixtures.defaultAdmin();
+
+        given(userRepository.findById(3L)).willReturn(Optional.of(admin));
+        given(userRepository.countByRoleAndActiveTrue(UserRole.ADMIN)).willReturn(1L);
+
+        assertThatThrownBy(() -> userManagementService.delete(3L))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("last active ADMIN");
+        then(userRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("DELETE - should deactivate admin when another active admin remains")
+    void delete_WhenAnotherActiveAdminExists_ShouldDeactivate() {
+        User admin = UserFixtures.defaultAdmin();
+
+        given(userRepository.findById(3L)).willReturn(Optional.of(admin));
+        given(userRepository.countByRoleAndActiveTrue(UserRole.ADMIN)).willReturn(2L);
+        given(userRepository.save(admin)).willReturn(admin);
+
+        userManagementService.delete(3L);
+
+        assertThat(admin.getActive()).isFalse();
+        then(userRepository).should().save(admin);
+    }
+
+    @Test
     @DisplayName("ACTIVATE - should activate a user with a branch")
     void activate_ShouldActivateUser() {
         User user = UserFixtures.defaultCashier();

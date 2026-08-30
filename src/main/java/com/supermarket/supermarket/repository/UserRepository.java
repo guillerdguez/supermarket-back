@@ -22,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> findByRoleIn(List<UserRole> roles);
 
     boolean existsByBranchId(Long branchId);
+
+    long countByRoleAndActiveTrue(UserRole role);
 }
