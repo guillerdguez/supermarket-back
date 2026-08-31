@@ -1,5 +1,8 @@
 package com.supermarket.supermarket.fixtures.auth;
 
+import com.supermarket.supermarket.dto.auth.AuthResponse;
+import com.supermarket.supermarket.dto.auth.LoginRequest;
+import com.supermarket.supermarket.dto.auth.UserResponse;
 import com.supermarket.supermarket.dto.user.UserRequest;
 import com.supermarket.supermarket.model.user.UserRole;
 import lombok.experimental.UtilityClass;
@@ -36,6 +39,30 @@ public class AuthFixtures {
                 .firstName("Cashier")
                 .lastName("Test")
                 .role(UserRole.CASHIER)
+                .build();
+    }
+
+    public static LoginRequest validLoginRequest() {
+        return LoginRequest.builder()
+                .email("user@test.com")
+                .password("Password123!")
+                .build();
+    }
+
+    public static AuthResponse authResponse() {
+        return AuthResponse.builder()
+                .token("jwt-token-value")
+                .user(UserResponse.builder()
+                        .id(1L)
+                        .username("test-user")
+                        .email("user@test.com")
+                        .firstName("Test")
+                        .lastName("User")
+                        .role(UserRole.CASHIER.name())
+                        .active(true)
+                        .branchId(1L)
+                        .branchName("Central Warehouse")
+                        .build())
                 .build();
     }
 }
