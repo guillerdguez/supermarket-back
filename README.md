@@ -1,13 +1,10 @@
 # Supermarket Management System API
 
-![Deployed on Railway](https://img.shields.io/badge/deployed-Railway-0B0D0E?logo=railway&logoColor=white)
-
+ 
 API REST en capas (Controller/Service/Repository) para la gestión de inventarios distribuidos, control de caja y ventas.
 
 **Frontend:** [supermarket-front](https://github.com/guillerdguez/supermarket-front) (Angular 20) — demo en vivo: [supermarketweb.up.railway.app](https://supermarketweb.up.railway.app/)
-
-**Demo en vivo (API):** [supermarket-back-production.up.railway.app](https://supermarket-back-production.up.railway.app)
-
+ 
 **Swagger UI:** [supermarket-back-production.up.railway.app/api/swagger-ui/index.html](https://supermarket-back-production.up.railway.app/api/swagger-ui/index.html)
 
 ## Credenciales de prueba
@@ -22,17 +19,53 @@ Con `data.sql` corriendo (por defecto, ver más abajo), estos usuarios ya existe
 ## Cómo empezar (API en 30 segundos)
 
 Sin instalar nada, prueba el flujo real de login + llamada autenticada contra la demo:
+ 
+ 
+
+### Bash / Git Bash / WSL
 
 ```bash
-# 1. Login — obtén el token JWT
+# 1. Login — obtiene el token JWT
 TOKEN=$(curl -s -X POST https://supermarket-back-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@supermarket.com","password":"password"}' | jq -r '.token')
+  -d '{"email":"admin@supermarket.com","password":"password"}' \
+  | jq -r '.token')
 
-# 2. Úsalo en una llamada autenticada
+# 2. Usa el token en una llamada autenticada
 curl -s https://supermarket-back-production.up.railway.app/api/products \
   -H "Authorization: Bearer $TOKEN"
 ```
+
+ 
+### PowerShell
+
+```powershell
+# 1. Login — obtiene el token JWT
+$body = '{"email":"admin@supermarket.com","password":"password"}'
+
+$login = Invoke-RestMethod `
+  -Uri "https://supermarket-back-production.up.railway.app/api/auth/login" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body $body
+
+$TOKEN = $login.token
+
+# 2. Usa el token en una llamada autenticada
+Invoke-RestMethod `
+  -Uri "https://supermarket-back-production.up.railway.app/api/products" `
+  -Headers @{ Authorization = "Bearer $TOKEN" }
+```
+  
+
+
+
+
+
+
+
+
+
 
 ## Sobre el proyecto
 
