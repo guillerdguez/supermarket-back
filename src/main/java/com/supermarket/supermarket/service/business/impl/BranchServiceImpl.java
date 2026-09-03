@@ -39,9 +39,12 @@ public class BranchServiceImpl implements BranchService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<BranchResponse> getAll() {
-        log.info("Fetching all branches");
-        return branchMapper.toResponseList(branchRepository.findAll());
+    public List<BranchResponse> getAll(boolean includeInactive) {
+        log.info("Fetching branches - includeInactive: {}", includeInactive);
+        List<Branch> branches = includeInactive
+                ? branchRepository.findAll()
+                : branchRepository.findAllByActiveTrue();
+        return branchMapper.toResponseList(branches);
     }
 
     @Transactional(readOnly = true)
@@ -80,30 +83,51 @@ public class BranchServiceImpl implements BranchService {
     }
 
     @Override
+    public void deactivate(Long id) {
+        log.info("Deactivating branch with ID: {}", id);
+        Branch branch = findBranch(id);
+        branch.setActive(false);
+        branchRepository.save(branch);
+        log.info("Branch deactivated successfully - ID: {}", id);
+    }
+
+    @Override
+    public void reactivate(Long id) {
+        log.info("Reactivating branch with ID: {}", id);
+        Branch branch = findBranch(id);
+        branch.setActive(true);
+        branchRepository.save(branch);
+        log.info("Branch reactivated successfully - ID: {}", id);
+    }
+
+    @Override
     public void delete(Long id) {
         log.info("Attempting to delete branch with ID: {}", id);
 
-        Branch branch = branchRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Branch not found with ID: " + id));
+        Branch branch = findBranch(id);
 
         if (saleRepo.existsByBranchId(id)) {
-            throw new InvalidOperationException("Cannot delete branch: It has associated sales records");
+            throw new InvalidOperationException(
+                    "Cannot delete branch: It has associated sales records. Deactivate it instead");
         }
         if (cashRegisterRepo.existsByBranchId(id)) {
-            throw new InvalidOperationException("Cannot delete branch: It has associated cash registers");
+            throw new InvalidOperationException(
+                    "Cannot delete branch: It has associated cash registers. Deactivate it instead");
         }
         if (stockTransferRepo.existsBySourceBranchIdOrTargetBranchId(id, id)) {
-            throw new InvalidOperationException("Cannot delete branch: It has associated stock transfers");
+            throw new InvalidOperationException(
+                    "Cannot delete branch: It has associated stock transfers. Deactivate it instead");
         }
         if (userRepo.existsByBranchId(id)) {
-            throw new InvalidOperationException("Cannot delete branch: It has users assigned to it");
+            throw new InvalidOperationException(
+                    "Cannot delete branch: It has users assigned to it. Deactivate it instead");
         }
         if (branchInventoryRepo.existsByBranchIdAndStockGreaterThan(id, 0)) {
-            throw new InvalidOperationException("Cannot delete branch: It has products in stock");
+            throw new InvalidOperationException(
+                    "Cannot delete branch: It has products in stock. Deactivate it instead");
         }
 
         branchInventoryRepo.deleteByBranchId(id);
-        branchInventoryRepo.flush();
         branchRepository.delete(branch);
         log.info("Branch deleted successfully - ID: {}", id);
     }

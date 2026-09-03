@@ -19,6 +19,7 @@ public class BranchMapper {
                 .name(branch.getName())
                 .address(branch.getAddress())
                 .isWarehouse(branch.getIsWarehouse())
+                .active(branch.getActive())
                 .build();
     }
 

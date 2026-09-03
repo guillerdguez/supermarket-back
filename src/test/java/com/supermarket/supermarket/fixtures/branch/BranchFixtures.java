@@ -17,6 +17,15 @@ public class BranchFixtures {
                 .build();
     }
 
+    public static Branch inactiveBranch() {
+        return Branch.builder()
+                .id(1L)
+                .name("Central Branch")
+                .address("123 Main St")
+                .active(false)
+                .build();
+    }
+
     public static Branch warehouseBranch() {
         return Branch.builder()
                 .id(WAREHOUSE_ID)
@@ -45,6 +54,7 @@ public class BranchFixtures {
                 .id(1L)
                 .name("Central Branch")
                 .address("123 Main St")
+                .active(true)
                 .build();
     }
 }

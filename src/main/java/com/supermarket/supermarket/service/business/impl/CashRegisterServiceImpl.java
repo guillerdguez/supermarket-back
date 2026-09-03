@@ -99,14 +99,20 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     private Branch resolveBranch(OpenRegisterRequest request, User currentUser) {
+        Branch branch;
         if (request.getBranchId() != null) {
-            return branchRepository.findById(request.getBranchId())
+            branch = branchRepository.findById(request.getBranchId())
                     .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
+        } else {
+            if (currentUser.getBranch() == null) {
+                throw new InvalidOperationException("This user has no branch assigned");
+            }
+            branch = currentUser.getBranch();
         }
-        if (currentUser.getBranch() == null) {
-            throw new InvalidOperationException("This user has no branch assigned");
+        if (!branch.getActive()) {
+            throw new InvalidOperationException("Cannot open a cash register in an inactive branch");
         }
-        return currentUser.getBranch();
+        return branch;
     }
 
     private void notifyIfDiscrepancy(CashRegister register) {

@@ -59,8 +59,17 @@ class BranchControllerTest {
     @Test
     @DisplayName("GET /branches - should return list")
     void getAll_ShouldReturnList() throws Exception {
-        given(branchService.getAll()).willReturn(List.of(branchResponse()));
+        given(branchService.getAll(false)).willReturn(List.of(branchResponse()));
         mockMvc.perform(get("/branches"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
+    @DisplayName("GET /branches?includeInactive=true - should ask the service for every branch")
+    void getAll_WithIncludeInactive_ShouldReturnAllBranches() throws Exception {
+        given(branchService.getAll(true)).willReturn(List.of(branchResponse()));
+        mockMvc.perform(get("/branches").param("includeInactive", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
     }
@@ -115,6 +124,38 @@ class BranchControllerTest {
                         .content(objectMapper.writeValueAsString(validBranchRequest())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Central Branch"));
+    }
+
+    @Test
+    @DisplayName("PUT /branches/{id}/deactivate - should return 204")
+    void deactivate_ShouldReturnNoContent() throws Exception {
+        mockMvc.perform(put("/branches/1/deactivate"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("PUT /branches/{id}/deactivate - should return 404 when not found")
+    void deactivate_WhenNotFound_ShouldReturn404() throws Exception {
+        doThrow(new ResourceNotFoundException("Branch not found"))
+                .when(branchService).deactivate(999L);
+        mockMvc.perform(put("/branches/999/deactivate"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /branches/{id}/reactivate - should return 204")
+    void reactivate_ShouldReturnNoContent() throws Exception {
+        mockMvc.perform(put("/branches/1/reactivate"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("PUT /branches/{id}/reactivate - should return 404 when not found")
+    void reactivate_WhenNotFound_ShouldReturn404() throws Exception {
+        doThrow(new ResourceNotFoundException("Branch not found"))
+                .when(branchService).reactivate(999L);
+        mockMvc.perform(put("/branches/999/reactivate"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

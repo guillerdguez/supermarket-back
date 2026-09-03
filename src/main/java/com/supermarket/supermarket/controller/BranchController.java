@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -37,9 +38,10 @@ public class BranchController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    @Operation(summary = "Retrieve all branches")
-    public ResponseEntity<List<BranchResponse>> getAll() {
-        return ResponseEntity.ok(branchService.getAll());
+    @Operation(summary = "Retrieve all active branches, or every branch when includeInactive is true")
+    public ResponseEntity<List<BranchResponse>> getAll(
+            @RequestParam(defaultValue = "false") boolean includeInactive) {
+        return ResponseEntity.ok(branchService.getAll(includeInactive));
     }
 
     @GetMapping("/{id}")
@@ -68,9 +70,25 @@ public class BranchController {
         return ResponseEntity.ok(branchService.update(id, request));
     }
 
+    @PutMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Deactivate a branch - Requires ADMIN role")
+    public ResponseEntity<Void> deactivate(@PathVariable Long id) {
+        branchService.deactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/reactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reactivate a branch - Requires ADMIN role")
+    public ResponseEntity<Void> reactivate(@PathVariable Long id) {
+        branchService.reactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Delete a branch - Requires ADMIN role")
+    @Operation(summary = "Permanently delete a branch with no activity - Requires ADMIN role")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         branchService.delete(id);
         return ResponseEntity.noContent().build();

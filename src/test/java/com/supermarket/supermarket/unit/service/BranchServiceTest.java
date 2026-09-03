@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.branchResponse;
 import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.defaultBranch;
+import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.inactiveBranch;
 import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.validBranchRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -57,15 +58,81 @@ class BranchServiceTest {
     private BranchServiceImpl branchService;
 
     @Test
-    @DisplayName("GET ALL - should return list")
-    void getAll_ShouldReturnList() {
+    @DisplayName("GET ALL - should return only active branches by default")
+    void getAll_ShouldReturnOnlyActiveBranches() {
         Branch branch = defaultBranch();
         BranchResponse response = branchResponse();
-        given(branchRepository.findAll()).willReturn(List.of(branch));
+        given(branchRepository.findAllByActiveTrue()).willReturn(List.of(branch));
         given(branchMapper.toResponseList(List.of(branch))).willReturn(List.of(response));
-        List<BranchResponse> result = branchService.getAll();
+        List<BranchResponse> result = branchService.getAll(false);
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Central Branch");
+        then(branchRepository).should(never()).findAll();
+    }
+
+    @Test
+    @DisplayName("GET ALL - should include inactive branches when requested")
+    void getAll_WhenIncludeInactive_ShouldReturnAllBranches() {
+        Branch active = defaultBranch();
+        Branch inactive = inactiveBranch();
+        given(branchRepository.findAll()).willReturn(List.of(active, inactive));
+        given(branchMapper.toResponseList(List.of(active, inactive))).willReturn(List.of(branchResponse()));
+        branchService.getAll(true);
+        then(branchRepository).should(never()).findAllByActiveTrue();
+    }
+
+    @Test
+    @DisplayName("DEACTIVATE - should mark branch as inactive")
+    void deactivate_ShouldMarkBranchInactive() {
+        Long id = 1L;
+        Branch branch = defaultBranch();
+        given(branchRepository.findById(id)).willReturn(Optional.of(branch));
+        branchService.deactivate(id);
+        assertThat(branch.getActive()).isFalse();
+        then(branchRepository).should().save(branch);
+    }
+
+    @Test
+    @DisplayName("DEACTIVATE - should be idempotent when branch is already inactive")
+    void deactivate_WhenAlreadyInactive_ShouldNotThrow() {
+        Long id = 1L;
+        Branch branch = inactiveBranch();
+        given(branchRepository.findById(id)).willReturn(Optional.of(branch));
+        branchService.deactivate(id);
+        assertThat(branch.getActive()).isFalse();
+        then(branchRepository).should().save(branch);
+    }
+
+    @Test
+    @DisplayName("DEACTIVATE - should throw exception when branch not found")
+    void deactivate_WhenNotFound_ShouldThrowException() {
+        Long id = 999L;
+        given(branchRepository.findById(id)).willReturn(Optional.empty());
+        assertThatThrownBy(() -> branchService.deactivate(id))
+                .isInstanceOf(ResourceNotFoundException.class);
+        then(branchRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("REACTIVATE - should mark branch as active")
+    void reactivate_ShouldMarkBranchActive() {
+        Long id = 1L;
+        Branch branch = inactiveBranch();
+        given(branchRepository.findById(id)).willReturn(Optional.of(branch));
+        branchService.reactivate(id);
+        assertThat(branch.getActive()).isTrue();
+        then(branchRepository).should().save(branch);
+    }
+
+    @Test
+    @DisplayName("REACTIVATE - should be idempotent when branch is already active")
+    void reactivate_WhenAlreadyActive_ShouldNotThrow() {
+        Long id = 1L;
+        Branch branch = defaultBranch();
+        given(branchRepository.findById(id)).willReturn(Optional.of(branch));
+        branchService.reactivate(id);
+        assertThat(branch.getActive()).isTrue();
+        then(branchRepository).should().save(branch);
     }
 
     @Test

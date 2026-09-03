@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.defaultBranch;
+import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.inactiveBranch;
 import static com.supermarket.supermarket.fixtures.cashregister.CashRegisterFixtures.openRegister;
 import static com.supermarket.supermarket.fixtures.product.ProductFixtures.defaultProduct;
 import static com.supermarket.supermarket.fixtures.sale.SaleFixtures.cancelledSaleResponse;
@@ -130,6 +131,20 @@ class SaleServiceTest {
         then(productRepository).should().findAllById(productIds);
         then(saleRepository).should().save(sale);
         then(paymentRepository).should().save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("CREATE - should throw exception when branch is inactive")
+    void create_WhenBranchInactive_ShouldThrowException() {
+        given(securityUtils.getCurrentUser()).willReturn(mockUser);
+
+        SaleRequest request = validSaleRequest();
+        given(branchRepository.findById(1L)).willReturn(Optional.of(inactiveBranch()));
+
+        assertThatThrownBy(() -> saleService.create(request))
+                .isInstanceOf(InvalidOperationException.class);
+
+        then(saleRepository).should(never()).save(any());
     }
 
     @Test

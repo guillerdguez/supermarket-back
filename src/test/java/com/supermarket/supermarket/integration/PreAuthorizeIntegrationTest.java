@@ -27,6 +27,7 @@ import static com.supermarket.supermarket.fixtures.auth.AuthFixtures.adminRegist
 import static com.supermarket.supermarket.fixtures.auth.AuthFixtures.cashierRegisterRequest;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -102,5 +103,16 @@ class PreAuthorizeIntegrationTest {
         mockMvc.perform(delete("/products/" + testProductId)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("CASHIER role should fail to deactivate or reactivate branches")
+    void cashierCannotChangeBranchActivation() throws Exception {
+        mockMvc.perform(put("/branches/1/deactivate")
+                        .header("Authorization", "Bearer " + cashierToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/branches/1/reactivate")
+                        .header("Authorization", "Bearer " + cashierToken))
+                .andExpect(status().isForbidden());
     }
 }

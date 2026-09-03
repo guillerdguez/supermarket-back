@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS branch (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
     address VARCHAR(200) UNIQUE NOT NULL,
-    is_warehouse BOOLEAN NOT NULL DEFAULT FALSE
+    is_warehouse BOOLEAN NOT NULL DEFAULT FALSE,
+    active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -154,13 +155,13 @@ INSERT IGNORE INTO users (id, username, email, password, first_name, last_name, 
 (14, 'ajimenez', 'ajimenez@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'Alvaro', 'Jimenez Aguilar', 'CASHIER', true, 5),
 (15, 'bnavarro', 'bnavarro@supermarket.com', '$2b$10$O.yKBd9OskbXboDN6ms.X.0SRPiwVEiFqB7MbBESmx8mfWHc8lOSe', 'Beatriz', 'Navarro Campos', 'MANAGER', true, NULL);
 
-INSERT IGNORE INTO branch (id, name, address, is_warehouse) VALUES
-(1, 'Sucursal Centro', 'Calle de la Paz, 12, 46003 Valencia', false),
-(2, 'Sucursal Ruzafa', 'Calle de Cadiz, 45, 46006 Valencia', false),
-(3, 'Sucursal Benimaclet', 'Avenida de Alfahuir, 22, 46020 Valencia', false),
-(4, 'Sucursal Patraix', 'Calle Padre Porta, 8, 46017 Valencia', false),
-(5, 'Sucursal Malvarrosa', 'Paseo Maritimo, 30, 46011 Valencia', false),
-(6, 'Almacen Central', 'Poligono Industrial Vara de Quart, Nave 14, 46014 Valencia', true);
+INSERT IGNORE INTO branch (id, name, address, is_warehouse, active) VALUES
+(1, 'Sucursal Centro', 'Calle de la Paz, 12, 46003 Valencia', false, true),
+(2, 'Sucursal Ruzafa', 'Calle de Cadiz, 45, 46006 Valencia', false, true),
+(3, 'Sucursal Benimaclet', 'Avenida de Alfahuir, 22, 46020 Valencia', false, true),
+(4, 'Sucursal Patraix', 'Calle Padre Porta, 8, 46017 Valencia', false, true),
+(5, 'Sucursal Malvarrosa', 'Paseo Maritimo, 30, 46011 Valencia', false, true),
+(6, 'Almacen Central', 'Poligono Industrial Vara de Quart, Nave 14, 46014 Valencia', true, true);
 
 UPDATE users SET branch_id = 1 WHERE id = 3 AND branch_id IS NULL;
 

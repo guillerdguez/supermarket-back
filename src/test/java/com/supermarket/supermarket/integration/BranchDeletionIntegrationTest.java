@@ -1,6 +1,8 @@
 package com.supermarket.supermarket.integration;
 
 import com.supermarket.supermarket.dto.branch.BranchResponse;
+import com.supermarket.supermarket.exception.InvalidOperationException;
+import com.supermarket.supermarket.model.branch.Branch;
 import com.supermarket.supermarket.model.branch.BranchInventory;
 import com.supermarket.supermarket.model.product.Product;
 import com.supermarket.supermarket.repository.BranchInventoryRepository;
@@ -23,6 +25,7 @@ import java.util.List;
 
 import static com.supermarket.supermarket.fixtures.branch.BranchFixtures.validBranchRequest;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -69,5 +72,30 @@ class BranchDeletionIntegrationTest {
 
         assertThat(branchRepository.existsById(created.getId())).isFalse();
         assertThat(branchInventoryRepository.findByBranchId(created.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("DELETE - a branch with stock cannot be deleted, but can be deactivated and keeps its row")
+    void delete_branchWithActivity_shouldFailButAllowDeactivation() {
+        productRepository.save(Product.builder()
+                .name("Test Product")
+                .category("Test Category")
+                .price(new BigDecimal("10.00"))
+                .build());
+
+        BranchResponse created = branchService.create(validBranchRequest());
+
+        BranchInventory inventory = branchInventoryRepository.findByBranchId(created.getId()).get(0);
+        inventory.setStock(5);
+        branchInventoryRepository.save(inventory);
+
+        assertThatThrownBy(() -> branchService.delete(created.getId()))
+                .isInstanceOf(InvalidOperationException.class);
+
+        branchService.deactivate(created.getId());
+
+        Branch persisted = branchRepository.findById(created.getId()).orElseThrow();
+        assertThat(persisted.getActive()).isFalse();
+        assertThat(branchInventoryRepository.findByBranchId(created.getId())).isNotEmpty();
     }
 }

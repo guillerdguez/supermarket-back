@@ -18,4 +18,5 @@ public class BranchResponse {
     private String name;
     private String address;
     private Boolean isWarehouse;
+    private Boolean active;
 }

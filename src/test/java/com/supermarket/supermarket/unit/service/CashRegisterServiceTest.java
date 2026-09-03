@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class CashRegisterServiceTest {
@@ -93,6 +94,18 @@ class CashRegisterServiceTest {
 
         assertThatThrownBy(() -> cashRegisterService.openRegister(request))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void openRegister_whenBranchInactive_shouldThrowException() {
+        Branch inactive = BranchFixtures.inactiveBranch();
+        OpenRegisterRequest request = new OpenRegisterRequest(inactive.getId(), new BigDecimal("100.00"));
+        given(branchRepository.findById(inactive.getId())).willReturn(Optional.of(inactive));
+
+        assertThatThrownBy(() -> cashRegisterService.openRegister(request))
+                .isInstanceOf(InvalidOperationException.class);
+
+        then(cashRegisterRepository).should(never()).save(any(CashRegister.class));
     }
 
     @Test

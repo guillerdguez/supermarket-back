@@ -97,6 +97,9 @@ public class SaleServiceImpl implements SaleService {
         User currentUser = securityUtils.getCurrentUser();
         Branch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
+        if (!branch.getActive()) {
+            throw new InvalidOperationException("Cannot register a sale in an inactive branch");
+        }
         CashRegister cashRegister = cashRegisterService.getRegisterEntityByBranch(branch.getId());
         Sale sale = saleMapper.toEntity(request);
         sale.setStatus(SaleStatus.REGISTERED);

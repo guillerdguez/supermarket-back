@@ -29,4 +29,7 @@ public class Branch {
     @Column(name = "is_warehouse", nullable = false)
     @Builder.Default
     private Boolean isWarehouse = false;
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
 }
